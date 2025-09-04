@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SatisFlow</title>
+    <meta name="description" content="SatisFlow – Track your Satisfactory factory production chains and logistics flows">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- PWA meta tags -->
+    <meta name="theme-color" content="#2563eb">
+    <link rel="manifest" href="/manifest.json">
+    
+    <style>
+        /* Custom styles for better factory management UX */
+        .factory-card {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .factory-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .production-status-balanced {
+            color: #059669;
+        }
+        
+        .production-status-overflow {
+            color: #d97706;
+        }
+        
+        .production-status-underflow {
+            color: #dc2626;
+        }
+        
+        /* Loading spinner for data loading */
+        .loading-spinner {
+            border: 2px solid #f3f4f6;
+            border-top: 2px solid #2563eb;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="main"></div>
+    
+    <!-- Loading indicator -->
+    <div id="loading" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 flex items-center space-x-4">
+            <div class="loading-spinner"></div>
+            <span class="text-gray-700">Loading SatisFlow...</span>
+        </div>
+    </div>
+    
+    <script>
+        // Hide loading indicator once WASM loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loading = document.getElementById('loading');
+                if (loading) {
+                    loading.style.display = 'none';
+                }
+            }, 100);
+        });
+        
+        // Console welcome message
+        console.log('%c🏭 SatisFlow', 'color: #2563eb; font-size: 16px; font-weight: bold');
+        console.log('Built with Dioxus + WASM for optimal performance!');
+    </script>
+</body>
+</html>

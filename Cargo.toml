@@ -1,0 +1,43 @@
+[package]
+name = "satisflow"
+version = "0.1.0"
+edition = "2024"
+authors = ["Maxime Pointet <maxime@maxime.pointet.fr>"]
+description = "A blazingly fast web application for tracking and optimizing Satisfactory factory production chains"
+homepage = "https://github.com/PixmaNts/SatisFlow"
+repository = "https://github.com/PixmaNts/SatisFlow"
+readme = "README.md"
+license = "MIT"
+keywords = ["satisfactory", "factory", "production", "wasm", "game-tools"]
+categories = ["games", "web-programming", "wasm"]
+exclude = [
+    "design/",
+    "public/",
+    "target/",
+    ".github/",
+    "*.sh"
+]
+
+[package.metadata.docs.rs]
+default-target = "wasm32-unknown-unknown"
+
+[dependencies]
+dioxus = { version = "0.6", features = ["web"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+web-sys = { version = "0.3", features = ["Storage", "Window", "console"] }
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+gloo-net = "0.4"
+
+[profile]
+
+[profile.wasm-dev]
+inherits = "dev"
+opt-level = 1
+
+[profile.server-dev]
+inherits = "dev"
+
+[profile.android-dev]
+inherits = "dev"
