@@ -1,43 +1,67 @@
-# SatisFlow 🏭
+# SatisFlow
 
-> A blazingly fast web application for tracking and optimizing your Satisfactory factory production chains and logistics flows.
+A blazingly fast web application for tracking and optimizing Satisfactory factory production chains.
 
 [![Build Status](https://github.com/PixmaNts/SatisFlow/workflows/CI/badge.svg)](https://github.com/PixmaNts/SatisFlow/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-stable-brightgreen.svg)](https://rustup.rs)
 
-## ✨ Features
+## Features
 
-- **🌐 Web-First**: Runs in any modern browser, no installation required
-- **⚡ Near-Native Performance**: Built with Rust and WebAssembly (WASM)
-- **📊 Production Overview**: Track all items produced/consumed across your factory network
-- **🚛 Logistics Management**: Organize transport routes with proper ID conventions
-- **🏗️ Factory Organization**: Manage multiple factories with production line grouping
-- **💾 Persistent Storage**: Save your configurations in browser localStorage
-- **📱 Progressive Web App**: Install as a native-feeling app from your browser
-- **🎨 Modern UI**: Clean, responsive interface with Tailwind CSS
+- **Production Tracking**: Monitor production rates across multiple factories
+- **Resource Management**: Identify resource surpluses and shortages
+- **Logistics Optimization**: Track material flows between factories  
+- **Cloud Storage**: Save your factory configurations (premium feature)
+- **File Import/Export**: Local save files for offline usage
+- **WASM Performance**: Near-native calculation speed in the browser
 
-## 🚀 Quick Start
+## Project Structure
 
-### Try Online
-**[🌐 Open SatisFlow](https://pixmanits.github.io/SatisFlow)** *(coming soon)*
+This project uses a Cargo workspace with multiple crates:
 
-### Local Development
+```
+SatisFlow/
+├── Cargo.toml                   # Workspace configuration
+├── crates/
+│   ├── satisflow-engine/        # Core calculation engine (Rust library)
+│   ├── satisflow-wasm/          # WASM bindings for browser integration  
+│   └── satisflow-server/        # SaaS backend server (optional)
+├── frontend/                    # Vue.js + TypeScript frontend
+└── design/                      # Architecture and design documents
+```
 
-1. **Install Rust and Dioxus CLI**:
-   ```bash
-   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   cargo install dioxus-cli
-   ```
+## Development Setup
 
-2. **Clone and serve**:
+### Prerequisites
+- Rust 1.70+ with `wasm-pack` installed
+- Node.js 18+ with npm
+- PostgreSQL (for server development)
+
+### Quick Start
+
+1. **Clone and setup:**
    ```bash
    git clone https://github.com/PixmaNts/SatisFlow.git
    cd SatisFlow
-   dx serve --platform web
    ```
 
-3. **Open your browser** to `http://localhost:8080`
+2. **Build the WASM module:**
+   ```bash
+   cd crates/satisflow-wasm
+   wasm-pack build --target web --out-dir ../../frontend/src/wasm
+   ```
+
+3. **Start the frontend:**
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+4. **Optional - Start the backend server:**
+   ```bash
+   cargo run -p satisflow-server
+   ```
 
 ## 📖 Usage
 
@@ -65,10 +89,10 @@ Document your transport networks:
 
 Built with modern web technologies for optimal performance:
 
-- **Frontend**: [Dioxus](https://dioxuslabs.com/) (React-like for Rust)
-- **Runtime**: WebAssembly for near-native performance
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/) for responsive design
-- **Storage**: Browser localStorage for persistence
+- **Frontend**: Vue 3 + TypeScript (Vite)
+- **Engine**: Rust compiled to WebAssembly via `wasm-bindgen`
+- **Styling**: Tailwind CSS or scoped CSS
+- **Storage**: Browser localStorage for persistence (web); JSON files for desktop
 - **Data**: External JSON files for easy recipe management
 
 See [design/architecture.md](design/architecture.md) for detailed technical documentation.
@@ -87,11 +111,14 @@ rustup target add wasm32-unknown-unknown
 git clone https://github.com/PixmaNts/SatisFlow.git
 cd SatisFlow
 
-# Run in development mode with hot reload
-dx serve --platform web --hot-reload
+# Build WASM bindings
+cd crates/satisflow-wasm
+wasm-pack build --target web --out-dir ../../frontend/src/wasm
 
-# Build for production
-dx build --release --platform web
+# Start Vue dev server
+cd ../../frontend
+npm install
+npm run dev
 ```
 
 ## 📋 Roadmap

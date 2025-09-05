@@ -76,11 +76,20 @@ A desktop application to help Satisfactory players track their factory productio
 - External game data files for easy updates
 - Modular code structure for feature additions
 - Clear separation between UI and business logic
+ - JSON Schemas for data validation in CI
 
 ### Reliability
 - Graceful error handling for invalid data
 - Data validation to prevent corruption
 - Automatic backup of user configurations
+ - Versioned save file format with migrations
+
+## Acceptance Criteria (Phase 1)
+
+- Create factory via dialog; persists across reloads
+- Add production line; overview numbers update correctly
+- Add logistics flux; ID auto-generated; validated endpoints
+- Save/Load works with `version: "1"` envelope
 
 ## Game-Specific Requirements
 
@@ -91,9 +100,9 @@ A desktop application to help Satisfactory players track their factory productio
 - Accurate production rates and timing
 
 ### ID Conventions
-- Logistics flux IDs follow pattern: `LG-{TYPE}-{ID}-{DETAIL}`
+- Logistics flux IDs follow pattern: `LG-{TYPE}-{ID}[-{DETAIL}]`
   - Train: `LG-TRN-01-W02` (Train 01, Wagon 02)
-  - Bus: `LG-BUS-001-03` (Bus 001, Conveyor 03)
+  - Bus: `LG-BUS-001` is the bus identifier; each conveyor on the bus may add a detail like `-C03` (Bus 001, Conveyor 03)
   - Truck: `LG-TRK-05` (Truck route 05)
   - Drone: `LG-DRN-12` (Drone route 12)
 

@@ -1,10 +1,11 @@
-# Next Steps & Future Ideas
+# Roadmap & Milestones
 
-## Immediate Priorities
+## Immediate Priorities (Phase 1: MVP)
 
 ### 1. Factory Creation Dialog
 **Priority**: High  
-**Effort**: Medium
+**Effort**: Medium  
+**Milestone Acceptance**: Create factory with unique name; optional first raw input; appears in Factory view; persists across reloads.
 
 Create a modal dialog for adding new factories:
 - Factory name input
@@ -14,7 +15,8 @@ Create a modal dialog for adding new factories:
 
 ### 2. Production Line Editor
 **Priority**: High
-**Effort**: Medium
+**Effort**: Medium  
+**Milestone Acceptance**: Add a production line with recipe, machine count, and clock; overview reflects correct production/consumption deltas.
 
 Implement production line creation/editing:
 - Recipe dropdown with search/filter
@@ -26,6 +28,7 @@ Implement production line creation/editing:
 ### 3. Logistics Flux Dialog
 **Priority**: Medium
 **Effort**: Medium  
+**Milestone Acceptance**: Add a logistics flux with auto ID; visible in list; validated factories/items; saved and reloaded.
 
 Build logistics management interface:
 - Factory selection dropdowns
@@ -34,7 +37,7 @@ Build logistics management interface:
 - Auto-generate logistics IDs based on type
 - Quantity validation against production capacity
 
-## Quality of Life Improvements
+## Quality of Life Improvements (Phase 2)
 
 ### 4. Enhanced Recipe Database
 **Priority**: Medium
@@ -67,7 +70,7 @@ Data sharing capabilities:
 - Template system for common setups
 - JSON schema validation
 
-## Advanced Features
+## Advanced Features (Phase 3)
 
 ### 7. Power Consumption Tracking
 **Priority**: Low
@@ -99,7 +102,7 @@ Automated optimization tools:
 - Alternative recipe recommendations
 - Cost-benefit analysis for upgrades
 
-## Technical Improvements
+## Technical Improvements (Ongoing)
 
 ### 10. Performance Optimizations
 **Priority**: Medium
@@ -131,7 +134,7 @@ UI/UX improvements:
 - Dark/light theme support
 - Customizable layouts and views
 
-## Community Features
+## Community Features (Phase 4)
 
 ### 13. Blueprint Sharing
 **Priority**: Low
@@ -171,7 +174,7 @@ Historical data tracking and production trend analysis
 
 ## Development Approach
 
-**Phase 1**: Core functionality (Items 1-3)
+**Phase 1**: Core functionality (Items 1-3) with acceptance criteria
 **Phase 2**: Quality improvements (Items 4-6, 11)  
 **Phase 3**: Advanced features (Items 7-10, 12)
 **Phase 4**: Community features (Items 13-14)

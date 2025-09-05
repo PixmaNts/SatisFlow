@@ -1,0 +1,33 @@
+[package]
+name = "satisflow-wasm"
+version = "0.1.0"
+edition = "2021"
+authors = ["Maxime Pointet <maxime@maxime.pointet.fr>"]
+description = "WASM bindings for SatisFlow factory tracking engine"
+license = "MIT"
+repository = "https://github.com/PixmaNts/SatisFlow"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+satisflow-engine = { path = "../satisflow-engine" }
+wasm-bindgen = { workspace = true }
+serde-wasm-bindgen = { workspace = true }
+js-sys = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true, features = ["wasmbind"] }
+
+# Console logging for WASM debugging
+console_error_panic_hook = "0.1"
+wee_alloc = "0.4"
+
+[dependencies.web-sys]
+workspace = true
+features = [
+  "console",
+  "Storage",
+  "Window",
+]
