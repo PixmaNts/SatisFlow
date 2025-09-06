@@ -102,6 +102,7 @@
             <div class="col-quantity">Quantity/min</div>
             <div class="col-transport">Transport</div>
             <div class="col-details">Details</div>
+            <div class="col-actions">Actions</div>
           </div>
           <div 
             v-for="flux in filteredLogisticsFluxes" 
@@ -130,6 +131,24 @@
             </div>
             <div class="col-details">
               <span class="transport-details">{{ flux.transport_details || '-' }}</span>
+            </div>
+            <div class="col-actions">
+              <div class="action-buttons">
+                <button 
+                  @click="handleEditLogisticsFlux(flux)"
+                  class="action-btn edit-btn"
+                  title="Edit logistics connection"
+                >
+                  ✏️
+                </button>
+                <button 
+                  @click="handleRemoveLogisticsFlux(flux.id)"
+                  class="action-btn delete-btn"
+                  title="Delete logistics connection"
+                >
+                  🗑️
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -163,7 +182,25 @@
                   <span class="quantity">{{ flux.quantity_per_min.toFixed(1) }}/min</span>
                   <span v-if="flux.transport_details" class="transport-details">{{ flux.transport_details }}</span>
                 </div>
-                <div class="connection-id-small">{{ flux.id }}</div>
+                <div class="connection-actions">
+                  <div class="connection-id-small">{{ flux.id }}</div>
+                  <div class="action-buttons">
+                    <button 
+                      @click="handleEditLogisticsFlux(flux)"
+                      class="action-btn edit-btn"
+                      title="Edit logistics connection"
+                    >
+                      ✏️
+                    </button>
+                    <button 
+                      @click="handleRemoveLogisticsFlux(flux.id)"
+                      class="action-btn delete-btn"
+                      title="Delete logistics connection"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -182,18 +219,32 @@
       @close="showAddLogistics = false" 
       @logistics-added="onLogisticsAdded"
     />
+    
+    <!-- Edit Logistics Modal -->
+    <EditLogisticsFluxModal
+      :isOpen="showEditLogistics"
+      :logisticsFlux="editingLogisticsFlux"
+      :fromFactoryName="getFactoryName(editingLogisticsFlux?.from_factory)"
+      :toFactoryName="getFactoryName(editingLogisticsFlux?.to_factory)"
+      :itemName="getItemName(editingLogisticsFlux?.item)"
+      @close="showEditLogistics = false"
+      @logistics-flux-updated="onLogisticsUpdated"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { getLogisticsFluxes, getFactories, getItems } from '../lib/tracker'
+import { getLogisticsFluxes, getFactories, getItems, removeLogisticsFlux } from '../lib/tracker'
 import AddLogisticsModal from '../components/AddLogisticsModal.vue'
+import EditLogisticsFluxModal from '../components/EditLogisticsFluxModal.vue'
 
 const logisticsFluxes = ref<any[]>([])
 const factories = ref<any[]>([])
 const items = ref<any[]>([])
 const showAddLogistics = ref(false)
+const showEditLogistics = ref(false)
+const editingLogisticsFlux = ref<any>(null)
 const viewMode = ref('list')
 const displayDensity = ref('comfortable')
 
@@ -223,6 +274,27 @@ const refreshData = async () => {
 
 const onLogisticsAdded = () => {
   refreshData()
+}
+
+const onLogisticsUpdated = () => {
+  refreshData()
+}
+
+const handleEditLogisticsFlux = (flux: any) => {
+  editingLogisticsFlux.value = flux
+  showEditLogistics.value = true
+}
+
+const handleRemoveLogisticsFlux = async (fluxId: string) => {
+  if (confirm('Are you sure you want to remove this logistics connection?')) {
+    try {
+      await removeLogisticsFlux(fluxId)
+      refreshData()
+    } catch (error: any) {
+      console.error('Failed to remove logistics flux:', error)
+      alert('Failed to remove logistics connection: ' + error.message)
+    }
+  }
 }
 
 const clearFilters = () => {
@@ -453,7 +525,7 @@ onMounted(async () => {
 
 .table-header {
   display: grid;
-  grid-template-columns: 1.5fr 1.5fr 1.5fr 1.2fr 1fr 1.2fr 1fr;
+  grid-template-columns: 1.5fr 1.5fr 1.5fr 1.2fr 1fr 1.2fr 1fr 0.8fr;
   gap: 1rem;
   padding: 1rem;
   background: #f8f9fa;
@@ -467,7 +539,7 @@ onMounted(async () => {
 
 .table-row {
   display: grid;
-  grid-template-columns: 1.5fr 1.5fr 1.5fr 1.2fr 1fr 1.2fr 1fr;
+  grid-template-columns: 1.5fr 1.5fr 1.5fr 1.2fr 1fr 1.2fr 1fr 0.8fr;
   gap: 1rem;
   padding: 1rem;
   border-bottom: 1px solid #f3f4f6;
@@ -712,6 +784,57 @@ onMounted(async () => {
   padding: 0.25rem 0.5rem;
   border-radius: 3px;
   border: 1px solid #f3f4f6;
+}
+
+.connection-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  transform: scale(1.1);
+}
+
+.edit-btn {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+}
+
+.edit-btn:hover {
+  background: #0ea5e9;
+  color: white;
+}
+
+.delete-btn {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.delete-btn:hover {
+  background: #ef4444;
+  color: white;
 }
 
 /* No Results */

@@ -474,6 +474,49 @@ impl ProductionTracker {
         }
     }
 
+    /// Update an existing production line (modify machine count, clock ratio, etc.)
+    pub fn update_production_line(&mut self, line_id: &ProductionLineId, updated_line: ProductionLine) -> Result<(), String> {
+        // Validate the updated line data (same validations as add)
+        if self
+            .index
+            .as_ref()
+            .map_or(true, |idx| !idx.recipes_by_id.contains_key(&updated_line.recipe_id))
+        {
+            return Err(format!("Unknown recipe id: {}", updated_line.recipe_id.0));
+        }
+        if updated_line.machine_count == 0 || updated_line.machine_count > 999 {
+            return Err(format!(
+                "Invalid machine_count: {} (allowed 1..=999)",
+                updated_line.machine_count
+            ));
+        }
+        if !(0.1..=2.5).contains(&updated_line.clock_ratio) {
+            return Err(format!(
+                "Invalid clock_ratio: {} (allowed 0.1..=2.5)",
+                updated_line.clock_ratio
+            ));
+        }
+
+        // Find the production line to update across all factories
+        for factory in self.factories.values_mut() {
+            if let Some(line) = factory.production_lines.iter_mut().find(|l| l.id == *line_id) {
+                // Ensure the line ID and factory ID match
+                if updated_line.id != *line_id {
+                    return Err("Cannot change production line ID".to_string());
+                }
+                if updated_line.factory_id != line.factory_id {
+                    return Err("Cannot move production line between factories".to_string());
+                }
+                
+                // Update the line
+                *line = updated_line;
+                return Ok(());
+            }
+        }
+
+        Err(format!("Production line not found: {}", line_id.0))
+    }
+
     pub fn add_logistics_flux(&mut self, flux: LogisticsFlux) -> Result<(), String> {
         if !self.factories.contains_key(&flux.from_factory) {
             return Err(format!("Unknown from_factory: {}", flux.from_factory.0));
@@ -497,6 +540,54 @@ impl ProductionTracker {
         }
         self.logistics_fluxes.insert(flux.id.clone(), flux);
         Ok(())
+    }
+
+    /// Update an existing logistics flux connection
+    pub fn update_logistics_flux(&mut self, flux_id: &LogisticsFluxId, updated_flux: LogisticsFlux) -> Result<(), String> {
+        // Validate the updated flux data (same validations as add)
+        if !self.factories.contains_key(&updated_flux.from_factory) {
+            return Err(format!("Unknown from_factory: {}", updated_flux.from_factory.0));
+        }
+        if !self.factories.contains_key(&updated_flux.to_factory) {
+            return Err(format!("Unknown to_factory: {}", updated_flux.to_factory.0));
+        }
+        if updated_flux.from_factory == updated_flux.to_factory {
+            return Err("from_factory and to_factory must differ".to_string());
+        }
+        if updated_flux.quantity_per_min <= 0.0 {
+            return Err(format!(
+                "quantity_per_min must be > 0, got {}",
+                updated_flux.quantity_per_min
+            ));
+        }
+        if let Some(idx) = &self.index {
+            if !idx.items_by_id.contains_key(&updated_flux.item) {
+                return Err(format!("Unknown item id in flux: {}", updated_flux.item.0));
+            }
+        }
+
+        // Ensure the flux ID matches
+        if updated_flux.id != *flux_id {
+            return Err("Cannot change logistics flux ID".to_string());
+        }
+
+        // Check if the flux exists
+        if !self.logistics_fluxes.contains_key(flux_id) {
+            return Err(format!("Logistics flux not found: {}", flux_id.0));
+        }
+
+        // Update the flux
+        self.logistics_fluxes.insert(flux_id.clone(), updated_flux);
+        Ok(())
+    }
+
+    /// Remove a logistics flux connection
+    pub fn remove_logistics_flux(&mut self, flux_id: &LogisticsFluxId) -> Result<(), String> {
+        if self.logistics_fluxes.remove(flux_id).is_some() {
+            Ok(())
+        } else {
+            Err(format!("Logistics flux not found: {}", flux_id.0))
+        }
     }
 
     pub fn generate_logistics_id(&self, t: &TransportType) -> LogisticsFluxId {
@@ -535,6 +626,74 @@ impl ProductionTracker {
         } else {
             base
         }
+    }
+
+    /// Add a raw input to a specific factory
+    pub fn add_raw_input_to_factory(&mut self, factory_id: &FactoryId, raw_input: RawInput) -> Result<(), String> {
+        let factory = self.factories.get_mut(factory_id)
+            .ok_or_else(|| format!("Factory not found: {}", factory_id.0))?;
+        
+        // Check if the item is already a raw input for this factory
+        if factory.raw_inputs.iter().any(|ri| ri.item == raw_input.item) {
+            return Err(format!("Raw input for item '{}' already exists in factory '{}'", raw_input.item.0, factory.name));
+        }
+
+        // Validate item exists in game data
+        if let Some(index) = &self.index {
+            if !index.items_by_id.contains_key(&raw_input.item) {
+                return Err(format!("Unknown item id: {}", raw_input.item.0));
+            }
+        }
+
+        // Validate quantity
+        if raw_input.quantity_per_min <= 0.0 {
+            return Err("Raw input quantity must be greater than 0".to_string());
+        }
+
+        factory.raw_inputs.push(raw_input);
+        Ok(())
+    }
+
+    /// Remove a raw input from a specific factory
+    pub fn remove_raw_input_from_factory(&mut self, factory_id: &FactoryId, item_id: &ItemId) -> Result<(), String> {
+        let factory = self.factories.get_mut(factory_id)
+            .ok_or_else(|| format!("Factory not found: {}", factory_id.0))?;
+        
+        let initial_len = factory.raw_inputs.len();
+        factory.raw_inputs.retain(|ri| ri.item != *item_id);
+        
+        if factory.raw_inputs.len() == initial_len {
+            return Err(format!("Raw input for item '{}' not found in factory '{}'", item_id.0, factory.name));
+        }
+
+        Ok(())
+    }
+
+    /// Update a raw input in a factory (modify quantity or source type)
+    pub fn update_raw_input_in_factory(&mut self, factory_id: &FactoryId, item_id: &ItemId, updated_raw_input: RawInput) -> Result<(), String> {
+        let factory = self.factories.get_mut(factory_id)
+            .ok_or_else(|| format!("Factory not found: {}", factory_id.0))?;
+        
+        // Find the raw input to update
+        let raw_input = factory.raw_inputs.iter_mut().find(|ri| ri.item == *item_id)
+            .ok_or_else(|| format!("Raw input for item '{}' not found in factory '{}'", item_id.0, factory.name))?;
+        
+        // Validate the updated data
+        if updated_raw_input.quantity_per_min <= 0.0 {
+            return Err("Raw input quantity must be greater than 0".to_string());
+        }
+        
+        // Validate item exists in game data
+        if let Some(index) = &self.index {
+            if !index.items_by_id.contains_key(&updated_raw_input.item) {
+                return Err(format!("Unknown item id: {}", updated_raw_input.item.0));
+            }
+        }
+        
+        // Update the raw input
+        *raw_input = updated_raw_input;
+        
+        Ok(())
     }
 }
 

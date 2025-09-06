@@ -86,6 +86,11 @@ export async function addProductionLine(lineData: any): Promise<void> {
   return t.add_production_line(lineData);
 }
 
+export async function updateProductionLine(lineId: string, lineData: any): Promise<void> {
+  const t = await getTracker();
+  return t.update_production_line(lineId, lineData);
+}
+
 export async function addLogisticsFlux(fluxData: any): Promise<void> {
   const t = await getTracker();
   return t.add_logistics_flux(fluxData);
@@ -104,4 +109,29 @@ export async function generateLogisticsId(transportType: string): Promise<string
 export async function getLogisticsFluxes(): Promise<any[]> {
   const t = await getTracker();
   return t.get_logistics_fluxes();
+}
+
+export async function updateLogisticsFlux(fluxId: string, fluxData: any): Promise<void> {
+  const t = await getTracker();
+  return t.update_logistics_flux(fluxId, fluxData);
+}
+
+export async function removeLogisticsFlux(fluxId: string): Promise<void> {
+  const t = await getTracker();
+  return t.remove_logistics_flux(fluxId);
+}
+
+export async function addRawInput(factoryId: string, rawInputData: any): Promise<void> {
+  const t = await getTracker();
+  return t.add_raw_input(factoryId, rawInputData);
+}
+
+export async function removeRawInput(factoryId: string, itemId: string): Promise<void> {
+  const t = await getTracker();
+  return t.remove_raw_input(factoryId, itemId);
+}
+
+export async function updateRawInput(factoryId: string, itemId: string, rawInputData: any): Promise<void> {
+  const t = await getTracker();
+  return t.update_raw_input(factoryId, itemId, rawInputData);
 }

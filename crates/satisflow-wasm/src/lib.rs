@@ -231,6 +231,50 @@ impl WebTracker {
         to_value(&fluxes).map_err(|e| JsValue::from_str(&e.to_string()))
     }
 
+    /// Update a logistics flux connection
+    #[wasm_bindgen]
+    pub fn update_logistics_flux(&mut self, flux_id: &str, flux_data: &JsValue) -> Result<(), JsValue> {
+        use satisflow_engine::*;
+        use serde_json::Value;
+        
+        // First deserialize to a generic JSON value
+        let mut json: Value = from_value(flux_data.clone())
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+            
+        // Convert string fields to proper newtype wrappers
+        if let Value::Object(ref mut obj) = json {
+            if let Some(Value::String(id)) = obj.get("id").cloned() {
+                obj["id"] = serde_json::json!(LogisticsFluxId(id));
+            }
+            if let Some(Value::String(from_factory)) = obj.get("from_factory").cloned() {
+                obj["from_factory"] = serde_json::json!(FactoryId(from_factory));
+            }
+            if let Some(Value::String(to_factory)) = obj.get("to_factory").cloned() {
+                obj["to_factory"] = serde_json::json!(FactoryId(to_factory));
+            }
+            if let Some(Value::String(item)) = obj.get("item").cloned() {
+                obj["item"] = serde_json::json!(ItemId(item));
+            }
+        }
+        
+        let flux: LogisticsFlux = serde_json::from_value(json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        
+        let flux_id_typed = LogisticsFluxId(flux_id.to_string());
+        self.inner.update_logistics_flux(&flux_id_typed, flux)
+            .map_err(|e| JsValue::from_str(&e))
+    }
+
+    /// Remove a logistics flux connection
+    #[wasm_bindgen]
+    pub fn remove_logistics_flux(&mut self, flux_id: &str) -> Result<(), JsValue> {
+        use satisflow_engine::*;
+        
+        let flux_id_typed = LogisticsFluxId(flux_id.to_string());
+        self.inner.remove_logistics_flux(&flux_id_typed)
+            .map_err(|e| JsValue::from_str(&e))
+    }
+
     /// Generate a unique logistics ID
     #[wasm_bindgen]
     pub fn generate_logistics_id(&self, transport_type: &str) -> String {
@@ -243,6 +287,101 @@ impl WebTracker {
             _ => TransportType::Conveyor, // default
         };
         self.inner.generate_logistics_id(&t_type).0
+    }
+
+    /// Add a raw input to a factory
+    #[wasm_bindgen]
+    pub fn add_raw_input(&mut self, factory_id: &str, raw_input_data: &JsValue) -> Result<(), JsValue> {
+        use satisflow_engine::*;
+        use serde_json::Value;
+        
+        // First deserialize to a generic JSON value
+        let mut json: Value = from_value(raw_input_data.clone())
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+            
+        // Convert string fields to proper newtype wrappers
+        if let Value::Object(ref mut obj) = json {
+            if let Some(Value::String(item)) = obj.get("item").cloned() {
+                obj["item"] = serde_json::json!(ItemId(item));
+            }
+        }
+        
+        let raw_input: RawInput = serde_json::from_value(json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        
+        let factory_id_typed = FactoryId(factory_id.to_string());
+        self.inner.add_raw_input_to_factory(&factory_id_typed, raw_input)
+            .map_err(|e| JsValue::from_str(&e))
+    }
+
+    /// Remove a raw input from a factory
+    #[wasm_bindgen]
+    pub fn remove_raw_input(&mut self, factory_id: &str, item_id: &str) -> Result<(), JsValue> {
+        use satisflow_engine::*;
+        
+        let factory_id_typed = FactoryId(factory_id.to_string());
+        let item_id_typed = ItemId(item_id.to_string());
+        
+        self.inner.remove_raw_input_from_factory(&factory_id_typed, &item_id_typed)
+            .map_err(|e| JsValue::from_str(&e))
+    }
+
+    /// Update a production line in a factory
+    #[wasm_bindgen]
+    pub fn update_production_line(&mut self, line_id: &str, production_line_data: &JsValue) -> Result<(), JsValue> {
+        use satisflow_engine::*;
+        use serde_json::Value;
+        
+        // First deserialize to a generic JSON value
+        let mut json: Value = from_value(production_line_data.clone())
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+            
+        // Convert string fields to proper newtype wrappers
+        if let Value::Object(ref mut obj) = json {
+            if let Some(Value::String(id)) = obj.get("id").cloned() {
+                obj["id"] = serde_json::json!(ProductionLineId(id));
+            }
+            if let Some(Value::String(factory_id)) = obj.get("factory_id").cloned() {
+                obj["factory_id"] = serde_json::json!(FactoryId(factory_id));
+            }
+            if let Some(Value::String(recipe_id)) = obj.get("recipe_id").cloned() {
+                obj["recipe_id"] = serde_json::json!(RecipeId(recipe_id));
+            }
+        }
+        
+        let line: ProductionLine = serde_json::from_value(json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        
+        let line_id_typed = ProductionLineId(line_id.to_string());
+        self.inner.update_production_line(&line_id_typed, line)
+            .map_err(|e| JsValue::from_str(&e))
+    }
+
+    /// Update a raw input in a factory
+    #[wasm_bindgen]
+    pub fn update_raw_input(&mut self, factory_id: &str, item_id: &str, raw_input_data: &JsValue) -> Result<(), JsValue> {
+        use satisflow_engine::*;
+        use serde_json::Value;
+        
+        // First deserialize to a generic JSON value
+        let mut json: Value = from_value(raw_input_data.clone())
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+            
+        // Convert string fields to proper newtype wrappers
+        if let Value::Object(ref mut obj) = json {
+            if let Some(Value::String(item)) = obj.get("item").cloned() {
+                obj["item"] = serde_json::json!(ItemId(item));
+            }
+        }
+        
+        let raw_input: RawInput = serde_json::from_value(json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        
+        let factory_id_typed = FactoryId(factory_id.to_string());
+        let item_id_typed = ItemId(item_id.to_string());
+        
+        self.inner.update_raw_input_in_factory(&factory_id_typed, &item_id_typed, raw_input)
+            .map_err(|e| JsValue::from_str(&e))
     }
 }
 

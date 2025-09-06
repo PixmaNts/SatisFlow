@@ -41,25 +41,32 @@
 
     <!-- Selected Factory View -->
     <div v-else-if="selectedFactory" class="factory-view">
-      <!-- Factory Header -->
-      <div class="factory-info-card">
-        <div class="factory-title">
-          <h2>{{ selectedFactory.name }}</h2>
-          <div class="factory-stats">
-            <span class="stat">{{ selectedFactory.production_lines?.length || 0 }} production lines</span>
-            <span class="stat">{{ selectedFactory.raw_inputs?.length || 0 }} raw inputs</span>
-          </div>
-        </div>
-        <div class="factory-actions">
-          <button @click="showAddProductionLine = true" class="btn btn-success">
-            <span class="icon">⚙️</span>
-            Add Production Line
+      <!-- Factory Tabs -->
+      <div class="factory-tabs">
+        <div class="tab-list">
+          <button 
+            :class="['tab-button', { active: activeTab === 'production-lines' }]"
+            @click="activeTab = 'production-lines'"
+          >
+            <span class="tab-icon">⚙️</span>
+            Production Lines
+            <span class="tab-count">{{ selectedFactory.production_lines?.length || 0 }}</span>
+          </button>
+          <button 
+            :class="['tab-button', { active: activeTab === 'raw-inputs' }]"
+            @click="activeTab = 'raw-inputs'"
+          >
+            <span class="tab-icon">⛏️</span>
+            Raw Inputs
+            <span class="tab-count">{{ selectedFactory.raw_inputs?.length || 0 }}</span>
           </button>
         </div>
       </div>
 
-      <!-- Filters and Density Controls -->
-      <div v-if="selectedFactory.production_lines?.length > 0" class="controls-section">
+      <!-- Production Lines Tab -->
+      <div v-if="activeTab === 'production-lines'" class="tab-content">
+          <!-- Filters and Density Controls -->
+        <div v-if="selectedFactory.production_lines?.length > 0" class="controls-section">
         <div class="controls-grid">
           <div class="control-group">
             <label for="densityControl">Display Density</label>
@@ -98,19 +105,10 @@
         </div>
       </div>
 
-      <!-- Production Lines Content -->
-      <div class="production-content">
-        <!-- Empty Factory -->
-        <div v-if="!selectedFactory.production_lines?.length" class="empty-factory">
-          <h3>No Production Lines</h3>
-          <p>This factory doesn't have any production lines yet.</p>
-          <button @click="showAddProductionLine = true" class="btn btn-success btn-large">
-            ⚙️ Add First Production Line
-          </button>
-        </div>
-
+        <!-- Production Lines Content -->
+        <div class="production-content">
         <!-- Production Lines Table -->
-        <div v-else-if="filteredProductionLines.length > 0" :class="['production-table', `density-${displayDensity}`]">
+        <div :class="['production-table', `density-${displayDensity}`]">
           <div class="table-header">
             <div class="col-line-id">Line ID</div>
             <div class="col-recipe">Recipe</div>
@@ -119,7 +117,28 @@
             <div class="col-boosters">Boosters</div>
             <div class="col-group">Group</div>
             <div class="col-efficiency">Efficiency</div>
+            <div class="col-actions">Actions</div>
           </div>
+          
+          <!-- Add Production Line Row -->
+          <div class="table-row add-row">
+            <div class="col-line-id">
+              <span class="add-label">➕ New Line</span>
+            </div>
+            <div class="col-recipe">
+              <button @click="showAddProductionLine = true" class="btn-add-inline">
+                <span class="icon">⚙️</span>
+                Add Production Line
+              </button>
+            </div>
+            <div class="col-machines">—</div>
+            <div class="col-clock">—</div>
+            <div class="col-boosters">—</div>
+            <div class="col-group">—</div>
+            <div class="col-efficiency">—</div>
+            <div class="col-actions">—</div>
+          </div>
+          
           <div 
             v-for="line in filteredProductionLines" 
             :key="line.id" 
@@ -153,32 +172,88 @@
                 {{ getEfficiencyStatus(line) }}
               </span>
             </div>
+            <div class="col-actions">
+              <button 
+                @click="handleEditProductionLine(line)"
+                class="action-btn edit-btn"
+                title="Edit production line"
+              >
+                ✏️
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- No Results -->
-        <div v-else class="no-results">
+        <div v-if="selectedFactory.production_lines?.length > 0 && filteredProductionLines.length === 0" class="no-results">
           <p>No production lines match the current filters.</p>
           <button @click="clearFilters" class="btn btn-secondary">Clear Filters</button>
         </div>
       </div>
-
-      <!-- Raw Inputs Section -->
-      <div v-if="selectedFactory.raw_inputs?.length > 0" class="raw-inputs-section">
-        <h3>Raw Material Inputs</h3>
-        <div class="raw-inputs-grid">
-          <div 
-            v-for="input in selectedFactory.raw_inputs" 
-            :key="input.item" 
-            class="raw-input-card"
-          >
-            <div class="input-item">{{ input.item }}</div>
-            <div class="input-quantity">{{ input.quantity_per_min }}/min</div>
-            <div class="input-source">{{ input.source_type }}</div>
+      </div>
+      <!-- Raw Inputs Tab -->
+      <div v-if="activeTab === 'raw-inputs'" class="tab-content">
+        <!-- Raw Inputs Table -->
+        <div class="raw-inputs-content">
+          <div :class="['raw-inputs-table', `density-${displayDensity}`]">
+            <div class="table-header">
+              <div class="col-item">Item</div>
+              <div class="col-quantity">Quantity/min</div>
+              <div class="col-source">Source Type</div>
+              <div class="col-actions">Actions</div>
+            </div>
+            
+            <!-- Add Raw Input Row -->
+            <div class="table-row add-row">
+              <div class="col-item">
+                <span class="add-label">➕ New Raw Input</span>
+              </div>
+              <div class="col-quantity">
+                <button @click="showAddRawInput = true" class="btn-add-inline">
+                  <span class="icon">⛏️</span>
+                  Add Raw Input
+                </button>
+              </div>
+              <div class="col-source">—</div>
+              <div class="col-actions">—</div>
+            </div>
+            
+            <div 
+              v-for="input in selectedFactory.raw_inputs" 
+              :key="input.item" 
+              class="table-row"
+            >
+              <div class="col-item">
+                <span class="item-name">{{ getItemName(input.item) }}</span>
+              </div>
+              <div class="col-quantity">
+                <span class="quantity">{{ input.quantity_per_min }}/min</span>
+              </div>
+              <div class="col-source">
+                <span class="source-type">{{ input.source_type || 'Unknown' }}</span>
+              </div>
+              <div class="col-actions">
+                <button 
+                  @click="handleEditRawInput(input)"
+                  class="action-btn edit-btn"
+                  title="Edit raw input"
+                >
+                  ✏️
+                </button>
+                <button 
+                  @click="handleRemoveRawInput(input.item)"
+                  class="action-btn delete-btn"
+                  title="Remove raw input"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
+
 
     <!-- Modals -->
     <AddFactoryModal 
@@ -192,20 +267,55 @@
       @close="showAddProductionLine = false" 
       @line-added="onLineAdded"
     />
+    
+    <AddRawInputModal
+      :isOpen="showAddRawInput"
+      :factoryId="selectedFactoryId"
+      @close="showAddRawInput = false"
+      @raw-input-added="onRawInputAdded"
+    />
+    
+    <EditRawInputModal
+      :isOpen="showEditRawInput"
+      :factoryId="selectedFactoryId"
+      :rawInput="editingRawInput"
+      :itemName="getItemName(editingRawInput?.item || '')"
+      @close="showEditRawInput = false"
+      @raw-input-updated="onRawInputUpdated"
+    />
+    
+    <EditProductionLineModal
+      :isOpen="showEditProductionLine"
+      :productionLine="editingProductionLine"
+      :factoryName="selectedFactory?.name || ''"
+      :recipeName="editingProductionLine?.recipe_id || ''"
+      @close="showEditProductionLine = false"
+      @production-line-updated="onProductionLineUpdated"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { getFactories } from '../lib/tracker'
+import { getFactories, removeRawInput, getItems } from '../lib/tracker'
 import AddFactoryModal from '../components/AddFactoryModal.vue'
 import AddProductionLineModal from '../components/AddProductionLineModal.vue'
+import AddRawInputModal from '../components/AddRawInputModal.vue'
+import EditRawInputModal from '../components/EditRawInputModal.vue'
+import EditProductionLineModal from '../components/EditProductionLineModal.vue'
 
 const factories = ref<any[]>([])
 const selectedFactoryId = ref('')
 const displayDensity = ref('comfortable')
 const showAddFactory = ref(false)
 const showAddProductionLine = ref(false)
+const showAddRawInput = ref(false)
+const showEditRawInput = ref(false)
+const editingRawInput = ref<any>(null)
+const showEditProductionLine = ref(false)
+const editingProductionLine = ref<any>(null)
+const items = ref<any[]>([])
+const activeTab = ref<'raw-inputs' | 'production-lines'>('production-lines')
 
 // Filters
 const groupFilter = ref('')
@@ -214,9 +324,11 @@ const recipeFilter = ref('')
 const refreshData = async () => {
   try {
     factories.value = await getFactories()
+    items.value = await getItems()
     
-    // Auto-select factory if only one exists
-    if (factories.value.length === 1 && !selectedFactoryId.value) {
+    
+    // Auto-select first factory if none is selected
+    if (factories.value.length > 0 && !selectedFactoryId.value) {
       selectedFactoryId.value = factories.value[0].id
     }
     
@@ -264,7 +376,51 @@ const onFactoryCreated = (factory: any) => {
 
 const onLineAdded = () => {
   refreshData()
+  activeTab.value = 'production-lines'
 }
+
+const onRawInputAdded = () => {
+  refreshData()
+  activeTab.value = 'raw-inputs'
+}
+
+const onRawInputUpdated = () => {
+  refreshData()
+}
+
+const onProductionLineUpdated = () => {
+  refreshData()
+}
+
+const handleEditRawInput = (rawInput: any) => {
+  editingRawInput.value = rawInput
+  showEditRawInput.value = true
+}
+
+const handleEditProductionLine = (productionLine: any) => {
+  editingProductionLine.value = productionLine
+  showEditProductionLine.value = true
+}
+
+const handleRemoveRawInput = async (itemId: string) => {
+  if (!selectedFactoryId.value) return
+  
+  if (confirm('Are you sure you want to remove this raw input?')) {
+    try {
+      await removeRawInput(selectedFactoryId.value, itemId)
+      await refreshData()
+    } catch (error) {
+      console.error('Failed to remove raw input:', error)
+      alert('Failed to remove raw input: ' + error.message)
+    }
+  }
+}
+
+const getItemName = (itemId: string) => {
+  const item = items.value.find(i => i.id === itemId)
+  return item ? item.name : itemId
+}
+
 
 const getClockSpeedClass = (clockRatio: number) => {
   const percentage = clockRatio * 100
@@ -536,7 +692,7 @@ onMounted(async () => {
 
 .table-header {
   display: grid;
-  grid-template-columns: 2fr 2fr 1fr 1fr 1fr 1.5fr 1fr;
+  grid-template-columns: 2fr 2fr 1fr 1fr 1fr 1.5fr 1fr 1fr;
   gap: 1rem;
   padding: 1rem;
   background: #f8f9fa;
@@ -550,7 +706,7 @@ onMounted(async () => {
 
 .table-row {
   display: grid;
-  grid-template-columns: 2fr 2fr 1fr 1fr 1fr 1.5fr 1fr;
+  grid-template-columns: 2fr 2fr 1fr 1fr 1fr 1.5fr 1fr 1fr;
   gap: 1rem;
   padding: 1rem;
   border-bottom: 1px solid #f3f4f6;
@@ -633,6 +789,32 @@ onMounted(async () => {
   color: #059669;
 }
 
+.col-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.action-btn.edit-btn {
+  color: #3b82f6;
+}
+
+.action-btn.edit-btn:hover {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
 .raw-inputs-section {
   background: white;
   border-radius: 8px;
@@ -645,37 +827,247 @@ onMounted(async () => {
   margin: 0 0 1rem 0;
 }
 
-.raw-inputs-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
-.raw-input-card {
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
-  border-left: 4px solid #0ea5e9;
-  border-radius: 6px;
-  padding: 1rem;
+.section-header h3 {
+  margin: 0;
 }
 
-.input-item {
-  font-weight: 600;
-  color: #0f172a;
-  margin-bottom: 0.5rem;
+.btn-info {
+  background-color: #0ea5e9;
+  color: white;
 }
 
-.input-quantity {
-  color: #0369a1;
-  font-weight: 600;
+.btn-info:hover {
+  background-color: #0284c7;
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 2px solid;
+}
+
+.btn-outline.btn-info {
+  border-color: #0ea5e9;
+  color: #0ea5e9;
+}
+
+.btn-outline.btn-info:hover {
+  background-color: #0ea5e9;
+  color: white;
+}
+
+.btn-outline.btn-success {
+  border-color: #27ae60;
+  color: #27ae60;
+}
+
+.btn-outline.btn-success:hover {
+  background-color: #27ae60;
+  color: white;
+}
+
+/* Factory Tabs */
+.factory-tabs {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.tab-list {
+  display: flex;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 1rem 1.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.tab-button:first-child {
+  border-top-left-radius: 8px;
+}
+
+.tab-button:last-child {
+  border-top-right-radius: 8px;
+}
+
+.tab-button:hover {
+  background-color: #f8f9fa;
+  color: #374151;
+}
+
+.tab-button.active {
+  color: #3b82f6;
+  background-color: #eff6ff;
+}
+
+.tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: #3b82f6;
+  border-radius: 2px 2px 0 0;
+}
+
+.tab-icon {
   font-size: 1.1rem;
 }
 
-.input-source {
-  color: #64748b;
-  font-size: 0.85rem;
+.tab-count {
+  background: #e5e7eb;
+  color: #6b7280;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  min-width: 1.5rem;
+  text-align: center;
+}
+
+.tab-button.active .tab-count {
+  background: #dbeafe;
+  color: #3b82f6;
+}
+
+/* Tab Content */
+.tab-content {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.empty-section {
+  text-align: center;
+  padding: 3rem 2rem;
+}
+
+.empty-section h3 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+}
+
+.empty-section p {
+  color: #666;
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.raw-inputs-content {
+  /* Remove the background/shadow since it's now in tab-content */
+  background: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* Logistics Table */
+.logistics-content {
+  background: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.logistics-table {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.logistics-table .table-header {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr 1.5fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e5e7eb;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.logistics-table .table-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr 1.5fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  align-items: center;
+}
+
+.logistics-table .table-row:last-child {
+  border-bottom: none;
+}
+
+.logistics-table .table-row:hover {
+  background: #f8f9fa;
+}
+
+.connection-flow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.from-factory,
+.to-factory {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.flow-arrow {
+  color: #6b7280;
+  font-weight: bold;
+}
+
+.item-name {
+  font-weight: 500;
+  color: #059669;
+}
+
+.quantity {
+  font-weight: 600;
+  color: #0369a1;
+}
+
+.transport-type {
+  font-weight: 500;
+  color: #7c3aed;
+  display: block;
+}
+
+.transport-details {
+  font-size: 0.8rem;
+  color: #6b7280;
+  display: block;
   margin-top: 0.25rem;
 }
+
 
 .no-results {
   text-align: center;
@@ -716,6 +1108,134 @@ onMounted(async () => {
   padding: 0.15rem 0.4rem;
   font-size: 0.75rem;
 }
+
+/* Raw Inputs Table Styles */
+.raw-inputs-table {
+  min-width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.raw-inputs-table .table-header {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1.5fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e5e7eb;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.raw-inputs-table .table-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1.5fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  align-items: center;
+}
+
+.raw-inputs-table .table-row:last-child {
+  border-bottom: none;
+}
+
+.raw-inputs-table .table-row:not(.add-row):hover {
+  background: #f8f9fa;
+  transform: translateX(2px);
+  transition: all 0.2s ease;
+}
+
+.raw-inputs-table .item-name {
+  font-weight: 600;
+  color: #059669;
+  font-size: 1rem;
+}
+
+.raw-inputs-table .quantity {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-weight: 600;
+  color: #7c3aed;
+  font-size: 0.95rem;
+}
+
+.raw-inputs-table .source-type {
+  font-weight: 500;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* Compact density for raw inputs */
+.raw-inputs-table.density-compact .table-row,
+.raw-inputs-table.density-compact .table-header {
+  padding: 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* Dense density for raw inputs */
+.raw-inputs-table.density-dense .table-row,
+.raw-inputs-table.density-dense .table-header {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+
+.raw-inputs-table.density-dense .item-name {
+  font-size: 0.9rem;
+}
+
+.raw-inputs-table.density-dense .quantity {
+  font-size: 0.85rem;
+}
+
+.raw-inputs-table.density-dense .source-type {
+  font-size: 0.8rem;
+}
+
+/* Add Button Styles */
+.add-row {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 2px dashed #0ea5e9;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.add-row:hover {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  transform: none;
+}
+
+.add-label {
+  color: #0ea5e9;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.btn-add-inline {
+  background: #0ea5e9;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.btn-add-inline:hover {
+  background: #0284c7;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(14, 165, 233, 0.3);
+}
+
 
 /* Responsive */
 @media (max-width: 768px) {
