@@ -103,6 +103,147 @@ impl WebTracker {
         let factories_vec: Vec<&Factory> = self.inner.factories.values().collect();
         to_value(&factories_vec).map_err(|e| JsValue::from_str(&e.to_string()))
     }
+
+    /// Get available recipes for dropdowns
+    #[wasm_bindgen]
+    pub fn get_recipes(&self) -> Result<JsValue, JsValue> {
+        if let Some(index) = &self.inner.index {
+            let recipes: Vec<_> = index.recipes_by_id.values().collect();
+            to_value(&recipes).map_err(|e| JsValue::from_str(&e.to_string()))
+        } else {
+            // Fallback to old recipes if index not available
+            let recipes: Vec<_> = self.inner.recipes.values().collect();
+            to_value(&recipes).map_err(|e| JsValue::from_str(&e.to_string()))
+        }
+    }
+
+    /// Get available items for dropdowns
+    #[wasm_bindgen]
+    pub fn get_items(&self) -> Result<JsValue, JsValue> {
+        if let Some(index) = &self.inner.index {
+            let items: Vec<_> = index.items_by_id.values().collect();
+            to_value(&items).map_err(|e| JsValue::from_str(&e.to_string()))
+        } else {
+            // Fallback to old items if index not available
+            let items: Vec<_> = self.inner.items.values().collect();
+            to_value(&items).map_err(|e| JsValue::from_str(&e.to_string()))
+        }
+    }
+
+    /// Create a new factory with given name and return the generated factory data
+    #[wasm_bindgen]
+    pub fn create_factory(&mut self, name: &str) -> Result<JsValue, JsValue> {
+        use satisflow_engine::{Factory, FactoryId};
+        
+        if self.inner.factory_name_exists(name) {
+            return Err(JsValue::from_str(&format!("Factory name '{}' already exists", name)));
+        }
+
+        let factory_id = self.inner.generate_factory_id(name);
+        let factory = Factory {
+            id: factory_id,
+            name: name.to_string(),
+            raw_inputs: vec![],
+            logistics_inputs: vec![],
+            production_lines: vec![],
+        };
+
+        let factory_js = to_value(&factory).map_err(|e| JsValue::from_str(&e.to_string()))?;
+        self.inner.add_factory(factory);
+        Ok(factory_js)
+    }
+
+    /// Add a production line to a factory
+    #[wasm_bindgen]
+    pub fn add_production_line(&mut self, line_data: &JsValue) -> Result<(), JsValue> {
+        use satisflow_engine::*;
+        use serde_json::Value;
+        
+        // First deserialize to a generic JSON value
+        let mut json: Value = from_value(line_data.clone())
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+            
+        // Convert string fields to proper newtype wrappers
+        if let Value::Object(ref mut obj) = json {
+            if let Some(Value::String(id)) = obj.get("id").cloned() {
+                obj["id"] = serde_json::json!(ProductionLineId(id));
+            }
+            if let Some(Value::String(factory_id)) = obj.get("factory_id").cloned() {
+                obj["factory_id"] = serde_json::json!(FactoryId(factory_id));
+            }
+            if let Some(Value::String(recipe_id)) = obj.get("recipe_id").cloned() {
+                obj["recipe_id"] = serde_json::json!(RecipeId(recipe_id));
+            }
+        }
+        
+        let line: ProductionLine = serde_json::from_value(json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        self.inner.add_production_line(line)
+            .map_err(|e| JsValue::from_str(&e))
+    }
+
+    /// Add a logistics flux connection
+    #[wasm_bindgen]
+    pub fn add_logistics_flux(&mut self, flux_data: &JsValue) -> Result<(), JsValue> {
+        use satisflow_engine::*;
+        use serde_json::Value;
+        
+        // First deserialize to a generic JSON value
+        let mut json: Value = from_value(flux_data.clone())
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+            
+        // Convert string fields to proper newtype wrappers
+        if let Value::Object(ref mut obj) = json {
+            if let Some(Value::String(id)) = obj.get("id").cloned() {
+                obj["id"] = serde_json::json!(LogisticsFluxId(id));
+            }
+            if let Some(Value::String(from_factory)) = obj.get("from_factory").cloned() {
+                obj["from_factory"] = serde_json::json!(FactoryId(from_factory));
+            }
+            if let Some(Value::String(to_factory)) = obj.get("to_factory").cloned() {
+                obj["to_factory"] = serde_json::json!(FactoryId(to_factory));
+            }
+            if let Some(Value::String(item)) = obj.get("item").cloned() {
+                obj["item"] = serde_json::json!(ItemId(item));
+            }
+        }
+        
+        let flux: LogisticsFlux = serde_json::from_value(json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+        self.inner.add_logistics_flux(flux)
+            .map_err(|e| JsValue::from_str(&e))
+    }
+
+    /// Generate a unique production line ID for a factory
+    #[wasm_bindgen]
+    pub fn generate_line_id(&self, factory_id: &str, recipe_name: &str) -> String {
+        use satisflow_engine::FactoryId;
+        let fid = FactoryId(factory_id.to_string());
+        self.inner.generate_line_id(&fid, recipe_name).0
+    }
+
+    /// Get all logistics flux connections
+    #[wasm_bindgen]
+    pub fn get_logistics_fluxes(&self) -> Result<JsValue, JsValue> {
+        let fluxes: Vec<_> = self.inner.logistics_fluxes.values().collect();
+        to_value(&fluxes).map_err(|e| JsValue::from_str(&e.to_string()))
+    }
+
+    /// Generate a unique logistics ID
+    #[wasm_bindgen]
+    pub fn generate_logistics_id(&self, transport_type: &str) -> String {
+        use satisflow_engine::TransportType;
+        let t_type = match transport_type {
+            "Conveyor" => TransportType::Conveyor,
+            "Train" => TransportType::Train,
+            "Truck" => TransportType::Truck,
+            "Drone" => TransportType::Drone,
+            _ => TransportType::Conveyor, // default
+        };
+        self.inner.generate_logistics_id(&t_type).0
+    }
 }
 
 /// Utility functions for the frontend

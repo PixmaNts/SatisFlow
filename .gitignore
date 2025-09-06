@@ -55,6 +55,7 @@ node_modules/
 # Build outputs
 /build/
 /public/build/
+frontend/dist/
 
 # Temporary files
 *.tmp

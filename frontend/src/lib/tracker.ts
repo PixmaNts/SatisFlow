@@ -7,8 +7,13 @@ export async function getTracker() {
   if (!trackerPromise) {
     trackerPromise = (async () => {
       // Dynamically import the wasm module
-      const wasm = await import('../wasm/satisflow_wasm.js');
-      const wt = new wasm.WebTracker();
+      const wasmModule = await import('../wasm/satisflow_wasm.js');
+      
+      // Initialize the WASM module first
+      await wasmModule.default();
+      
+      // Now we can create the WebTracker
+      const wt = new wasmModule.WebTracker();
       wt.load_static_data();
       return wt;
     })();
@@ -54,4 +59,49 @@ export async function getOverview(): Promise<OverviewItem[]> {
   const jsv = await t.get_overview();
   // serde-wasm-bindgen returns native JS values already
   return jsv as OverviewItem[];
+}
+
+export async function getFactories(): Promise<any[]> {
+  const t = await getTracker();
+  return t.get_factories();
+}
+
+export async function getRecipes(): Promise<any[]> {
+  const t = await getTracker();
+  return t.get_recipes();
+}
+
+export async function getItems(): Promise<any[]> {
+  const t = await getTracker();
+  return t.get_items();
+}
+
+export async function createFactory(name: string): Promise<any> {
+  const t = await getTracker();
+  return t.create_factory(name);
+}
+
+export async function addProductionLine(lineData: any): Promise<void> {
+  const t = await getTracker();
+  return t.add_production_line(lineData);
+}
+
+export async function addLogisticsFlux(fluxData: any): Promise<void> {
+  const t = await getTracker();
+  return t.add_logistics_flux(fluxData);
+}
+
+export async function generateLineId(factoryId: string, recipeName: string): Promise<string> {
+  const t = await getTracker();
+  return t.generate_line_id(factoryId, recipeName);
+}
+
+export async function generateLogisticsId(transportType: string): Promise<string> {
+  const t = await getTracker();
+  return t.generate_logistics_id(transportType);
+}
+
+export async function getLogisticsFluxes(): Promise<any[]> {
+  const t = await getTracker();
+  return t.get_logistics_fluxes();
 }

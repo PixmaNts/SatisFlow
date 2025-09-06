@@ -5,6 +5,10 @@ members = [
     "crates/satisflow-wasm", 
     "crates/satisflow-server",
 ]
+default-members = [
+    "crates/satisflow-engine",
+    "crates/satisflow-wasm"
+]
 
 [workspace.dependencies]
 # Shared dependencies across the workspace
