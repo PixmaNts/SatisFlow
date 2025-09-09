@@ -61,12 +61,23 @@
         <div class="form-row">
           <div class="form-group">
             <label for="groupName">Group Name (Optional)</label>
-            <input
-              id="groupName"
-              v-model="groupName"
-              type="text"
-              placeholder="e.g., Basic Iron Processing"
-            />
+            <div class="group-input-container">
+              <select v-if="existingGroups.length > 0" v-model="selectedExistingGroup" @change="handleGroupSelection" class="group-select">
+                <option value="">Select existing group...</option>
+                <option v-for="group in existingGroups" :key="group" :value="group">
+                  {{ group }}
+                </option>
+              </select>
+              <input
+                id="groupName"
+                v-model="groupName"
+                type="text"
+                :placeholder="existingGroups.length > 0 ? 'Or enter new group name...' : 'e.g., Basic Iron Processing'"
+              />
+            </div>
+            <div v-if="existingGroups.length > 0" class="help-text">
+              Select an existing group or enter a new name
+            </div>
           </div>
 
           <div class="form-group">
@@ -119,7 +130,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { updateProductionLine } from '../lib/tracker'
+import { updateProductionLine, getFactoryGroups } from '../lib/tracker'
 
 interface Props {
   isOpen: boolean
@@ -136,6 +147,8 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
+const existingGroups = ref<string[]>([])
+const selectedExistingGroup = ref('')
 const machineCount = ref<number>(1)
 const clockRatio = ref<number>(100)
 const groupName = ref('')
@@ -144,14 +157,23 @@ const error = ref('')
 const isLoading = ref(false)
 
 // Reset form when modal opens or productionLine changes
-watch([() => props.isOpen, () => props.productionLine], ([isOpen, line]) => {
+watch([() => props.isOpen, () => props.productionLine], async ([isOpen, line]) => {
   if (isOpen && line) {
     machineCount.value = line.machine_count || 1
     clockRatio.value = Math.round((line.clock_ratio || 1) * 100)
     groupName.value = line.group_name || ''
     boostedMachines.value = line.strange_matter_boosted || 0
+    selectedExistingGroup.value = ''
     error.value = ''
     isLoading.value = false
+    
+    // Load existing groups for this factory
+    try {
+      existingGroups.value = await getFactoryGroups(line.factory_id)
+    } catch (err: any) {
+      console.warn('Failed to load existing groups:', err.message)
+      existingGroups.value = []
+    }
   }
 })
 
@@ -169,6 +191,12 @@ const close = () => {
 
 const handleOverlayClick = () => {
   close()
+}
+
+const handleGroupSelection = () => {
+  if (selectedExistingGroup.value) {
+    groupName.value = selectedExistingGroup.value
+  }
 }
 
 const handleSubmit = async () => {
@@ -405,5 +433,26 @@ const handleSubmit = async () => {
 
 .btn-secondary:hover {
   background-color: #e5e7eb;
+}
+
+.group-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.group-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+  background-color: #f8f9fa;
+}
+
+.group-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 </style>

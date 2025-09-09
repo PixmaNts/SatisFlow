@@ -77,9 +77,11 @@ fn create_northern_forest_factory(idx: &GameIndex) -> Factory {
 
     // Raw inputs - iron ore mining
     let raw_inputs = vec![RawInput {
+        id: RawInputId("raw_fac_northern_forest_1_iron_ore_1_input".to_string()),
         item: idx.item_id_by_name["Iron Ore"].clone(),
         quantity_per_min: 240.0, // 3 normal nodes * 80 per min
         source_type: "Miner Mk.1".to_string(),
+        comment: Some("Three normal nodes clustered near main base".to_string()),
     }];
 
     Factory {
@@ -138,9 +140,11 @@ fn create_northern_cliff_factory(idx: &GameIndex) -> Factory {
 
     // Raw inputs - copper ore mining
     let raw_inputs = vec![RawInput {
+        id: RawInputId("raw_fac_northern_cliff_1_copper_ore_1_input".to_string()),
         item: idx.item_id_by_name["Copper Ore"].clone(),
         quantity_per_min: 180.0, // 2 normal nodes * 90 per min
         source_type: "Miner Mk.1".to_string(),
+        comment: Some("Two nodes on cliff, good for early game".to_string()),
     }];
 
     Factory {

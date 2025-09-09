@@ -8,22 +8,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Initial web application built with Dioxus and WebAssembly
-- Production overview with item production/consumption tracking
-- Factory management with production line configuration
-- Logistics flux management with transport type support
-- Browser localStorage for persistent data storage
-- Progressive Web App (PWA) support with manifest.json
-- Responsive Tailwind CSS design
-- Real-time production calculations
-- Demo factory data for initial exploration
+- **Multiple raw inputs support**: Support for multiple raw inputs of the same item type with unique IDs and comments
+- **Searchable autocomplete**: Searchable dropdown components for recipes, items, and factory selection across all modals
+- **Factory-specific production groups**: Production line grouping system with factory-scoped group management
+- **Context-aware factory preselection**: Current factory automatically preselected when adding production lines
+- **Raw input comments**: Comment system for documenting raw input sources and locations
+- **Legacy data migration**: Automatic migration system for backward compatibility with old save files
+- **Clean JSON exports**: Optimized JSON export format excluding static game data (recipes/items)
+
+### Changed
+- **Vue 3 + TypeScript frontend**: Migrated from Dioxus to Vue 3 with TypeScript for better developer experience
+- **Enhanced UI components**: Replaced basic dropdowns with SearchableSelect component featuring keyboard navigation
+- **Improved factory management**: Factory creation and editing with comprehensive validation and error handling
+- **Robust data persistence**: Enhanced save/load system with versioned format and automatic migrations
+
+### Fixed
+- **Critical import bug**: Fixed game index not being rebuilt after JSON import, preventing recipe validation
+- **Raw input ID conflicts**: Resolved issue preventing multiple raw inputs of the same item type
+- **Frontend integration**: Fixed WASM bindings and TypeScript integration issues
+- **Data validation**: Comprehensive error handling for corrupted or invalid save files
 
 ### Technical
-- WASM compilation target for near-native performance
-- Async HTTP data loading for game recipes and items
-- Modular Rust architecture with clear separation of concerns
-- External JSON configuration for recipes and items
-- Conditional compilation for web and desktop targets
+- **Rust/WASM engine**: Core calculations performed in Rust compiled to WebAssembly for performance
+- **Serde serialization**: Advanced JSON handling with selective field serialization and custom migration logic  
+- **Unique ID generation**: Database-style unique ID system for all entities (factories, raw inputs, production lines)
+- **Component architecture**: Reusable Vue components with TypeScript interfaces and proper prop validation
+- **Game data integration**: Static compilation of game data into Rust code via build.rs for performance
 
 ## [0.1.0] - 2025-01-04 (Planning)
 

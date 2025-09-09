@@ -36,12 +36,14 @@
 
         <div class="form-group">
           <label for="item">Item</label>
-          <select id="item" v-model="selectedItem" required>
-            <option value="">Select item to transport...</option>
-            <option v-for="item in items" :key="item.name" :value="item">
-              {{ item.name }}
-            </option>
-          </select>
+          <SearchableSelect
+            v-model="selectedItem"
+            :options="items"
+            placeholder="Search for item to transport..."
+            label-key="name"
+            key-key="name"
+            :filter-keys="['name']"
+          />
         </div>
 
         <div class="form-row">
@@ -97,6 +99,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import { getFactories, getItems, addLogisticsFlux, generateLogisticsId } from '../lib/tracker'
+import SearchableSelect from './SearchableSelect.vue'
 
 interface Props {
   isOpen: boolean
@@ -143,11 +146,12 @@ watch(() => props.isOpen, async (isOpen) => {
     error.value = ''
     isLoading.value = false
     
-    // Refresh factories list when modal opens
+    // Refresh factories and items when modal opens
     try {
       factories.value = await getFactories()
+      items.value = await getItems()
     } catch (err: any) {
-      error.value = 'Failed to refresh factories: ' + err.message
+      error.value = 'Failed to refresh data: ' + err.message
     }
   }
 })

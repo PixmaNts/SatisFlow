@@ -126,12 +126,22 @@ export async function addRawInput(factoryId: string, rawInputData: any): Promise
   return t.add_raw_input(factoryId, rawInputData);
 }
 
-export async function removeRawInput(factoryId: string, itemId: string): Promise<void> {
+export async function removeRawInput(factoryId: string, rawInputId: string): Promise<void> {
   const t = await getTracker();
-  return t.remove_raw_input(factoryId, itemId);
+  return t.remove_raw_input(factoryId, rawInputId);
 }
 
-export async function updateRawInput(factoryId: string, itemId: string, rawInputData: any): Promise<void> {
+export async function updateRawInput(factoryId: string, rawInputId: string, rawInputData: any): Promise<void> {
   const t = await getTracker();
-  return t.update_raw_input(factoryId, itemId, rawInputData);
+  return t.update_raw_input(factoryId, rawInputId, rawInputData);
+}
+
+export async function generateRawInputId(factoryId: string, itemName: string): Promise<string> {
+  const t = await getTracker();
+  return t.generate_raw_input_id(factoryId, itemName);
+}
+
+export async function getFactoryGroups(factoryId: string): Promise<string[]> {
+  const t = await getTracker();
+  return t.get_factory_groups(factoryId);
 }

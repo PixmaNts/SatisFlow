@@ -19,12 +19,15 @@
 
         <div class="form-group">
           <label for="recipe">Recipe</label>
-          <select id="recipe" v-model="selectedRecipe" required>
-            <option value="">Select a recipe...</option>
-            <option v-for="recipe in recipes" :key="recipe.name" :value="recipe">
-              {{ recipe.name }} ({{ recipe.machine_type }})
-            </option>
-          </select>
+          <SearchableSelect
+            v-model="selectedRecipe"
+            :options="recipes"
+            placeholder="Search for a recipe..."
+            label-key="name"
+            meta-key="machine_type"
+            key-key="name"
+            :filter-keys="['name', 'machine_type']"
+          />
         </div>
 
         <div class="form-row">
@@ -68,12 +71,23 @@
 
         <div class="form-group">
           <label for="groupName">Group Name (optional)</label>
-          <input
-            id="groupName"
-            v-model="groupName"
-            type="text"
-            placeholder="e.g., Iron Processing, Early Game..."
-          />
+          <div class="group-input-container">
+            <select v-if="existingGroups.length > 0" v-model="selectedExistingGroup" @change="handleGroupSelection" class="group-select">
+              <option value="">Select existing group...</option>
+              <option v-for="group in existingGroups" :key="group" :value="group">
+                {{ group }}
+              </option>
+            </select>
+            <input
+              id="groupName"
+              v-model="groupName"
+              type="text"
+              :placeholder="existingGroups.length > 0 ? 'Or enter new group name...' : 'e.g., Iron Processing, Early Game...'"
+            />
+          </div>
+          <div v-if="existingGroups.length > 0" class="help-text">
+            Select an existing group or enter a new name
+          </div>
         </div>
 
         <div v-if="error" class="error-message">{{ error }}</div>
@@ -93,10 +107,12 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
-import { getFactories, getRecipes, addProductionLine, generateLineId } from '../lib/tracker'
+import { getFactories, getRecipes, addProductionLine, generateLineId, getFactoryGroups } from '../lib/tracker'
+import SearchableSelect from './SearchableSelect.vue'
 
 interface Props {
   isOpen: boolean
+  preselectedFactoryId?: string
 }
 
 interface Emits {
@@ -109,8 +125,10 @@ const emit = defineEmits<Emits>()
 
 const factories = ref<any[]>([])
 const recipes = ref<any[]>([])
+const existingGroups = ref<string[]>([])
 const selectedFactoryId = ref('')
 const selectedRecipe = ref<any>(null)
+const selectedExistingGroup = ref('')
 const machineCount = ref(1)
 const clockRatio = ref(100)
 const boostedMachines = ref(0)
@@ -131,21 +149,50 @@ onMounted(async () => {
 // Reset form when modal opens and refresh factories list
 watch(() => props.isOpen, async (isOpen) => {
   if (isOpen) {
-    selectedFactoryId.value = ''
+    selectedFactoryId.value = props.preselectedFactoryId || ''
     selectedRecipe.value = null
+    selectedExistingGroup.value = ''
     machineCount.value = 1
     clockRatio.value = 100
     boostedMachines.value = 0
     groupName.value = ''
+    existingGroups.value = []
     error.value = ''
     isLoading.value = false
     
-    // Refresh factories list when modal opens
+    // Refresh factories and recipes when modal opens
     try {
       factories.value = await getFactories()
+      recipes.value = await getRecipes()
+      
+      // If we have a preselected factory, load its groups immediately
+      if (props.preselectedFactoryId) {
+        try {
+          existingGroups.value = await getFactoryGroups(props.preselectedFactoryId)
+        } catch (err: any) {
+          console.warn('Failed to load existing groups:', err.message)
+          existingGroups.value = []
+        }
+      }
     } catch (err: any) {
-      error.value = 'Failed to refresh factories: ' + err.message
+      error.value = 'Failed to refresh data: ' + err.message
     }
+  }
+})
+
+// Load existing groups when factory is selected
+watch(selectedFactoryId, async (factoryId) => {
+  if (factoryId) {
+    try {
+      existingGroups.value = await getFactoryGroups(factoryId)
+    } catch (err: any) {
+      console.warn('Failed to load existing groups:', err.message)
+      existingGroups.value = []
+    }
+  } else {
+    existingGroups.value = []
+    selectedExistingGroup.value = ''
+    groupName.value = ''
   }
 })
 
@@ -162,6 +209,12 @@ const close = () => {
 
 const handleOverlayClick = () => {
   close()
+}
+
+const handleGroupSelection = () => {
+  if (selectedExistingGroup.value) {
+    groupName.value = selectedExistingGroup.value
+  }
 }
 
 const handleSubmit = async () => {
@@ -361,5 +414,26 @@ const handleSubmit = async () => {
 
 .btn-secondary:hover {
   background-color: #e5e7eb;
+}
+
+.group-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.group-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+  background-color: #f8f9fa;
+}
+
+.group-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 </style>

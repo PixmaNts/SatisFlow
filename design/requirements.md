@@ -41,24 +41,29 @@ A desktop application to help Satisfactory players track their factory productio
 
 ### Logistics Management
 - Add/edit/delete logistics flux entries
+- Searchable item selection with autocomplete
 - Support transport type selection with visual icons
 - Validate origin and destination factories
 - Generate unique logistics IDs automatically
 
 ### Factory Management
 - Create new factories with custom names
-- Configure raw input sources with quantities
+- Configure raw input sources with quantities and comments
+- Support multiple raw inputs of the same item type
 - Add production lines with:
-  - Recipe selection from game database
+  - Searchable recipe selection with autocomplete
   - Machine count (1-999)
   - Clock ratio (0.0-2.5)
-  - Optional grouping names
+  - Factory-specific grouping names with dropdown selection
+  - Strange Matter booster support
 - Edit and delete existing factories
+- Pre-selection of current factory in production line creation
 
 ### Data Persistence
-- Save user configurations to JSON file
-- Load previous sessions automatically
+- Save user configurations to JSON file (clean format without static data)
+- Load previous sessions automatically with backward compatibility
 - Import/export functionality for sharing setups
+- Legacy data migration for older save formats
 
 ## Non-Functional Requirements
 
@@ -84,12 +89,15 @@ A desktop application to help Satisfactory players track their factory productio
 - Automatic backup of user configurations
  - Versioned save file format with migrations
 
-## Acceptance Criteria (Phase 1)
+## Acceptance Criteria (Phase 1) ✅ COMPLETED
 
-- Create factory via dialog; persists across reloads
-- Add production line; overview numbers update correctly
-- Add logistics flux; ID auto-generated; validated endpoints
-- Save/Load works with `version: "1"` envelope
+- ✅ Create factory via dialog; persists across reloads
+- ✅ Add production line with searchable recipe selection; overview numbers update correctly
+- ✅ Add multiple raw inputs of same item type with unique IDs and comments
+- ✅ Factory-specific production line grouping with reusable group names
+- ✅ Add logistics flux with searchable items; ID auto-generated; validated endpoints
+- ✅ Save/Load works with clean JSON format and backward compatibility
+- ✅ Context-aware factory preselection in production line creation
 
 ## Game-Specific Requirements
 

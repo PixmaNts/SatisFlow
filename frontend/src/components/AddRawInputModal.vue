@@ -9,12 +9,14 @@
       <form @submit.prevent="handleSubmit" class="modal-body">
         <div class="form-group">
           <label for="item">Raw Material</label>
-          <select id="item" v-model="selectedItem" required>
-            <option value="">Select raw material...</option>
-            <option v-for="item in rawMaterials" :key="item.id" :value="item">
-              {{ item.name }}
-            </option>
-          </select>
+          <SearchableSelect
+            v-model="selectedItem"
+            :options="rawMaterials"
+            placeholder="Search for raw material..."
+            label-key="name"
+            key-key="name"
+            :filter-keys="['name']"
+          />
         </div>
 
         <div class="form-row">
@@ -44,6 +46,16 @@
               <option value="Other">Other</option>
             </select>
           </div>
+        </div>
+
+        <div class="form-group">
+          <label for="comment">Comment (optional)</label>
+          <textarea
+            id="comment"
+            v-model="comment"
+            placeholder="e.g., Three nodes clustered near main base..."
+            rows="2"
+          ></textarea>
         </div>
 
         <div v-if="selectedItem" class="material-info">
@@ -82,7 +94,8 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
-import { getItems, addRawInput } from '../lib/tracker'
+import { getItems, addRawInput, generateRawInputId } from '../lib/tracker'
+import SearchableSelect from './SearchableSelect.vue'
 
 interface Props {
   isOpen: boolean
@@ -101,6 +114,7 @@ const items = ref<any[]>([])
 const selectedItem = ref<any>(null)
 const quantity = ref<number>(0)
 const sourceType = ref('Miner Mk.1')
+const comment = ref('')
 const error = ref('')
 const isLoading = ref(false)
 
@@ -124,6 +138,7 @@ watch(() => props.isOpen, (isOpen) => {
     selectedItem.value = null
     quantity.value = 0
     sourceType.value = 'Miner Mk.1'
+    comment.value = ''
     error.value = ''
     isLoading.value = false
   }
@@ -209,10 +224,15 @@ const handleSubmit = async () => {
   error.value = ''
 
   try {
+    // Generate unique ID for this raw input
+    const rawInputId = await generateRawInputId(props.factoryId, selectedItem.value.name)
+    
     const rawInputData = {
+      id: rawInputId,
       item: selectedItem.value.id,
       quantity_per_min: quantity.value,
       source_type: sourceType.value,
+      comment: comment.value.trim() || null,
     }
 
     await addRawInput(props.factoryId, rawInputData)
@@ -305,19 +325,27 @@ const handleSubmit = async () => {
 }
 
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 1rem;
+  font-family: inherit;
 }
 
 .form-group input:focus,
-.form-group select:focus {
+.form-group select:focus,
+.form-group textarea:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 3rem;
 }
 
 .material-info {

@@ -26,9 +26,11 @@ pub struct ProductionLine {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RawInput {
+    pub id: RawInputId,
     pub item: ItemId,
     pub quantity_per_min: f32,
     pub source_type: String,
+    pub comment: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

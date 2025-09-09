@@ -234,7 +234,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { getLogisticsFluxes, getFactories, getItems, removeLogisticsFlux } from '../lib/tracker'
 import AddLogisticsModal from '../components/AddLogisticsModal.vue'
 import EditLogisticsFluxModal from '../components/EditLogisticsFluxModal.vue'
@@ -428,6 +429,15 @@ const getGroupIcon = (groupType: string) => {
 onMounted(async () => {
   await refreshData()
 })
+
+const route = useRoute()
+
+// Refresh data when route changes to logistics
+watch(() => route.path, async (newPath) => {
+  if (newPath === '/logistics') {
+    await refreshData()
+  }
+})
 </script>
 
 <style scoped>
@@ -444,7 +454,7 @@ onMounted(async () => {
 }
 
 .logistics-header h1 {
-  color: #2c3e50;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
@@ -501,7 +511,7 @@ onMounted(async () => {
 }
 
 .empty-state h2 {
-  color: #2c3e50;
+  color: var(--color-text-primary);
   margin-bottom: 1rem;
 }
 

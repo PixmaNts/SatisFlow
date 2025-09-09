@@ -1,0 +1,132 @@
+/* Beautiful Light Theme with Orange Palette */
+:root {
+  /* Primary Orange Palette - Warm and Professional */
+  --color-primary: #f97316;        /* Modern vibrant orange */
+  --color-primary-light: #fb923c;  /* Light orange */
+  --color-primary-lighter: #fed7aa; /* Very light orange */
+  --color-primary-dark: #ea580c;   /* Dark orange */
+  --color-primary-darker: #c2410c; /* Darker orange */
+  
+  /* Secondary Blue Palette - Clean and Modern */
+  --color-secondary: #0ea5e9;      /* Clean sky blue */
+  --color-secondary-light: #38bdf8; /* Light blue */
+  --color-secondary-lighter: #bae6fd; /* Very light blue */
+  --color-secondary-dark: #0284c7;  /* Dark blue */
+  
+  /* Light Background Colors */
+  --color-bg-primary: #ffffff;     /* Pure white background */
+  --color-bg-secondary: #f8fafc;   /* Very light gray */
+  --color-bg-tertiary: #f1f5f9;    /* Light gray panels */
+  --color-bg-card: #ffffff;        /* Card background */
+  --color-bg-elevated: #ffffff;    /* Elevated elements */
+  --color-bg-input: #ffffff;       /* Input backgrounds */
+  --color-bg-hover: #f8fafc;       /* Hover states */
+  --color-bg-accent: #fff7ed;      /* Light orange background */
+  
+  /* Text Colors for Light Theme */
+  --color-text-primary: #1f2937;   /* Dark gray - primary text */
+  --color-text-secondary: #4b5563; /* Medium gray - secondary text */
+  --color-text-tertiary: #6b7280;  /* Light gray - muted text */
+  --color-text-accent: #f97316;    /* Orange accent text */
+  --color-text-link: #0ea5e9;      /* Blue links */
+  
+  /* Factory/Production Colors */
+  --color-production: #10b981;     /* Green for production */
+  --color-production-light: #34d399;
+  --color-production-dark: #047857;
+  
+  --color-raw-input: #f59e0b;      /* Amber for raw materials */
+  --color-raw-input-light: #fbbf24;
+  --color-raw-input-dark: #d97706;
+  
+  --color-logistics: #8b5cf6;      /* Purple for logistics */
+  --color-logistics-light: #a78bfa;
+  --color-logistics-dark: #7c3aed;
+  
+  /* Transport Type Colors */
+  --color-conveyor: #0ea5e9;       /* Blue for conveyors */
+  --color-train: #7c2d12;          /* Brown for trains */
+  --color-truck: #dc2626;          /* Red for trucks */
+  --color-drone: #059669;          /* Green for drones */
+  
+  /* Status Colors - Light Theme */
+  --color-success: #059669;
+  --color-success-light: #10b981;
+  --color-success-lighter: #d1fae5;
+  --color-warning: #d97706;
+  --color-warning-light: #f59e0b;
+  --color-warning-lighter: #fef3c7;
+  --color-error: #dc2626;
+  --color-error-light: #ef4444;
+  --color-error-lighter: #fee2e2;
+  --color-info: #2563eb;
+  --color-info-light: #3b82f6;
+  --color-info-lighter: #dbeafe;
+  
+  /* Border Colors - Light Theme */
+  --color-border: #e5e7eb;
+  --color-border-light: #f3f4f6;
+  --color-border-medium: #d1d5db;
+  --color-border-dark: #9ca3af;
+  --color-border-accent: #fed7aa;
+  
+  /* Interactive Elements - Light Theme */
+  --color-hover: var(--color-bg-hover);
+  --color-active: var(--color-bg-tertiary);
+  --color-focus: var(--color-secondary);
+  --color-focus-ring: rgba(14, 165, 233, 0.2);
+  
+  /* Gradients - Light Theme */
+  --gradient-primary: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  --gradient-secondary: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
+  --gradient-production: linear-gradient(135deg, var(--color-production-light) 0%, var(--color-production) 100%);
+  --gradient-hero: linear-gradient(135deg, var(--color-bg-accent) 0%, var(--color-primary-lighter) 100%);
+  --gradient-card: linear-gradient(145deg, #ffffff 0%, #fafafa 100%);
+  
+  /* Spacing System */
+  --spacing-xs: 0.25rem;   /* 4px */
+  --spacing-sm: 0.5rem;    /* 8px */
+  --spacing-md: 0.75rem;   /* 12px */
+  --spacing-lg: 1rem;      /* 16px */
+  --spacing-xl: 1.5rem;    /* 24px */
+  --spacing-2xl: 2rem;     /* 32px */
+  --spacing-3xl: 3rem;     /* 48px */
+  
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  
+  /* Typography */
+  --font-family-mono: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 2rem;
+  
+  /* Shadows - Light Theme */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-orange: 0 4px 14px 0 rgba(249, 115, 22, 0.2);
+  --shadow-blue: 0 4px 14px 0 rgba(14, 165, 233, 0.2);
+  
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Mode Overrides (if needed later) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg-light: var(--color-bg-primary);
+    --color-text-dark: var(--color-text-primary);
+  }
+}

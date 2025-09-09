@@ -27,16 +27,20 @@
     <div class="dashboard-content">
       <div class="stats-grid">
         <div class="stat-card">
-          <h3>Factories</h3>
+          <h3>🏭 Factories</h3>
           <p class="stat-value">{{ factoryCount }}</p>
         </div>
         <div class="stat-card">
-          <h3>Production Lines</h3>
+          <h3>⚙️ Production Lines</h3>
           <p class="stat-value">{{ productionLineCount }}</p>
         </div>
         <div class="stat-card">
-          <h3>Items Tracked</h3>
+          <h3>📦 Items Tracked</h3>
           <p class="stat-value">{{ itemCount }}</p>
+        </div>
+        <div class="stat-card">
+          <h3>🚛 Logistics Lines</h3>
+          <p class="stat-value">{{ logisticsCount }}</p>
         </div>
       </div>
 
@@ -150,8 +154,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { getCounts, exportJson, loadSample, getFactories, getOverview } from '../lib/tracker'
+import { ref, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { getCounts, exportJson, loadSample, getFactories, getOverview, getLogisticsFluxes } from '../lib/tracker'
 import AddFactoryModal from '../components/AddFactoryModal.vue'
 import AddProductionLineModal from '../components/AddProductionLineModal.vue'
 import AddLogisticsModal from '../components/AddLogisticsModal.vue'
@@ -159,6 +164,7 @@ import AddLogisticsModal from '../components/AddLogisticsModal.vue'
 const factoryCount = ref(0)
 const productionLineCount = ref(0)
 const itemCount = ref(0)
+const logisticsCount = ref(0)
 const factories = ref<any[]>([])
 const overview = ref<any[]>([])
 
@@ -169,15 +175,17 @@ const showAddLogistics = ref(false)
 
 const refreshData = async () => {
   try {
-    const [counts, factoryList, overviewData] = await Promise.all([
+    const [counts, factoryList, overviewData, logisticsData] = await Promise.all([
       getCounts(),
       getFactories(),
-      getOverview()
+      getOverview(),
+      getLogisticsFluxes()
     ])
     
     factoryCount.value = counts.factories
     productionLineCount.value = counts.lines
     itemCount.value = counts.items
+    logisticsCount.value = logisticsData.length
     factories.value = factoryList
     overview.value = overviewData
   } catch (error) {
@@ -186,14 +194,35 @@ const refreshData = async () => {
 }
 
 const exportData = async () => {
-  const json = await exportJson()
-  const blob = new Blob([json], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'satisflow_data.json'
-  a.click()
-  URL.revokeObjectURL(url)
+  try {
+    // Show loading state
+    const button = document.querySelector('.btn-secondary')
+    const originalText = button?.textContent
+    if (button) button.textContent = 'Exporting...'
+    
+    const json = await exportJson()
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    
+    // Generate filename with timestamp
+    const now = new Date()
+    const timestamp = now.toISOString().slice(0, 19).replace(/[:.]/g, '-')
+    a.download = `satisfflow-factory-${timestamp}.json`
+    
+    a.click()
+    URL.revokeObjectURL(url)
+    
+    // Show success message
+    alert('Factory data exported successfully!')
+    
+    // Restore button text
+    if (button) button.textContent = originalText
+  } catch (error) {
+    console.error('Export failed:', error)
+    alert('Failed to export factory data: ' + error.message)
+  }
 }
 
 const loadDemo = async () => {
@@ -225,101 +254,90 @@ const getStatusIcon = (status: string) => {
 onMounted(async () => {
   await refreshData()
 })
+
+const route = useRoute()
+
+// Refresh data when route changes to dashboard
+watch(() => route.path, async (newPath) => {
+  if (newPath === '/dashboard') {
+    await refreshData()
+  }
+})
 </script>
 
 <style scoped>
 .dashboard {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
+  padding: var(--spacing-xl);
 }
 
 .dashboard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: var(--spacing-2xl);
 }
 
 .dashboard-header h1 {
-  color: #2c3e50;
+  color: var(--color-text-primary);
   margin: 0;
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
 }
 
 .dashboard-actions {
   display: flex;
-  gap: 1rem;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
 }
 
-.btn {
-  padding: 0.75rem 1.5rem;
-  font-size: 0.9rem;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 600;
-}
-
-.btn-large {
-  padding: 1rem 2rem;
-  font-size: 1.1rem;
-}
-
-.btn-primary {
-  background-color: #3498db;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #2980b9;
-}
-
-.btn-secondary {
-  background-color: white;
-  color: #3498db;
-  border: 2px solid #3498db;
-}
-
-.btn-secondary:hover {
-  background-color: #3498db;
-  color: white;
-}
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-2xl);
 }
 
 .stat-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: var(--gradient-card);
+  border: 1px solid var(--color-border);
+  padding: var(--spacing-2xl);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
   text-align: center;
+  transition: all var(--transition-normal);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-primary-light);
 }
 
 .stat-card h3 {
-  color: #666;
-  margin: 0 0 0.5rem 0;
-  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--font-size-sm);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  font-weight: 600;
 }
 
 .stat-value {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #2c3e50;
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  color: var(--color-primary);
   margin: 0;
 }
 
 .main-content {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 2rem;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: var(--spacing-2xl);
 }
 
 .welcome-message {
@@ -328,7 +346,7 @@ onMounted(async () => {
 }
 
 .welcome-message h2 {
-  color: #2c3e50;
+  color: var(--color-text-primary);
   margin-bottom: 1rem;
 }
 
@@ -353,46 +371,31 @@ onMounted(async () => {
 }
 
 .section-header h2 {
-  color: #2c3e50;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
-.btn-small {
-  padding: 0.5rem 1rem;
-  font-size: 0.85rem;
-}
-
-.btn-success {
-  background-color: #27ae60;
-  color: white;
-}
-
-.btn-success:hover {
-  background-color: #229954;
-}
-
-.btn-info {
-  background-color: #3498db;
-  color: white;
-}
-
-.btn-info:hover {
-  background-color: #2980b9;
-}
 
 .factories-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 2rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+  gap: var(--spacing-2xl);
+  margin-bottom: var(--spacing-2xl);
 }
 
 .factory-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: var(--gradient-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-2xl);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-normal);
+}
+
+.factory-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-primary-light);
 }
 
 .factory-header {
@@ -403,7 +406,7 @@ onMounted(async () => {
 }
 
 .factory-header h3 {
-  color: #2c3e50;
+  color: var(--color-text-primary);
   margin: 0;
   font-size: 1.25rem;
 }
@@ -450,7 +453,7 @@ onMounted(async () => {
 
 .line-info .recipe {
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--color-text-primary);
 }
 
 .line-info .machines {
@@ -521,35 +524,40 @@ onMounted(async () => {
 }
 
 .overview-section h2 {
-  color: #2c3e50;
+  color: var(--color-text-primary);
   margin-bottom: 1.5rem;
 }
 
 .overview-table {
-  background: white;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
   overflow: hidden;
+  box-shadow: var(--shadow-md);
 }
 
 .table-header {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-  gap: 1rem;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e5e7eb;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1.2fr;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
   font-weight: 600;
-  color: #374151;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .table-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-  gap: 1rem;
-  padding: 1rem;
-  border-bottom: 1px solid #f3f4f6;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1.2fr;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border-light);
   align-items: center;
+  transition: all var(--transition-fast);
 }
 
 .table-row:last-child {
@@ -557,19 +565,24 @@ onMounted(async () => {
 }
 
 .table-row:hover {
-  background: #f8f9fa;
+  background: var(--color-bg-hover);
+  transform: translateX(2px);
+  border-left: 3px solid var(--color-primary);
 }
 
 .col-item {
-  font-weight: 500;
-  color: #1f2937;
+  font-weight: 600;
+  color: var(--color-production);
+  font-size: var(--font-size-lg);
 }
 
 .col-produced,
 .col-consumed,
 .col-available {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-weight: 500;
+  font-family: var(--font-family-mono);
+  font-weight: 600;
+  color: var(--color-logistics);
+  font-size: var(--font-size-md);
 }
 
 .status {

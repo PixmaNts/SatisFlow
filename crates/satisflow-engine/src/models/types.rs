@@ -17,6 +17,9 @@ pub struct ProductionLineId(pub String);
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LogisticsFluxId(pub String);
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct RawInputId(pub String);
+
 // Explicit enums for stable game concepts
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum MachineType {

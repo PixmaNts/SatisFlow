@@ -67,6 +67,8 @@ const handleFileUpload = (event: Event) => {
       try {
         const content = e.target?.result as string
         await importJson(content)
+        // Add small delay to ensure WASM state is fully updated
+        await new Promise(resolve => setTimeout(resolve, 100))
         router.push('/dashboard')
       } catch (error) {
         console.error('Failed to import factory file:', error)
@@ -79,6 +81,8 @@ const handleFileUpload = (event: Event) => {
 
 const tryDemo = async () => {
   await loadSample()
+  // Add small delay to ensure WASM state is fully updated
+  await new Promise(resolve => setTimeout(resolve, 100))
   router.push('/dashboard')
 }
 </script>
@@ -92,17 +96,27 @@ const tryDemo = async () => {
 
 .hero {
   padding: 4rem 2rem;
+  background: var(--gradient-hero);
+  border-radius: var(--radius-2xl);
+  margin: var(--spacing-2xl);
+  border: 1px solid var(--color-border-accent);
+  box-shadow: var(--shadow-lg);
 }
 
 .hero h1 {
   font-size: 3.5rem;
-  color: #2c3e50;
+  color: var(--color-primary);
   margin-bottom: 1rem;
+  font-weight: 700;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .subtitle {
   font-size: 1.25rem;
-  color: #666;
+  color: var(--color-text-secondary);
   margin-bottom: 2rem;
   max-width: 600px;
   margin-left: auto;
@@ -120,32 +134,41 @@ const tryDemo = async () => {
   padding: 1rem 2rem;
   font-size: 1.1rem;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
 .btn-primary {
-  background-color: #3498db;
+  background: var(--gradient-primary);
   color: white;
+  box-shadow: var(--shadow-orange);
+  border: none;
 }
 
 .btn-primary:hover {
-  background-color: #2980b9;
+  background: var(--color-primary-dark);
   transform: translateY(-2px);
+  box-shadow: var(--shadow-lg), var(--shadow-orange);
 }
 
 .btn-secondary {
-  background-color: white;
-  color: #3498db;
-  border: 2px solid #3498db;
+  background: var(--color-bg-card);
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-secondary:hover {
-  background-color: #3498db;
-  color: white;
+  background: var(--color-primary-lighter);
+  color: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
   transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .features {
@@ -156,24 +179,49 @@ const tryDemo = async () => {
 }
 
 .feature {
-  background: white;
+  background: var(--gradient-card);
+  border: 1px solid var(--color-border);
   padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-normal);
 }
 
 .feature:hover {
   transform: translateY(-4px);
+  border-color: var(--color-primary-light);
+  box-shadow: var(--shadow-xl);
+  background: var(--color-bg-card);
 }
 
 .feature h3 {
-  color: #2c3e50;
+  color: var(--color-text-primary);
   margin-bottom: 1rem;
+  font-size: var(--font-size-xl);
 }
 
 .feature p {
-  color: #666;
+  color: var(--color-text-secondary);
   line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .hero {
+    margin: var(--spacing-lg);
+    padding: 2rem 1rem;
+  }
+  
+  .hero h1 {
+    font-size: 2.5rem;
+  }
+  
+  .cta-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .btn {
+    min-width: 200px;
+  }
 }
 </style>

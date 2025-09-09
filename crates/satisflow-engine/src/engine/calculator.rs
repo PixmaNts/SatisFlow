@@ -6,7 +6,10 @@ use std::collections::HashMap;
 pub struct ProductionTracker {
     pub factories: HashMap<FactoryId, Factory>,
     pub logistics_fluxes: HashMap<LogisticsFluxId, LogisticsFlux>,
+    // Static game data - not saved, loaded from build-time data
+    #[serde(skip)]
     pub recipes: HashMap<String, Recipe>,
+    #[serde(skip)]
     pub items: HashMap<String, Item>,
     // Typed indices for internal logic
     #[serde(skip)]
@@ -628,16 +631,27 @@ impl ProductionTracker {
         }
     }
 
+    /// Generate a unique raw input ID for a factory
+    pub fn generate_raw_input_id(&self, factory_id: &FactoryId, item_name: &str) -> RawInputId {
+        let item_slug = slugify(item_name);
+        let mut n: u32 = 1;
+        loop {
+            let id = RawInputId(format!("raw_{}_{}_{}_{}", factory_id.0, item_slug, n, "input"));
+            
+            // Check if this ID exists in any factory
+            let exists = self.factories.values().any(|f| f.raw_inputs.iter().any(|ri| ri.id == id));
+            if !exists {
+                break id;
+            }
+            n += 1;
+        }
+    }
+
     /// Add a raw input to a specific factory
     pub fn add_raw_input_to_factory(&mut self, factory_id: &FactoryId, raw_input: RawInput) -> Result<(), String> {
         let factory = self.factories.get_mut(factory_id)
             .ok_or_else(|| format!("Factory not found: {}", factory_id.0))?;
         
-        // Check if the item is already a raw input for this factory
-        if factory.raw_inputs.iter().any(|ri| ri.item == raw_input.item) {
-            return Err(format!("Raw input for item '{}' already exists in factory '{}'", raw_input.item.0, factory.name));
-        }
-
         // Validate item exists in game data
         if let Some(index) = &self.index {
             if !index.items_by_id.contains_key(&raw_input.item) {
@@ -650,33 +664,38 @@ impl ProductionTracker {
             return Err("Raw input quantity must be greater than 0".to_string());
         }
 
+        // Validate unique ID
+        if factory.raw_inputs.iter().any(|ri| ri.id == raw_input.id) {
+            return Err(format!("Raw input ID '{}' already exists in factory '{}'", raw_input.id.0, factory.name));
+        }
+
         factory.raw_inputs.push(raw_input);
         Ok(())
     }
 
-    /// Remove a raw input from a specific factory
-    pub fn remove_raw_input_from_factory(&mut self, factory_id: &FactoryId, item_id: &ItemId) -> Result<(), String> {
+    /// Remove a raw input from a specific factory by raw input ID
+    pub fn remove_raw_input_from_factory(&mut self, factory_id: &FactoryId, raw_input_id: &RawInputId) -> Result<(), String> {
         let factory = self.factories.get_mut(factory_id)
             .ok_or_else(|| format!("Factory not found: {}", factory_id.0))?;
         
         let initial_len = factory.raw_inputs.len();
-        factory.raw_inputs.retain(|ri| ri.item != *item_id);
+        factory.raw_inputs.retain(|ri| ri.id != *raw_input_id);
         
         if factory.raw_inputs.len() == initial_len {
-            return Err(format!("Raw input for item '{}' not found in factory '{}'", item_id.0, factory.name));
+            return Err(format!("Raw input with ID '{}' not found in factory '{}'", raw_input_id.0, factory.name));
         }
 
         Ok(())
     }
 
     /// Update a raw input in a factory (modify quantity or source type)
-    pub fn update_raw_input_in_factory(&mut self, factory_id: &FactoryId, item_id: &ItemId, updated_raw_input: RawInput) -> Result<(), String> {
+    pub fn update_raw_input_in_factory(&mut self, factory_id: &FactoryId, raw_input_id: &RawInputId, updated_raw_input: RawInput) -> Result<(), String> {
         let factory = self.factories.get_mut(factory_id)
             .ok_or_else(|| format!("Factory not found: {}", factory_id.0))?;
         
         // Find the raw input to update
-        let raw_input = factory.raw_inputs.iter_mut().find(|ri| ri.item == *item_id)
-            .ok_or_else(|| format!("Raw input for item '{}' not found in factory '{}'", item_id.0, factory.name))?;
+        let raw_input = factory.raw_inputs.iter_mut().find(|ri| ri.id == *raw_input_id)
+            .ok_or_else(|| format!("Raw input with ID '{}' not found in factory '{}'", raw_input_id.0, factory.name))?;
         
         // Validate the updated data
         if updated_raw_input.quantity_per_min <= 0.0 {
@@ -689,11 +708,37 @@ impl ProductionTracker {
                 return Err(format!("Unknown item id: {}", updated_raw_input.item.0));
             }
         }
+
+        // Ensure the ID remains consistent
+        if updated_raw_input.id != *raw_input_id {
+            return Err("Cannot change raw input ID during update".to_string());
+        }
         
         // Update the raw input
         *raw_input = updated_raw_input;
         
         Ok(())
+    }
+
+    /// Get all unique group names for production lines in a specific factory
+    pub fn get_factory_groups(&self, factory_id: &FactoryId) -> Vec<String> {
+        if let Some(factory) = self.factories.get(factory_id) {
+            let mut groups: std::collections::HashSet<String> = std::collections::HashSet::new();
+            
+            for line in &factory.production_lines {
+                if let Some(group) = &line.group_name {
+                    if !group.trim().is_empty() {
+                        groups.insert(group.clone());
+                    }
+                }
+            }
+            
+            let mut result: Vec<String> = groups.into_iter().collect();
+            result.sort();
+            result
+        } else {
+            Vec::new()
+        }
     }
 }
 

@@ -1,43 +1,34 @@
 # Roadmap & Milestones
 
-## Immediate Priorities (Phase 1: MVP)
+## Phase 1: MVP ✅ COMPLETED
 
-### 1. Factory Creation Dialog
-**Priority**: High  
-**Effort**: Medium  
-**Milestone Acceptance**: Create factory with unique name; optional first raw input; appears in Factory view; persists across reloads.
+### ✅ 1. Factory Creation Dialog - COMPLETED
+**Status**: ✅ Implemented with enhancements
+- ✅ Factory name input and validation
+- ✅ Raw input configuration with searchable item selection
+- ✅ Multiple raw inputs of same item type support
+- ✅ Raw input comments for documentation
+- ✅ Advanced validation and error handling
+- ✅ Full integration with factory management view
 
-Create a modal dialog for adding new factories:
-- Factory name input
-- Raw input configuration (item selection + quantity)  
-- Basic validation and error handling
-- Integration with main factory management view
+### ✅ 2. Production Line Editor - COMPLETED  
+**Status**: ✅ Implemented with enhancements
+- ✅ Searchable recipe selection with autocomplete
+- ✅ Machine count and clock ratio configuration
+- ✅ Factory-specific group management with dropdown
+- ✅ Context-aware factory preselection
+- ✅ Strange Matter booster support
+- ✅ Production overview calculations
 
-### 2. Production Line Editor
-**Priority**: High
-**Effort**: Medium  
-**Milestone Acceptance**: Add a production line with recipe, machine count, and clock; overview reflects correct production/consumption deltas.
+### ✅ 3. Logistics Flux Dialog - COMPLETED
+**Status**: ✅ Implemented with enhancements
+- ✅ Searchable item selection with autocomplete
+- ✅ Factory selection dropdowns with validation
+- ✅ Transport type selection with icons
+- ✅ Auto-generated logistics IDs by type
+- ✅ Clean JSON export/import with backward compatibility
 
-Implement production line creation/editing:
-- Recipe dropdown with search/filter
-- Machine count slider/input
-- Clock ratio slider (0-250%)
-- Group name selection/creation
-- Output routing configuration
-
-### 3. Logistics Flux Dialog
-**Priority**: Medium
-**Effort**: Medium  
-**Milestone Acceptance**: Add a logistics flux with auto ID; visible in list; validated factories/items; saved and reloaded.
-
-Build logistics management interface:
-- Factory selection dropdowns
-- Item selection from available outputs
-- Transport type selection with icons
-- Auto-generate logistics IDs based on type
-- Quantity validation against production capacity
-
-## Quality of Life Improvements (Phase 2)
+## Current Phase: Quality of Life Improvements (Phase 2)
 
 ### 4. Enhanced Recipe Database
 **Priority**: Medium
@@ -48,7 +39,7 @@ Expand game data coverage:
 - Include alternative recipes with markers
 - Add fluid handling (oil, water, gas)
 - Include power consumption data
-- Recipe search and filtering
+- Enhanced recipe categorization and filtering
 
 ### 5. Production Flow Visualization
 **Priority**: Low
@@ -61,14 +52,14 @@ Visual representation of production chains:
 - Export to image formats
 
 ### 6. Import/Export Features
-**Priority**: Medium  
+**Priority**: Low ✅ Basic functionality completed
 **Effort**: Low
 
-Data sharing capabilities:
-- Export factory configurations
-- Import community designs
+Enhanced data sharing capabilities:
+- ✅ Basic export/import functionality implemented
 - Template system for common setups
-- JSON schema validation
+- Blueprint format standardization
+- JSON schema validation for community sharing
 
 ## Advanced Features (Phase 3)
 

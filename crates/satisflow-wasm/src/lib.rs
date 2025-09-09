@@ -67,9 +67,53 @@ impl WebTracker {
     /// Import tracker data from JSON string
     #[wasm_bindgen]
     pub fn import_json(&mut self, json_data: &str) -> Result<(), JsValue> {
-        let tracker: ProductionTracker = serde_json::from_str(json_data)
+        use satisflow_engine::*;
+        use serde_json::Value;
+        
+        // Parse as generic JSON first to handle legacy data
+        let mut json: Value = serde_json::from_str(json_data)
             .map_err(|e| JsValue::from_str(&format!("Failed to parse JSON: {}", e)))?;
+        
+        // Fix legacy raw inputs that are missing IDs
+        if let Value::Object(ref mut root) = json {
+            if let Some(Value::Object(ref mut factories)) = root.get_mut("factories") {
+                for (factory_id, factory_data) in factories.iter_mut() {
+                    if let Value::Object(ref mut factory) = factory_data {
+                        if let Some(Value::Array(ref mut raw_inputs)) = factory.get_mut("raw_inputs") {
+                            for (index, raw_input) in raw_inputs.iter_mut().enumerate() {
+                                if let Value::Object(ref mut ri) = raw_input {
+                                    // If missing ID, generate one
+                                    if !ri.contains_key("id") {
+                                        let item_name = ri.get("item")
+                                            .and_then(|v| v.as_str())
+                                            .unwrap_or("unknown");
+                                        let raw_input_id = format!("raw_{}_{}_{}_{}", 
+                                            factory_id, 
+                                            item_name.replace("-", "_"), 
+                                            index + 1, 
+                                            "input"
+                                        );
+                                        ri.insert("id".to_string(), Value::String(raw_input_id));
+                                    }
+                                    // Ensure comment field exists (default to null for backward compatibility)
+                                    if !ri.contains_key("comment") {
+                                        ri.insert("comment".to_string(), Value::Null);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Now deserialize the fixed JSON
+        let mut tracker: ProductionTracker = serde_json::from_value(json)
+            .map_err(|e| JsValue::from_str(&format!("Failed to parse fixed JSON: {}", e)))?;
 
+        // Critical fix: reload static data to rebuild the index after import
+        tracker.load_static_data();
+        
         self.inner = tracker;
         Ok(())
     }
@@ -301,6 +345,9 @@ impl WebTracker {
             
         // Convert string fields to proper newtype wrappers
         if let Value::Object(ref mut obj) = json {
+            if let Some(Value::String(id)) = obj.get("id").cloned() {
+                obj["id"] = serde_json::json!(RawInputId(id));
+            }
             if let Some(Value::String(item)) = obj.get("item").cloned() {
                 obj["item"] = serde_json::json!(ItemId(item));
             }
@@ -316,13 +363,13 @@ impl WebTracker {
 
     /// Remove a raw input from a factory
     #[wasm_bindgen]
-    pub fn remove_raw_input(&mut self, factory_id: &str, item_id: &str) -> Result<(), JsValue> {
+    pub fn remove_raw_input(&mut self, factory_id: &str, raw_input_id: &str) -> Result<(), JsValue> {
         use satisflow_engine::*;
         
         let factory_id_typed = FactoryId(factory_id.to_string());
-        let item_id_typed = ItemId(item_id.to_string());
+        let raw_input_id_typed = RawInputId(raw_input_id.to_string());
         
-        self.inner.remove_raw_input_from_factory(&factory_id_typed, &item_id_typed)
+        self.inner.remove_raw_input_from_factory(&factory_id_typed, &raw_input_id_typed)
             .map_err(|e| JsValue::from_str(&e))
     }
 
@@ -359,7 +406,7 @@ impl WebTracker {
 
     /// Update a raw input in a factory
     #[wasm_bindgen]
-    pub fn update_raw_input(&mut self, factory_id: &str, item_id: &str, raw_input_data: &JsValue) -> Result<(), JsValue> {
+    pub fn update_raw_input(&mut self, factory_id: &str, raw_input_id: &str, raw_input_data: &JsValue) -> Result<(), JsValue> {
         use satisflow_engine::*;
         use serde_json::Value;
         
@@ -369,6 +416,9 @@ impl WebTracker {
             
         // Convert string fields to proper newtype wrappers
         if let Value::Object(ref mut obj) = json {
+            if let Some(Value::String(id)) = obj.get("id").cloned() {
+                obj["id"] = serde_json::json!(RawInputId(id));
+            }
             if let Some(Value::String(item)) = obj.get("item").cloned() {
                 obj["item"] = serde_json::json!(ItemId(item));
             }
@@ -378,10 +428,27 @@ impl WebTracker {
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
         
         let factory_id_typed = FactoryId(factory_id.to_string());
-        let item_id_typed = ItemId(item_id.to_string());
+        let raw_input_id_typed = RawInputId(raw_input_id.to_string());
         
-        self.inner.update_raw_input_in_factory(&factory_id_typed, &item_id_typed, raw_input)
+        self.inner.update_raw_input_in_factory(&factory_id_typed, &raw_input_id_typed, raw_input)
             .map_err(|e| JsValue::from_str(&e))
+    }
+
+    /// Generate a unique raw input ID for a factory
+    #[wasm_bindgen]
+    pub fn generate_raw_input_id(&self, factory_id: &str, item_name: &str) -> String {
+        use satisflow_engine::FactoryId;
+        let fid = FactoryId(factory_id.to_string());
+        self.inner.generate_raw_input_id(&fid, item_name).0
+    }
+
+    /// Get all unique group names for production lines in a specific factory
+    #[wasm_bindgen]
+    pub fn get_factory_groups(&self, factory_id: &str) -> Result<JsValue, JsValue> {
+        use satisflow_engine::FactoryId;
+        let fid = FactoryId(factory_id.to_string());
+        let groups = self.inner.get_factory_groups(&fid);
+        to_value(&groups).map_err(|e| JsValue::from_str(&e.to_string()))
     }
 }
 

@@ -1,0 +1,369 @@
+/* Layout Styles */
+
+/* Factory Management Layout */
+.factories-view {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+}
+
+.factories-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-2xl);
+}
+
+.factories-header h1 {
+  color: var(--color-text-primary);
+  margin: 0;
+  font-size: var(--font-size-2xl);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2xl);
+}
+
+.factory-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.factory-selector label {
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.factory-select {
+  padding: var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-input);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  min-width: 200px;
+}
+
+.factory-select:focus {
+  outline: none;
+  border-color: var(--color-focus);
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+
+.header-actions {
+  display: flex;
+  gap: var(--spacing-lg);
+}
+
+/* Factory Tabs */
+.factory-tabs {
+  margin-bottom: var(--spacing-2xl);
+}
+
+.tab-list {
+  display: flex;
+  gap: var(--spacing-xs);
+  border-bottom: 2px solid var(--color-border-light);
+}
+
+.tab-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background: none;
+  border: none;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  transition: all var(--transition-normal);
+  position: relative;
+}
+
+.tab-button.active {
+  color: var(--color-primary);
+  background: var(--color-bg-card);
+  border-bottom: 3px solid var(--color-primary);
+  box-shadow: 0 0 8px var(--color-primary-glow);
+}
+
+.tab-button:hover:not(.active) {
+  color: var(--color-text-primary);
+  background: var(--color-hover);
+}
+
+.tab-icon {
+  font-size: var(--font-size-xl);
+}
+
+.tab-count {
+  background: var(--color-primary);
+  color: white;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: 12px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.tab-button.active .tab-count {
+  background: var(--color-primary-dark);
+}
+
+/* Tab Content */
+.tab-content {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+/* Empty States */
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-3xl);
+}
+
+.empty-state h2 {
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.empty-state p {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-2xl);
+  font-size: var(--font-size-xl);
+}
+
+.no-selection {
+  composes: empty-state;
+}
+
+.no-results {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  color: var(--color-text-muted);
+  background: #f9fafb;
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--color-border-dark);
+}
+
+.no-results p {
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-xl);
+}
+
+/* Controls Section */
+.controls-section {
+  padding: var(--spacing-xl);
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.controls-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-lg);
+  align-items: end;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.control-group label {
+  font-weight: 500;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-md);
+}
+
+.control-select {
+  padding: var(--spacing-md);
+  border: 1px solid var(--color-border-dark);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-lg);
+  background: white;
+  cursor: pointer;
+}
+
+.control-actions {
+  display: flex;
+  align-items: end;
+}
+
+/* Content Areas */
+.production-content,
+.raw-inputs-content {
+  padding: var(--spacing-xl);
+}
+
+/* Logistics View */
+.logistics-view {
+  composes: factories-view;
+}
+
+.logistics-header {
+  composes: factories-header;
+}
+
+.logistics-actions {
+  composes: header-actions;
+}
+
+.logistics-content {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-2xl);
+}
+
+/* Filters Section */
+.filters-section {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-2xl);
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-lg);
+  align-items: end;
+}
+
+.filter-group {
+  composes: control-group;
+}
+
+.filter-select {
+  composes: control-select;
+}
+
+.filter-actions {
+  composes: control-actions;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--spacing-xl);
+}
+
+.modal-content {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-accent);
+  border-radius: var(--radius-lg);
+  box-shadow: 
+    var(--shadow-xl), 
+    0 0 20px var(--color-primary-glow);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xl);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: var(--font-size-xl);
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.modal-close:hover {
+  color: var(--color-error-light);
+  background: var(--color-bg-hover);
+}
+
+.modal-body {
+  padding: var(--spacing-xl);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-xl);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .factories-header,
+  .logistics-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-lg);
+  }
+  
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-lg);
+  }
+  
+  .controls-grid,
+  .filters-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .table-header,
+  .table-row {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+  
+  .table-header > div,
+  .table-row > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .tab-list {
+    flex-wrap: wrap;
+  }
+  
+  .modal-overlay {
+    padding: var(--spacing-lg);
+  }
+}

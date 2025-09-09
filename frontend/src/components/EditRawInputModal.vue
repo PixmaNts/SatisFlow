@@ -67,6 +67,16 @@
           </div>
         </div>
 
+        <div class="form-group">
+          <label for="comment">Comment (optional)</label>
+          <textarea
+            id="comment"
+            v-model="comment"
+            placeholder="e.g., Three nodes clustered near main base..."
+            rows="2"
+          ></textarea>
+        </div>
+
         <div v-if="error" class="error-message">{{ error }}</div>
 
         <div class="form-actions">
@@ -103,6 +113,7 @@ const emit = defineEmits<Emits>()
 
 const quantity = ref<number>(0)
 const sourceType = ref('Miner Mk.1')
+const comment = ref('')
 const error = ref('')
 const isLoading = ref(false)
 
@@ -111,6 +122,7 @@ watch([() => props.isOpen, () => props.rawInput], ([isOpen, rawInput]) => {
   if (isOpen && rawInput) {
     quantity.value = rawInput.quantity_per_min || 0
     sourceType.value = rawInput.source_type || 'Miner Mk.1'
+    comment.value = rawInput.comment || ''
     error.value = ''
     isLoading.value = false
   }
@@ -183,12 +195,14 @@ const handleSubmit = async () => {
 
   try {
     const rawInputData = {
+      id: props.rawInput.id,
       item: props.rawInput.item,
       quantity_per_min: quantity.value,
       source_type: sourceType.value,
+      comment: comment.value.trim() || null,
     }
 
-    await updateRawInput(props.factoryId, props.rawInput.item, rawInputData)
+    await updateRawInput(props.factoryId, props.rawInput.id, rawInputData)
     emit('raw-input-updated')
     close()
   } catch (err: any) {
@@ -278,19 +292,27 @@ const handleSubmit = async () => {
 }
 
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 1rem;
+  font-family: inherit;
 }
 
 .form-group input:focus,
-.form-group select:focus {
+.form-group select:focus,
+.form-group textarea:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 3rem;
 }
 
 .readonly-input {
