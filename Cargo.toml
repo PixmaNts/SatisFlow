@@ -1,0 +1,48 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/satisflow-engine",
+]
+default-members = [
+    "crates/satisflow-engine",
+
+]
+
+[workspace.dependencies]
+# Shared dependencies across the workspace
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.0", features = ["v4", "serde", "js"] }
+chrono = { version = "0.4", features = ["serde"] }
+thiserror = "1.0"
+anyhow = "1.0"
+
+# WASM specific
+wasm-bindgen = "0.2"
+serde-wasm-bindgen = "0.6"
+js-sys = "0.3"
+web-sys = "0.3"
+
+
+[workspace.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+
+[profile.release]
+opt-level = 3
+lto = true
+
+# Original package metadata for reference
+[workspace.metadata.original]
+name = "satisflow"
+version = "0.1.0"
+edition = "2021"
+authors = ["Maxime Pointet <maxime@maxime.pointet.fr>"]
+description = "A blazingly fast web application for tracking and optimizing Satisfactory factory production chains"
+homepage = "https://github.com/PixmaNts/SatisFlow"
+repository = "https://github.com/PixmaNts/SatisFlow"
+readme = "README.md"
+license = "MIT"
+keywords = ["satisfactory", "factory", "production", "wasm", "game-tools"]
+categories = ["games", "web-programming", "wasm"]
