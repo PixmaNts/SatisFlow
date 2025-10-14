@@ -1,0 +1,22 @@
+# Rust / Cargo
+/target
+**/target
+**/*.rs.bk
+
+# IDE / Editor
+.vscode/
+.idea/
+*.iml
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.vcxproj
+*.code-workspace
+
+# OS-generated
+.DS_Store
+Thumbs.db
+
+# Project-specific
+/satisflow-engine-old/
