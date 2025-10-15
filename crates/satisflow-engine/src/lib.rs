@@ -1,11 +1,19 @@
-use std::{collections::HashMap, hash::Hash, sync::{Arc, Mutex}};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 pub mod models;
-
 
 pub struct SatisflowEngine {
     factories: HashMap<u64, models::factory::Factory>,
     logistics_lines: HashMap<u64, Arc<Mutex<models::logistics::LogisticsFlux>>>,
+}
+
+impl Default for SatisflowEngine {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SatisflowEngine {
@@ -31,14 +39,20 @@ impl SatisflowEngine {
         self.factories.get_mut(&id)
     }
 
-    pub fn create_logistics_line(&mut self, from:u64, to:u64, transport_type: models::logistics::TransportType, transport_detail: String) -> Result<u64, Box<dyn std::error::Error>> {
+    pub fn create_logistics_line(
+        &mut self,
+        from: u64,
+        to: u64,
+        transport_type: models::logistics::TransportType,
+        transport_detail: String,
+    ) -> Result<u64, Box<dyn std::error::Error>> {
         let id = self.logistics_lines.len() as u64 + 1;
         let line = models::logistics::LogisticsFlux {
             id,
-            from_factory:from,
-            to_factory:to,
+            from_factory: from,
+            to_factory: to,
             transport_type,
-            transport_details:transport_detail,
+            transport_details: transport_detail,
         };
 
         //check that from and to factories exist
@@ -50,12 +64,23 @@ impl SatisflowEngine {
         }
         let line = Arc::new(Mutex::new(line));
         self.logistics_lines.insert(id, line.clone());
-        self.factories.get_mut(&from).unwrap().logistics_output.insert(id, line.clone()); // Safe to unwrap because we checked above
-        self.factories.get_mut(&to).unwrap().logistics_input.insert(id, line.clone()); // Safe to unwrap because we checked above
+        self.factories
+            .get_mut(&from)
+            .unwrap()
+            .logistics_output
+            .insert(id, line.clone()); // Safe to unwrap because we checked above
+        self.factories
+            .get_mut(&to)
+            .unwrap()
+            .logistics_input
+            .insert(id, line.clone()); // Safe to unwrap because we checked above
         Ok(id)
     }
 
-    pub fn get_logistics_line(&self, id: u64) -> Option<Arc<Mutex<models::logistics::LogisticsFlux>>> {
+    pub fn get_logistics_line(
+        &self,
+        id: u64,
+    ) -> Option<Arc<Mutex<models::logistics::LogisticsFlux>>> {
         self.logistics_lines.get(&id).cloned()
     }
 
@@ -71,5 +96,4 @@ impl SatisflowEngine {
         });
         global_items
     }
-    
 }

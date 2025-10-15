@@ -75,6 +75,30 @@ pub enum Purity {
 - **Oil**: Use Oil Extractor with purity (Impure: 60, Normal: 120, Pure: 240 m³/min)
 - **Gases** (Nitrogen, etc.): Use Resource Well Extractor with purity
 
+#### Resource Well Pressurizer System
+
+For advanced resource extraction, the game features Resource Well Pressurizers that control multiple satellite extractors:
+
+**Resource Well Pressurizer**:
+- Main building with 150MW base power consumption
+- Supports overclocking (0.000-250.000%)
+- Power formula: `base_power × (clock/100)^1.321928`
+- Controls all connected satellite extractors
+
+**Resource Well Extractors** (Satellites):
+- No individual power consumption (powered by pressurizer)
+- Each extractor has its own purity level
+- Base extraction rates: Impure (30), Normal (60), Pure (120) m³/min
+- Clock speed from pressurizer affects all extractors simultaneously
+
+**System Behavior**:
+- Extractors can only exist with a pressurizer
+- Total extraction rate = sum of all extractor rates
+- Power consumption comes from pressurizer only
+- Mixed purity configurations supported (different purities per extractor)
+
+This system is particularly useful for gas extraction (Nitrogen, etc.) where multiple resource nodes can be controlled from a central pressurizer building.
+
 ### LogisticInput
 
 Logistics input are the items transported to the Factory. They provide information on the quantity/min (or m3/min in the case of gaz and liquid) and also the type of transportation (Conveyor, Pipeline, Train, Truck, Drone). They come from a LogisticLine (thant will be covered later on that document)

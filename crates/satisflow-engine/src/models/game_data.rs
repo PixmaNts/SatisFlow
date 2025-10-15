@@ -69,5 +69,3 @@ pub enum MinerType {
     Mk2,
     Mk3,
 }
-
-

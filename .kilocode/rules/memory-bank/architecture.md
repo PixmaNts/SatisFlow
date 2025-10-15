@@ -166,6 +166,70 @@ pub trait Transport {
 - Lazy-loaded item database
 - ItemParseError for validation
 
+#### Raw Input (`models/raw_input.rs`)
+
+**Structure**:
+
+```rust
+pub struct RawInput {
+    pub id: u64,
+    pub extractor_type: ExtractorType,
+    pub item: Item,
+    pub purity: Option<Purity>,
+    pub quantity_per_min: f32,
+}
+
+pub enum ExtractorType {
+    MinerMk1,
+    MinerMk2,
+    MinerMk3,
+    WaterExtractor,
+    OilExtractor,
+    ResourceWellExtractor,
+}
+
+pub enum Purity {
+    Impure,   // 50% yield
+    Normal,   // 100% yield
+    Pure,     // 200% yield
+}
+```
+
+**Purpose**: Raw inputs represents a resource extraction source in the game
+
+**Extraction Mechanics**:
+- **Solid Resources** (Iron Ore, Copper Ore, etc.): Use Miners (Mk1/Mk2/Mk3) with purity affecting yield
+- **Liquids** (Water): Use Water Extractor at fixed 120 m³/min (no purity concept)
+- **Oil**: Use Oil Extractor with purity (Impure: 60, Normal: 120, Pure: 240 m³/min)
+- **Gases** (Nitrogen, etc.): Use Resource Well Extractor with purity
+
+##### Resource Well Pressurizer System
+
+**Purpose**: Advanced extraction mechanics for Resource Wells with satellite nodes
+
+**Key Components**:
+
+- **ResourceWellPressurizer**: Main building with 150MW base power consumption
+  - Overclocking: 0.000-250.000 (same as other machines)
+  - Power formula: `base_power × (clock/100)^1.321928`
+  - Controls all satellite extractors
+
+- **ResourceWellExtractor**: Satellite nodes powered by pressurizer
+  - No individual power consumption
+  - Individual purity per node
+  - Base rates: Impure 30, Normal 60, Pure 120 m³/min
+
+**System Logic**:
+- Extractors can only exist with a pressurizer
+- Clock speed affects all extractors simultaneously
+- Total extraction rate = sum of all extractor rates
+- Power consumption = pressurizer only
+
+**Validation**:
+- Extractor-resource compatibility
+- Clock speed range validation
+- Pressurizer requirement enforcement
+
 ## Key Design Decisions
 
 ### 1. Type Safety Over Flexibility
@@ -214,11 +278,11 @@ Return to UI (JSON via WASM)
 
 ## Missing Components (To Be Implemented)
 
-1. **RawInput** tracking (mentioned in brief, not yet in models)
-2. **PowerGenerator** as distinct from ProductionLine
-3. **Persistence layer** (JSON serialization infrastructure)
-4. **Blueprint custom recipes** (ProductionLineBlueprint exists but needs UI integration)
-5. **Validation layer** for user inputs (partially done in add_machine_group)
+
+1. **PowerGenerator** as distinct from ProductionLine
+2. **Persistence layer** (JSON serialization infrastructure)
+3. **Blueprint custom recipes** (ProductionLineBlueprint exists but needs UI integration)
+4. **Validation layer** for user inputs (partially done in add_machine_group)
 
 ## Performance Considerations
 

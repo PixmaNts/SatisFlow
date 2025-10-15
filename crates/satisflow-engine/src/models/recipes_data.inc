@@ -36,7 +36,7 @@ AILimiter => {
         name: "Adaptive Control Unit",
         machine: Manufacturer,
         inputs: [
-            (AutomatedWiring, 7.500000),
+            (AutomatedWiring, 7.5),
             (CircuitBoard, 5.000000),
             (HeavyModularFrame, 1.000000),
             (Computer, 1.000000),
@@ -70,11 +70,11 @@ AILimiter => {
         name: "Alternate: Adhered Iron Plate",
         machine: Assembler,
         inputs: [
-            (IronPlate, 11.250000),
-            (Rubber, 3.750000),
+            (IronPlate, 11.25),
+            (Rubber, 3.75),
         ],
         outputs: [
-            (ReinforcedIronPlate, 3.750000),
+            (ReinforcedIronPlate, 3.75),
         ],
     },
     AlternateAlcladCasing => {
@@ -85,7 +85,7 @@ AILimiter => {
             (CopperIngot, 75.000000),
         ],
         outputs: [
-            (AluminumCasing, 112.500000),
+            (AluminumCasing, 112.5),
         ],
     },
     AlternateAutomatedMiner => {
@@ -105,19 +105,19 @@ AILimiter => {
         name: "Alternate: Automated Speed Wiring",
         machine: Manufacturer,
         inputs: [
-            (Stator, 3.750000),
+            (Stator, 3.75),
             (Wire, 75.000000),
-            (HighSpeedConnector, 1.875000),
+            (HighSpeedConnector, 1.875),
         ],
         outputs: [
-            (AutomatedWiring, 7.500000),
+            (AutomatedWiring, 7.5),
         ],
     },
     AlternateBiocoal => {
         name: "Alternate: Biocoal",
         machine: Constructor,
         inputs: [
-            (Biomass, 37.500000),
+            (Biomass, 37.5),
         ],
         outputs: [
             (Coal, 45.000000),
@@ -127,7 +127,7 @@ AILimiter => {
         name: "Alternate: Bolted Frame",
         machine: Assembler,
         inputs: [
-            (ReinforcedIronPlate, 7.500000),
+            (ReinforcedIronPlate, 7.5),
             (Screw, 140.000000),
         ],
         outputs: [
@@ -149,7 +149,7 @@ AILimiter => {
         name: "Alternate: Cast Screw",
         machine: Constructor,
         inputs: [
-            (IronIngot, 12.500000),
+            (IronIngot, 12.5),
         ],
         outputs: [
             (Screw, 50.000000),
@@ -159,23 +159,23 @@ AILimiter => {
         name: "Alternate: Caterium Circuit Board",
         machine: Assembler,
         inputs: [
-            (Plastic, 12.500000),
-            (Quickwire, 37.500000),
+            (Plastic, 12.5),
+            (Quickwire, 37.5),
         ],
         outputs: [
-            (CircuitBoard, 8.750000),
+            (CircuitBoard, 8.75),
         ],
     },
     AlternateCateriumComputer => {
         name: "Alternate: Caterium Computer",
         machine: Manufacturer,
         inputs: [
-            (CircuitBoard, 26.250000),
+            (CircuitBoard, 26.25),
             (Quickwire, 105.000000),
             (Rubber, 45.000000),
         ],
         outputs: [
-            (Computer, 3.750000),
+            (Computer, 3.75),
         ],
     },
     AlternateCateriumWire => {
@@ -202,11 +202,11 @@ AILimiter => {
         name: "Alternate: Cheap Silica",
         machine: Assembler,
         inputs: [
-            (RawQuartz, 11.250000),
-            (Limestone, 18.750000),
+            (RawQuartz, 11.25),
+            (Limestone, 18.75),
         ],
         outputs: [
-            (Silica, 26.250000),
+            (Silica, 26.25),
         ],
     },
     AlternateClassicBattery => {
@@ -214,7 +214,7 @@ AILimiter => {
         machine: Manufacturer,
         inputs: [
             (Sulfur, 45.000000),
-            (AlcladAluminumSheet, 52.500000),
+            (AlcladAluminumSheet, 52.5),
             (Plastic, 60.000000),
             (Wire, 90.000000),
         ],
@@ -226,11 +226,11 @@ AILimiter => {
         name: "Alternate: Coated Cable",
         machine: Refinery,
         inputs: [
-            (Wire, 37.500000),
+            (Wire, 37.5),
             (HeavyOilResidue, 15.000000),
         ],
         outputs: [
-            (Cable, 67.500000),
+            (Cable, 67.5),
         ],
     },
     AlternateCoatedIronCanister => {
@@ -281,23 +281,23 @@ AILimiter => {
         name: "Alternate: Compacted Steel Ingot",
         machine: Foundry,
         inputs: [
-            (IronOre, 22.500000),
-            (CompactedCoal, 11.250000),
+            (IronOre, 22.5),
+            (CompactedCoal, 11.25),
         ],
         outputs: [
-            (SteelIngot, 37.500000),
+            (SteelIngot, 37.5),
         ],
     },
     AlternateCoolingDevice => {
         name: "Alternate: Cooling Device",
         machine: Blender,
         inputs: [
-            (HeatSink, 9.375000),
-            (Motor, 1.875000),
+            (HeatSink, 9.375),
+            (Motor, 1.875),
             (NitrogenGas, 45.000000),
         ],
         outputs: [
-            (CoolingSystem, 3.750000),
+            (CoolingSystem, 3.75),
         ],
     },
     AlternateCopperAlloyIngot => {
@@ -315,11 +315,11 @@ AILimiter => {
         name: "Alternate: Copper Rotor",
         machine: Assembler,
         inputs: [
-            (CopperSheet, 22.500000),
+            (CopperSheet, 22.5),
             (Screw, 195.000000),
         ],
         outputs: [
-            (Rotor, 11.250000),
+            (Rotor, 11.25),
         ],
     },
     AlternateCrystalBeacon => {
@@ -338,11 +338,11 @@ AILimiter => {
         name: "Alternate: Crystal Computer",
         machine: Assembler,
         inputs: [
-            (CircuitBoard, 7.500000),
-            (CrystalOscillator, 2.812500),
+            (CircuitBoard, 7.5),
+            (CrystalOscillator, 2.812_5),
         ],
         outputs: [
-            (Computer, 2.812500),
+            (Computer, 2.812_5),
         ],
     },
     AlternateDilutedFuel => {
@@ -371,11 +371,11 @@ AILimiter => {
         name: "Alternate: Electric Motor",
         machine: Assembler,
         inputs: [
-            (ElectromagneticControlRod, 3.750000),
-            (Rotor, 7.500000),
+            (ElectromagneticControlRod, 3.75),
+            (Rotor, 7.5),
         ],
         outputs: [
-            (Motor, 7.500000),
+            (Motor, 7.5),
         ],
     },
     AlternateElectrodeAluminumScrap => {
@@ -441,8 +441,8 @@ AILimiter => {
         name: "Alternate: Fine Black Powder",
         machine: Assembler,
         inputs: [
-            (Sulfur, 7.500000),
-            (CompactedCoal, 3.750000),
+            (Sulfur, 7.5),
+            (CompactedCoal, 3.75),
         ],
         outputs: [
             (BlackPowder, 15.000000),
@@ -452,7 +452,7 @@ AILimiter => {
         name: "Alternate: Fine Concrete",
         machine: Assembler,
         inputs: [
-            (Silica, 7.500000),
+            (Silica, 7.5),
             (Limestone, 30.000000),
         ],
         outputs: [
@@ -463,20 +463,20 @@ AILimiter => {
         name: "Alternate: Flexible Framework",
         machine: Manufacturer,
         inputs: [
-            (ModularFrame, 3.750000),
-            (SteelBeam, 22.500000),
+            (ModularFrame, 3.75),
+            (SteelBeam, 22.5),
             (Rubber, 30.000000),
         ],
         outputs: [
-            (VersatileFramework, 7.500000),
+            (VersatileFramework, 7.5),
         ],
     },
     AlternateFusedQuickwire => {
         name: "Alternate: Fused Quickwire",
         machine: Assembler,
         inputs: [
-            (CateriumIngot, 7.500000),
-            (CopperIngot, 37.500000),
+            (CateriumIngot, 7.5),
+            (CopperIngot, 37.5),
         ],
         outputs: [
             (Quickwire, 90.000000),
@@ -521,26 +521,26 @@ AILimiter => {
         name: "Alternate: Heavy Encased Frame",
         machine: Manufacturer,
         inputs: [
-            (ModularFrame, 7.500000),
-            (EncasedIndustrialBeam, 9.375000),
-            (SteelPipe, 33.750000),
-            (Concrete, 20.625000),
+            (ModularFrame, 7.5),
+            (EncasedIndustrialBeam, 9.375),
+            (SteelPipe, 33.75),
+            (Concrete, 20.625),
         ],
         outputs: [
-            (HeavyModularFrame, 2.812500),
+            (HeavyModularFrame, 2.812_5),
         ],
     },
     AlternateHeavyFlexibleFrame => {
         name: "Alternate: Heavy Flexible Frame",
         machine: Manufacturer,
         inputs: [
-            (ModularFrame, 18.750000),
-            (EncasedIndustrialBeam, 11.250000),
+            (ModularFrame, 18.75),
+            (EncasedIndustrialBeam, 11.25),
             (Rubber, 75.000000),
             (Screw, 390.000000),
         ],
         outputs: [
-            (HeavyModularFrame, 3.750000),
+            (HeavyModularFrame, 3.75),
         ],
     },
     AlternateHeavyOilResidue => {
@@ -607,12 +607,12 @@ AILimiter => {
         name: "Alternate: Insulated Crystal Oscillator",
         machine: Manufacturer,
         inputs: [
-            (QuartzCrystal, 18.750000),
-            (Rubber, 13.125000),
-            (AILimiter, 1.875000),
+            (QuartzCrystal, 18.75),
+            (Rubber, 13.125),
+            (AILimiter, 1.875),
         ],
         outputs: [
-            (CrystalOscillator, 1.875000),
+            (CrystalOscillator, 1.875),
         ],
     },
     AlternateIronAlloyIngot => {
@@ -630,10 +630,10 @@ AILimiter => {
         name: "Alternate: Iron Wire",
         machine: Constructor,
         inputs: [
-            (IronIngot, 12.500000),
+            (IronIngot, 12.5),
         ],
         outputs: [
-            (Wire, 22.500000),
+            (Wire, 22.5),
         ],
     },
     AlternateOCSupercomputer => {
@@ -651,9 +651,9 @@ AILimiter => {
         name: "Alternate: Plastic Smart Plating",
         machine: Manufacturer,
         inputs: [
-            (ReinforcedIronPlate, 2.500000),
-            (Rotor, 2.500000),
-            (Plastic, 7.500000),
+            (ReinforcedIronPlate, 2.5),
+            (Rotor, 2.5),
+            (Plastic, 7.5),
         ],
         outputs: [
             (SmartPlating, 5.000000),
@@ -721,7 +721,7 @@ AILimiter => {
             (Water, 10.000000),
         ],
         outputs: [
-            (CopperIngot, 37.500000),
+            (CopperIngot, 37.5),
         ],
     },
     AlternatePureIronIngot => {
@@ -739,22 +739,22 @@ AILimiter => {
         name: "Alternate: Pure Quartz Crystal",
         machine: Refinery,
         inputs: [
-            (RawQuartz, 67.500000),
-            (Water, 37.500000),
+            (RawQuartz, 67.5),
+            (Water, 37.5),
         ],
         outputs: [
-            (QuartzCrystal, 52.500000),
+            (QuartzCrystal, 52.5),
         ],
     },
     AlternateQuickwireCable => {
         name: "Alternate: Quickwire Cable",
         machine: Assembler,
         inputs: [
-            (Quickwire, 7.500000),
+            (Quickwire, 7.5),
             (Rubber, 5.000000),
         ],
         outputs: [
-            (Cable, 27.500000),
+            (Cable, 27.5),
         ],
     },
     AlternateQuickwireStator => {
@@ -773,24 +773,24 @@ AILimiter => {
         machine: Manufacturer,
         inputs: [
             (HeatSink, 15.000000),
-            (HighSpeedConnector, 7.500000),
+            (HighSpeedConnector, 7.5),
             (QuartzCrystal, 45.000000),
         ],
         outputs: [
-            (RadioControlUnit, 3.750000),
+            (RadioControlUnit, 3.75),
         ],
     },
     AlternateRadioControlSystem => {
         name: "Alternate: Radio Control System",
         machine: Manufacturer,
         inputs: [
-            (CrystalOscillator, 1.500000),
+            (CrystalOscillator, 1.5),
             (CircuitBoard, 15.000000),
             (AluminumCasing, 90.000000),
             (Rubber, 45.000000),
         ],
         outputs: [
-            (RadioControlUnit, 4.500000),
+            (RadioControlUnit, 4.5),
         ],
     },
     AlternateRecycledPlastic => {
@@ -819,12 +819,12 @@ AILimiter => {
         name: "Alternate: Rigour Motor",
         machine: Manufacturer,
         inputs: [
-            (Rotor, 3.750000),
-            (Stator, 3.750000),
-            (CrystalOscillator, 1.250000),
+            (Rotor, 3.75),
+            (Stator, 3.75),
+            (CrystalOscillator, 1.25),
         ],
         outputs: [
-            (Motor, 7.500000),
+            (Motor, 7.5),
         ],
     },
     AlternateRubberConcrete => {
@@ -842,11 +842,11 @@ AILimiter => {
         name: "Alternate: Silicon Circuit Board",
         machine: Assembler,
         inputs: [
-            (CopperSheet, 27.500000),
-            (Silica, 27.500000),
+            (CopperSheet, 27.5),
+            (Silica, 27.5),
         ],
         outputs: [
-            (CircuitBoard, 12.500000),
+            (CircuitBoard, 12.5),
         ],
     },
     AlternateSiliconHighSpeedConnector => {
@@ -854,7 +854,7 @@ AILimiter => {
         machine: Manufacturer,
         inputs: [
             (Quickwire, 90.000000),
-            (Silica, 37.500000),
+            (Silica, 37.5),
             (CircuitBoard, 3.000000),
         ],
         outputs: [
@@ -887,11 +887,11 @@ AILimiter => {
         name: "Alternate: Steamed Copper Sheet",
         machine: Refinery,
         inputs: [
-            (CopperIngot, 22.500000),
-            (Water, 22.500000),
+            (CopperIngot, 22.5),
+            (Water, 22.5),
         ],
         outputs: [
-            (CopperSheet, 22.500000),
+            (CopperSheet, 22.5),
         ],
     },
     AlternateSteelCanister => {
@@ -908,7 +908,7 @@ AILimiter => {
         name: "Alternate: Steel Coated Plate",
         machine: Assembler,
         inputs: [
-            (SteelIngot, 7.500000),
+            (SteelIngot, 7.5),
             (Plastic, 5.000000),
         ],
         outputs: [
@@ -961,24 +961,24 @@ AILimiter => {
         name: "Alternate: Stitched Iron Plate",
         machine: Assembler,
         inputs: [
-            (IronPlate, 18.750000),
-            (Wire, 37.500000),
+            (IronPlate, 18.75),
+            (Wire, 37.5),
         ],
         outputs: [
-            (ReinforcedIronPlate, 5.625000),
+            (ReinforcedIronPlate, 5.625),
         ],
     },
     AlternateSuperStateComputer => {
         name: "Alternate: Super-State Computer",
         machine: Manufacturer,
         inputs: [
-            (Computer, 3.600000),
-            (ElectromagneticControlRod, 2.400000),
+            (Computer, 3.6),
+            (ElectromagneticControlRod, 2.4),
             (Battery, 24.000000),
             (Wire, 54.000000),
         ],
         outputs: [
-            (Supercomputer, 2.400000),
+            (Supercomputer, 2.4),
         ],
     },
     AlternateTurboBlendFuel => {
@@ -987,8 +987,8 @@ AILimiter => {
         inputs: [
             (Fuel, 15.000000),
             (HeavyOilResidue, 30.000000),
-            (Sulfur, 22.500000),
-            (PetroleumCoke, 22.500000),
+            (Sulfur, 22.5),
+            (PetroleumCoke, 22.5),
         ],
         outputs: [
             (Turbofuel, 45.000000),
@@ -998,20 +998,20 @@ AILimiter => {
         name: "Alternate: Turbo Electric Motor",
         machine: Manufacturer,
         inputs: [
-            (Motor, 6.562500),
-            (RadioControlUnit, 8.437500),
-            (ElectromagneticControlRod, 4.687500),
-            (Rotor, 6.562500),
+            (Motor, 6.562_5),
+            (RadioControlUnit, 8.437_5),
+            (ElectromagneticControlRod, 4.687_5),
+            (Rotor, 6.562_5),
         ],
         outputs: [
-            (TurboMotor, 2.812500),
+            (TurboMotor, 2.812_5),
         ],
     },
     AlternateTurboHeavyFuel => {
         name: "Alternate: Turbo Heavy Fuel",
         machine: Refinery,
         inputs: [
-            (HeavyOilResidue, 37.500000),
+            (HeavyOilResidue, 37.5),
             (CompactedCoal, 30.000000),
         ],
         outputs: [
@@ -1022,13 +1022,13 @@ AILimiter => {
         name: "Alternate: Turbo Pressure Motor",
         machine: Manufacturer,
         inputs: [
-            (Motor, 7.500000),
-            (PressureConversionCube, 1.875000),
+            (Motor, 7.5),
+            (PressureConversionCube, 1.875),
             (PackagedNitrogenGas, 45.000000),
             (Stator, 15.000000),
         ],
         outputs: [
-            (TurboMotor, 3.750000),
+            (TurboMotor, 3.75),
         ],
     },
     AlternateUraniumFuelUnit => {
@@ -1038,7 +1038,7 @@ AILimiter => {
             (EncasedUraniumCell, 20.000000),
             (ElectromagneticControlRod, 2.000000),
             (CrystalOscillator, 0.600000),
-            (Beacon, 1.200000),
+            (Beacon, 1.2),
         ],
         outputs: [
             (UraniumFuelRod, 0.600000),
@@ -1114,7 +1114,7 @@ AILimiter => {
         name: "Assembly Director System",
         machine: Assembler,
         inputs: [
-            (AdaptiveControlUnit, 1.500000),
+            (AdaptiveControlUnit, 1.5),
             (Supercomputer, 0.750000),
         ],
         outputs: [
@@ -1133,11 +1133,11 @@ AILimiter => {
         name: "Automated Wiring",
         machine: Assembler,
         inputs: [
-            (Stator, 2.500000),
+            (Stator, 2.5),
             (Cable, 50.000000),
         ],
         outputs: [
-            (AutomatedWiring, 2.500000),
+            (AutomatedWiring, 2.5),
         ],
     },
     BasicWall1m => {
@@ -1173,13 +1173,13 @@ AILimiter => {
         name: "Beacon",
         machine: Manual,
         inputs: [
-            (IronPlate, 22.500000),
-            (IronRod, 7.500000),
-            (Wire, 112.500000),
+            (IronPlate, 22.5),
+            (IronRod, 7.5),
+            (Wire, 112.5),
             (Cable, 15.000000),
         ],
         outputs: [
-            (Beacon, 7.500000),
+            (Beacon, 7.5),
         ],
     },
     BeamConnector => {
@@ -1463,18 +1463,18 @@ AILimiter => {
             (Plastic, 30.000000),
         ],
         outputs: [
-            (CircuitBoard, 7.500000),
+            (CircuitBoard, 7.5),
         ],
     },
     ClusterNobelisk => {
         name: "Cluster Nobelisk",
         machine: Assembler,
         inputs: [
-            (Nobelisk, 7.500000),
+            (Nobelisk, 7.5),
             (SmokelessPowder, 10.000000),
         ],
         outputs: [
-            (ClusterNobelisk, 2.500000),
+            (ClusterNobelisk, 2.5),
         ],
     },
     CoalGenerator => {
@@ -1502,12 +1502,12 @@ AILimiter => {
         machine: Manufacturer,
         inputs: [
             (CircuitBoard, 25.000000),
-            (Cable, 22.500000),
+            (Cable, 22.5),
             (Plastic, 45.000000),
             (Screw, 130.000000),
         ],
         outputs: [
-            (Computer, 2.500000),
+            (Computer, 2.5),
         ],
     },
     Concrete => {
@@ -1749,7 +1749,7 @@ AILimiter => {
         inputs: [
             (QuartzCrystal, 18.000000),
             (Cable, 14.000000),
-            (ReinforcedIronPlate, 2.500000),
+            (ReinforcedIronPlate, 2.5),
         ],
         outputs: [
             (CrystalOscillator, 1.000000),
@@ -2209,24 +2209,24 @@ AILimiter => {
         name: "Fused Modular Frame",
         machine: Blender,
         inputs: [
-            (HeavyModularFrame, 1.500000),
+            (HeavyModularFrame, 1.5),
             (AluminumCasing, 75.000000),
-            (NitrogenGas, 37.500000),
+            (NitrogenGas, 37.5),
         ],
         outputs: [
-            (FusedModularFrame, 1.500000),
+            (FusedModularFrame, 1.5),
         ],
     },
     GasFilter => {
         name: "Gas Filter",
         machine: Manufacturer,
         inputs: [
-            (Coal, 37.500000),
+            (Coal, 37.5),
             (Rubber, 15.000000),
             (Fabric, 15.000000),
         ],
         outputs: [
-            (GasFilter, 7.500000),
+            (GasFilter, 7.5),
         ],
     },
     GasMask => {
@@ -2362,11 +2362,11 @@ AILimiter => {
         name: "Heat Sink",
         machine: Assembler,
         inputs: [
-            (AlcladAluminumSheet, 37.500000),
-            (CopperSheet, 22.500000),
+            (AlcladAluminumSheet, 37.5),
+            (CopperSheet, 22.5),
         ],
         outputs: [
-            (HeatSink, 7.500000),
+            (HeatSink, 7.5),
         ],
     },
     HeavyModularFrame => {
@@ -2396,11 +2396,11 @@ AILimiter => {
         machine: Manufacturer,
         inputs: [
             (Quickwire, 210.000000),
-            (Cable, 37.500000),
-            (CircuitBoard, 3.750000),
+            (Cable, 37.5),
+            (CircuitBoard, 3.75),
         ],
         outputs: [
-            (HighSpeedConnector, 3.750000),
+            (HighSpeedConnector, 3.75),
         ],
     },
     HogProtein => {
@@ -2418,7 +2418,7 @@ AILimiter => {
         machine: Assembler,
         inputs: [
             (RifleAmmo, 50.000000),
-            (HighSpeedConnector, 2.500000),
+            (HighSpeedConnector, 2.5),
         ],
         outputs: [
             (HomingRifleAmmo, 25.000000),
@@ -2707,12 +2707,12 @@ AILimiter => {
         name: "Iodine Infused Filter",
         machine: Manual,
         inputs: [
-            (GasFilter, 3.750000),
+            (GasFilter, 3.75),
             (Quickwire, 30.000000),
-            (AluminumCasing, 3.750000),
+            (AluminumCasing, 3.75),
         ],
         outputs: [
-            (IodineInfusedFilter, 3.750000),
+            (IodineInfusedFilter, 3.75),
         ],
     },
     IronIngot => {
@@ -2761,8 +2761,8 @@ AILimiter => {
         inputs: [
             (Plastic, 25.000000),
             (Rubber, 25.000000),
-            (CircuitBoard, 7.500000),
-            (Motor, 2.500000),
+            (CircuitBoard, 7.5),
+            (Motor, 2.5),
         ],
         outputs: [
             (Jetpack, 0.500000),
@@ -2867,7 +2867,7 @@ AILimiter => {
         name: "Magnetic Field Generator",
         machine: Manufacturer,
         inputs: [
-            (VersatileFramework, 2.500000),
+            (VersatileFramework, 2.5),
             (ElectromagneticControlRod, 1.000000),
             (Battery, 5.000000),
         ],
@@ -3006,8 +3006,8 @@ AILimiter => {
         machine: Manual,
         inputs: [
             (ObjectScanner, 0.750000),
-            (SteelBeam, 7.500000),
-            (Cable, 37.500000),
+            (SteelBeam, 7.5),
+            (Cable, 37.5),
         ],
         outputs: [
             (NobeliskDetonator, 0.750000),
@@ -3017,7 +3017,7 @@ AILimiter => {
         name: "Non-fissile Uranium",
         machine: Blender,
         inputs: [
-            (UraniumWaste, 37.500000),
+            (UraniumWaste, 37.5),
             (Silica, 25.000000),
             (NitricAcid, 15.000000),
             (SulfuricAcid, 15.000000),
@@ -3054,7 +3054,7 @@ AILimiter => {
         name: "Nuke Nobelisk",
         machine: Manufacturer,
         inputs: [
-            (Nobelisk, 2.500000),
+            (Nobelisk, 2.5),
             (EncasedUraniumCell, 10.000000),
             (SmokelessPowder, 5.000000),
             (AILimiter, 3.000000),
@@ -3084,7 +3084,7 @@ AILimiter => {
             (Screw, 75.000000),
         ],
         outputs: [
-            (ObjectScanner, 1.500000),
+            (ObjectScanner, 1.5),
         ],
     },
     OilExtractor => {
@@ -3297,7 +3297,7 @@ AILimiter => {
             (Cable, 15.000000),
         ],
         outputs: [
-            (Parachute, 1.500000),
+            (Parachute, 1.5),
         ],
     },
     ParticleAccelerator => {
@@ -3457,10 +3457,10 @@ AILimiter => {
         name: "Plutonium Fuel Rod",
         machine: Manufacturer,
         inputs: [
-            (EncasedPlutoniumCell, 7.500000),
-            (SteelBeam, 4.500000),
-            (ElectromagneticControlRod, 1.500000),
-            (HeatSink, 2.500000),
+            (EncasedPlutoniumCell, 7.5),
+            (SteelBeam, 4.5),
+            (ElectromagneticControlRod, 1.5),
+            (HeatSink, 2.5),
         ],
         outputs: [
             (PlutoniumFuelRod, 0.250000),
@@ -3485,7 +3485,7 @@ AILimiter => {
             (IronRod, 6.000000),
         ],
         outputs: [
-            (PortableMiner, 1.500000),
+            (PortableMiner, 1.5),
         ],
     },
     PortraitSign => {
@@ -3539,10 +3539,10 @@ AILimiter => {
         name: "Power Shard (1)",
         machine: Constructor,
         inputs: [
-            (BluePowerSlug, 7.500000),
+            (BluePowerSlug, 7.5),
         ],
         outputs: [
-            (PowerShard, 7.500000),
+            (PowerShard, 7.5),
         ],
     },
     PowerShard2 => {
@@ -3559,10 +3559,10 @@ AILimiter => {
         name: "Power Shard (5)",
         machine: Constructor,
         inputs: [
-            (PurplePowerSlug, 2.500000),
+            (PurplePowerSlug, 2.5),
         ],
         outputs: [
-            (PowerShard, 12.500000),
+            (PowerShard, 12.5),
         ],
     },
     PowerStorage => {
@@ -3670,10 +3670,10 @@ AILimiter => {
         name: "Quartz Crystal",
         machine: Constructor,
         inputs: [
-            (RawQuartz, 37.500000),
+            (RawQuartz, 37.5),
         ],
         outputs: [
-            (QuartzCrystal, 22.500000),
+            (QuartzCrystal, 22.5),
         ],
     },
     Quickwire => {
@@ -3702,11 +3702,11 @@ AILimiter => {
         machine: Manufacturer,
         inputs: [
             (AluminumCasing, 40.000000),
-            (CrystalOscillator, 1.250000),
-            (Computer, 1.250000),
+            (CrystalOscillator, 1.25),
+            (Computer, 1.25),
         ],
         outputs: [
-            (RadioControlUnit, 2.500000),
+            (RadioControlUnit, 2.5),
         ],
     },
     Railway => {
@@ -3874,7 +3874,7 @@ AILimiter => {
         inputs: [
             (Motor, 1.000000),
             (Rubber, 5.000000),
-            (SteelPipe, 12.500000),
+            (SteelPipe, 12.5),
             (Screw, 125.000000),
         ],
         outputs: [
@@ -3987,10 +3987,10 @@ AILimiter => {
         name: "Silica",
         machine: Constructor,
         inputs: [
-            (RawQuartz, 22.500000),
+            (RawQuartz, 22.5),
         ],
         outputs: [
-            (Silica, 37.500000),
+            (Silica, 37.5),
         ],
     },
     SingleWindow => {
@@ -4294,13 +4294,13 @@ AILimiter => {
         name: "Supercomputer",
         machine: Manufacturer,
         inputs: [
-            (Computer, 3.750000),
-            (AILimiter, 3.750000),
-            (HighSpeedConnector, 5.625000),
-            (Plastic, 52.500000),
+            (Computer, 3.75),
+            (AILimiter, 3.75),
+            (HighSpeedConnector, 5.625),
+            (Plastic, 52.5),
         ],
         outputs: [
-            (Supercomputer, 1.875000),
+            (Supercomputer, 1.875),
         ],
     },
     TheHUB => {
@@ -4327,7 +4327,7 @@ AILimiter => {
         name: "Thermal Propulsion Rocket",
         machine: Manufacturer,
         inputs: [
-            (ModularEngine, 2.500000),
+            (ModularEngine, 2.5),
             (TurboMotor, 1.000000),
             (CoolingSystem, 3.000000),
             (FusedModularFrame, 1.000000),
@@ -4431,13 +4431,13 @@ AILimiter => {
         name: "Turbo Motor",
         machine: Manufacturer,
         inputs: [
-            (CoolingSystem, 7.500000),
-            (RadioControlUnit, 3.750000),
-            (Motor, 7.500000),
+            (CoolingSystem, 7.5),
+            (RadioControlUnit, 3.75),
+            (Motor, 7.5),
             (Rubber, 45.000000),
         ],
         outputs: [
-            (TurboMotor, 1.875000),
+            (TurboMotor, 1.875),
         ],
     },
     TurboRifleAmmo => {
@@ -4456,11 +4456,11 @@ AILimiter => {
         name: "Turbofuel",
         machine: Refinery,
         inputs: [
-            (Fuel, 22.500000),
+            (Fuel, 22.5),
             (CompactedCoal, 15.000000),
         ],
         outputs: [
-            (Turbofuel, 18.750000),
+            (Turbofuel, 18.75),
         ],
     },
     UJellyLandingPad => {
@@ -4612,7 +4612,7 @@ AILimiter => {
         machine: Manufacturer,
         inputs: [
             (EncasedUraniumCell, 20.000000),
-            (EncasedIndustrialBeam, 1.200000),
+            (EncasedIndustrialBeam, 1.2),
             (ElectromagneticControlRod, 2.000000),
         ],
         outputs: [
@@ -4632,7 +4632,7 @@ AILimiter => {
         name: "Versatile Framework",
         machine: Assembler,
         inputs: [
-            (ModularFrame, 2.500000),
+            (ModularFrame, 2.5),
             (SteelBeam, 30.000000),
         ],
         outputs: [
@@ -4719,9 +4719,9 @@ AILimiter => {
         name: "Xeno-Basher",
         machine: Constructor,
         inputs: [
-            (ModularFrame, 3.750000),
-            (XenoZapper, 1.500000),
-            (Cable, 18.750000),
+            (ModularFrame, 3.75),
+            (XenoZapper, 1.5),
+            (Cable, 18.75),
             (Wire, 375.000000),
         ],
         outputs: [
@@ -4734,24 +4734,24 @@ AILimiter => {
         inputs: [
             (IronRod, 15.000000),
             (ReinforcedIronPlate, 3.000000),
-            (Cable, 22.500000),
+            (Cable, 22.5),
             (Wire, 75.000000),
         ],
         outputs: [
-            (XenoZapper, 1.500000),
+            (XenoZapper, 1.5),
         ],
     },
     Zipline => {
         name: "Zipline",
         machine: Constructor,
         inputs: [
-            (XenoZapper, 1.500000),
+            (XenoZapper, 1.5),
             (Quickwire, 45.000000),
-            (IronRod, 4.500000),
+            (IronRod, 4.5),
             (Cable, 15.000000),
         ],
         outputs: [
-            (Zipline, 1.500000),
+            (Zipline, 1.5),
         ],
     },
         }

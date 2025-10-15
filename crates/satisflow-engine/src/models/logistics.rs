@@ -184,7 +184,12 @@ pub struct Pipeline {
 }
 
 impl Pipeline {
-    pub fn new(pipeline_id: u64, capacity: PipelineCapacity, item: Item, quantity_per_min: f32) -> Self {
+    pub fn new(
+        pipeline_id: u64,
+        capacity: PipelineCapacity,
+        item: Item,
+        quantity_per_min: f32,
+    ) -> Self {
         Self {
             pipeline_id,
             capacity,
@@ -309,7 +314,7 @@ impl Transport for Train {
         self.wagons
             .iter()
             .map(|w| ItemFlow {
-                item: w.item.clone(),
+                item: w.item,
                 quantity_per_min: w.quantity_per_min,
             })
             .collect()
@@ -334,13 +339,13 @@ impl Transport for Bus {
 
         // Add conveyor items
         items.extend(self.lines.iter().map(|c| ItemFlow {
-            item: c.item.clone(),
+            item: c.item,
             quantity_per_min: c.quantity_per_min,
         }));
 
         // Add pipeline items
         items.extend(self.pipelines.iter().map(|p| ItemFlow {
-            item: p.item.clone(),
+            item: p.item,
             quantity_per_min: p.quantity_per_min,
         }));
 
@@ -363,7 +368,7 @@ impl Transport for Bus {
 impl Transport for TruckTransport {
     fn get_items(&self) -> Vec<ItemFlow> {
         vec![ItemFlow {
-            item: self.item.clone(),
+            item: self.item,
             quantity_per_min: self.quantity_per_min,
         }]
     }
@@ -384,7 +389,7 @@ impl Transport for TruckTransport {
 impl Transport for DroneTransport {
     fn get_items(&self) -> Vec<ItemFlow> {
         vec![ItemFlow {
-            item: self.item.clone(),
+            item: self.item,
             quantity_per_min: self.quantity_per_min,
         }]
     }
@@ -590,12 +595,8 @@ mod tests {
         let bus = Bus {
             bus_id: 1,
             bus_name: "Mixed Bus".into(),
-            lines: vec![
-                Conveyor::new(1, ConveyorSpeed::Mk3, Item::CopperOre, 90.0),
-            ],
-            pipelines: vec![
-                Pipeline::new(1, PipelineCapacity::Mk2, Item::Water, 450.0),
-            ],
+            lines: vec![Conveyor::new(1, ConveyorSpeed::Mk3, Item::CopperOre, 90.0)],
+            pipelines: vec![Pipeline::new(1, PipelineCapacity::Mk2, Item::Water, 450.0)],
         };
 
         let items = bus.get_items();
@@ -637,9 +638,7 @@ mod tests {
         let train = Train {
             train_id: 1,
             train_name: "Express".into(),
-            wagons: vec![
-                Wagon::new(1, WagonType::Cargo, Item::IronOre, 120.0),
-            ],
+            wagons: vec![Wagon::new(1, WagonType::Cargo, Item::IronOre, 120.0)],
         };
 
         let transport = TransportType::Train(train);
@@ -659,9 +658,7 @@ mod tests {
         let bus = Bus {
             bus_id: 5,
             bus_name: "Main Line".into(),
-            lines: vec![
-                Conveyor::new(1, ConveyorSpeed::Mk3, Item::CopperOre, 90.0),
-            ],
+            lines: vec![Conveyor::new(1, ConveyorSpeed::Mk3, Item::CopperOre, 90.0)],
             pipelines: vec![],
         };
 
@@ -669,7 +666,10 @@ mod tests {
 
         assert_eq!(transport.get_transport_type_name(), "Bus");
         assert_eq!(transport.get_transport_id(), "BUS-5");
-        assert_eq!(transport.get_transport_name(), Some("Main Line".to_string()));
+        assert_eq!(
+            transport.get_transport_name(),
+            Some("Main Line".to_string())
+        );
     }
 
     #[test]
@@ -731,7 +731,6 @@ mod tests {
 
     #[test]
     fn test_logistics_flux_total_quantity() {
-
         let train = Train {
             train_id: 1,
             train_name: "Express".into(),
@@ -756,7 +755,6 @@ mod tests {
         let item_flow = ItemFlow {
             item: Item::IronOre,
             quantity_per_min: 120.0,
-
         };
 
         assert_eq!(item_flow.item, Item::IronOre);

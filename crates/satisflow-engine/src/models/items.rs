@@ -1,5 +1,5 @@
-use std::{fmt, str::FromStr};
 use serde::{Deserialize, Serialize};
+use std::{fmt, str::FromStr};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Item {
@@ -125,6 +125,7 @@ pub enum Item {
     RifleAmmo,
     Rotor,
     Rubber,
+    Sam,
     Screw,
     ShatterRebar,
     Silica,
