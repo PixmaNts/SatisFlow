@@ -42,11 +42,38 @@ Then we have multiple element:
 
 ### Raw input
 
-A raw inputs is every ressources (Item) that are gathered in the map like ores, water, oil, gaz.
-Depending of the type of the Item extracted, we can have multiple form of RawInput:
-Ore, Oil and Gaz have the concept of Purity (impure, normal, pure)
-Water hoever doesn't.
-Also, the extractor can change the amount of element extracted per/min (Miner MK1, Mk2, Mk3)
+A raw input represents a resource extraction source in the game. It defines what is being extracted, how it's extracted, and at what rate.
+
+```rust
+pub struct RawInput {
+    pub id: u64,
+    pub extractor_type: ExtractorType,
+    pub item: Item,
+    pub purity: Option<Purity>, // Some for ores/oil/gas, None for water
+    pub quantity_per_min: f32,
+}
+
+pub enum ExtractorType {
+    MinerMk1,
+    MinerMk2,
+    MinerMk3,
+    WaterExtractor,
+    OilExtractor,
+    ResourceWellExtractor, // For gas/nitrogen
+}
+
+pub enum Purity {
+    Impure,   // 50% yield
+    Normal,   // 100% yield
+    Pure,     // 200% yield
+}
+```
+
+**Extraction Mechanics**:
+- **Solid Resources** (Iron Ore, Copper Ore, etc.): Use Miners (Mk1/Mk2/Mk3) with purity affecting yield
+- **Liquids** (Water): Use Water Extractor at fixed 120 m³/min (no purity concept)
+- **Oil**: Use Oil Extractor with purity (Impure: 60, Normal: 120, Pure: 240 m³/min)
+- **Gases** (Nitrogen, etc.): Use Resource Well Extractor with purity
 
 ### LogisticInput
 
@@ -73,6 +100,12 @@ A PowerGenerators is like a production line, but there is no output item (execpt
 The player should choose the type of carburant feeded into the generator depending on his type (eg: Fuel, TurboFuel, ect ...)
 As production line, the power generator can be set with groups one or many.
 Each group can have an OC value applyed to all the generator of that groups
+
+**Important Note on Overclocking**:
+Power generators overclock differently from power consumers. Their fuel consumption rate is always proportional to the power production of the building. Hence, overclocking a power generator will neither increase nor decrease fuel efficiency.
+
+- This means the generator will burn the fuel faster or slower, but not produce more energy from the same amount of fuel.
+- Production and consumption rate scale directly with Clock Speed, unlike power consumers
 
 ## LogisticsLine
 
@@ -124,6 +157,43 @@ Feature:
 
 - factory production calculation, power consuption and generation, defining product avaibility (underflow, overflow, balanced) ect ...
 - persistence: every data can be serialized into json value, so that the user can actually save is progression on a json file, and reuse it later.
+
+### Item Balance States
+
+The engine calculates item balance for each item type across all factories. The balance state is determined by:
+
+- **Overflow** (`> 0`): More items are produced than consumed
+- **Underflow** (`< 0`): More items are consumed than produced (production deficit)
+- **Balanced** (`= 0`): Production exactly matches consumption
+
+These states are displayed in the Dashboard view and can be used as filters.
+
+### Error Handling
+
+The system should prevent invalid configurations through UI validation and engine-level checks:
+
+**UI-Level Validation**:
+- When creating a logistics line, the UI must offer factory selection dropdowns (cannot create line without valid source/destination)
+- Overclock values are validated in real-time (0.0 - 250.0 range)
+- Sommersloop limits are enforced based on machine type before submission
+
+**Engine-Level Validation** (currently uses `Box<dyn std::error::Error>`, needs custom error types):
+```rust
+// Future error handling structure
+pub enum SatisflowError {
+    FactoryNotFound(u64),
+    InvalidOverclock(f32),
+    InvalidSommersloop { machine: MachineType, provided: u8, max: u8 },
+    LogisticsEndpointInvalid { from: u64, to: u64 },
+    // ... other error types
+}
+```
+
+**Existing Validations**:
+- Overclock range (0-250%) ✅
+- Sommersloop limits per machine type ✅
+- Factory existence when creating logistics lines ✅
+
 - engine should support blueprint (like in the game) as a custome recipe type.
 
 ### Custome Recipes
@@ -138,6 +208,67 @@ Based on these information, the engine can calculate the energy consuption of th
 The Custom recipe can be seen as a Particular type of ProductionLine, sharing multiple type of machine.
 
 eg: I take 120 iron ingo in input and got 10 reinforced plate on output, using 5 Fabricator and 2 assembler.
+
+### Blueprint Import/Export
+
+Blueprints (ProductionLineBlueprint) can be imported and exported for reuse:
+
+**Blueprint Export**:
+- User can export a ProductionLineBlueprint to JSON format
+- Exported blueprints include all nested production lines with their configurations
+- Export includes: inputs, outputs, machine groups, and power consumption data
+- Blueprints can be saved to file system or shared with other players
+
+**Blueprint Import**:
+- User can import a blueprint JSON file
+- Import validates the blueprint structure and compatibility
+- Imported blueprints become available as custom recipe options
+- Blueprints maintain their nested production line configurations
+
+**Blueprint Storage**:
+- Blueprints are stored within the main save file as part of the engine state
+- Each blueprint has a unique ID and name for easy reference
+- Blueprints can be edited after import (modifying nested production lines)
+
+### UI Navigation and Structure
+
+The application uses a **main navigation bar** with three primary views:
+
+**Navigation Flow**:
+1. **Dashboard** - Global overview of all production
+2. **Factory** - Detailed view of a single factory with sub-tabs
+3. **Logistics** - All logistics lines with filtering
+
+**Dashboard Navigation**:
+- Main navbar link to Dashboard
+- Displays global item balance (engine-wide aggregation)
+- Filters: Factory name, amount produced, production groups, balance states (overflow/underflow/balanced)
+- Sorting: By item type, quantity, factory
+
+**Factory Navigation**:
+- Main navbar link to Factory view
+- Factory selector dropdown to choose which factory to display
+- Two sub-tabs per factory:
+  - **Production Line** tab: View, edit, filter, delete production lines; create new standard or blueprint-based lines
+  - **Raw Input** tab: Add, view, edit, delete raw inputs
+  - **Power Generation** tab: Add, view, edit, delete power generators
+
+**Logistics Navigation**:
+- Main navbar link to Logistics view
+- Display all logistics lines across all factories
+- Filtering options:
+  - By transport type (Bus, Train, Truck, Drone)
+  - By source factory (from_factory)
+  - By destination factory (to_factory)
+  - By item type
+- Grouped display for multi-item transports (Buses and Trains)
+
+**User Preferences**:
+- Filter settings and view preferences stored in browser localStorage (not in JSON save file)
+- Includes: selected factory, active filters, sort order, expanded/collapsed sections
+- Persists between sessions but independent of save file
+
+
 
 ## User interface
 
