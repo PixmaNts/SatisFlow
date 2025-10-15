@@ -27,7 +27,7 @@ cargo build --package satisflow-engine --release
 
 ## Project Structure
 
-```
+```text
 Satisflow/
 ├── .kilocode/                    # Kilo Code configuration
 │   └── rules/
@@ -82,12 +82,14 @@ cargo test --package satisflow-engine
 ### 2. Code Style
 
 **Rust Conventions**:
+
 - Follow [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)
 - Use `rustfmt` for formatting: `cargo fmt`
 - Use `clippy` for linting: `cargo clippy -- -D warnings`
 - Document public APIs with `///` comments
 
 **Naming Conventions**:
+
 - Types: `PascalCase` (e.g., `ProductionLine`)
 - Functions: `snake_case` (e.g., `create_factory`)
 - Constants: `SCREAMING_SNAKE_CASE` (e.g., `MK1_SPEED`)
@@ -96,6 +98,7 @@ cargo test --package satisflow-engine
 ### 3. Testing Guidelines
 
 **Test Organization**:
+
 ```rust
 #[cfg(test)]
 mod tests {
@@ -122,6 +125,7 @@ mod tests {
 ```
 
 **Test Coverage Goals**:
+
 - Unit tests for all public functions
 - Edge cases for validation logic
 - Error paths for Result types
@@ -273,7 +277,7 @@ cargo doc --package satisflow-engine --open
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
-```
+```text
 feat: add raw input system with purity levels
 fix: correct power calculation for sommersloop multiplier
 docs: update architecture diagram with new components

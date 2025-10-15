@@ -7,6 +7,7 @@
 ### Completed Features
 
 #### Data Models ✅
+
 - [x] Item enum with all Satisfactory items
 - [x] Recipe enum with game recipes
 - [x] MachineType with sommersloop/power specs
@@ -16,6 +17,7 @@
 - [x] Transport types: Bus, Train, Truck, Drone
 
 #### Production System ✅
+
 - [x] ProductionLineRecipe with machine groups
 - [x] ProductionLineBlueprint for custom recipes
 - [x] MachineGroup with overclock (0-250%) and sommersloop
@@ -24,6 +26,7 @@
 - [x] Sommersloop validation per machine type
 
 #### Logistics System ✅
+
 - [x] TransportType enum (Bus, Train, Truck, Drone)
 - [x] Conveyor speeds (Mk1-Mk6: 60-1200 items/min)
 - [x] Pipeline capacities (Mk1-Mk2: 300-600 m³/min)
@@ -33,6 +36,7 @@
 - [x] Transport trait for polymorphism
 
 #### Engine Core ✅
+
 - [x] SatisflowEngine orchestrator
 - [x] Factory CRUD operations
 - [x] LogisticsFlux creation with validation
@@ -41,6 +45,7 @@
 - [x] Factory item balance calculation
 
 #### Testing ✅
+
 - [x] Logistics module: 30+ unit tests
 - [x] Production line module: 8+ unit tests
 - [x] Recipe lookup tests
@@ -53,6 +58,7 @@
 ### High Priority
 
 #### Raw Input System ✅ COMPLETE
+
 - [x] RawInput struct definition
 - [x] Purity enum (Impure, Normal, Pure)
 - [x] ExtractorType enum (Miner Mk1-3, Water Extractor, Oil Extractor, ResourceWellExtractor)
@@ -69,6 +75,7 @@
 **Enhanced**: Resource Well Pressurizer mechanics (2025-10-15)
 
 #### Power Generator System ⚠️ NOT STARTED
+
 - [ ] PowerGenerator struct (distinct from ProductionLine)
 - [ ] Generator types: Biomass, Coal, Fuel, Nuclear, Geothermal
 - [ ] Fuel consumption vs power generation mapping
@@ -80,6 +87,7 @@
 **Estimated Effort**: 3-4 hours
 
 #### Persistence Layer ⚠️ NOT STARTED
+
 - [ ] Serde Serialize/Deserialize for all types
 - [ ] JSON export for entire SatisflowEngine state
 - [ ] JSON import with validation
@@ -93,6 +101,7 @@
 ### Medium Priority
 
 #### ID Management System ⚠️ NEEDS IMPROVEMENT
+
 - [ ] Replace sequential ID generation with UUID
 - [ ] Factory ID collision prevention
 - [ ] LogisticsFlux ID management
@@ -103,6 +112,7 @@
 **Estimated Effort**: 2-3 hours
 
 #### Validation Layer ⚠️ PARTIAL
+
 - [x] Overclock range validation (0-250%)
 - [x] Sommersloop limit validation
 - [ ] Factory name uniqueness
@@ -116,6 +126,7 @@
 ### Low Priority
 
 #### Error Handling ⚠️ BASIC
+
 - [x] Box<dyn Error> in public API
 - [ ] Custom error types (SatisflowError enum)
 - [ ] Structured error messages
@@ -127,11 +138,13 @@
 ## Phase 2: WASM Integration 📅 PLANNED
 
 ### Prerequisites
+
 - [ ] Complete Phase 1 persistence layer
 - [ ] Ensure no threading in core engine
 - [ ] Test all calculations are deterministic
 
 ### Tasks
+
 - [ ] wasm-bindgen annotations
 - [ ] JS-friendly API wrapper
 - [ ] WASM build configuration
@@ -147,6 +160,7 @@
 See `brief.md` for UI specifications.
 
 ### Core Views
+
 - [ ] Dashboard view (global overview)
 - [ ] Factory view (production lines, raw inputs, power)
 - [ ] Logistics view (transport management)
@@ -157,14 +171,17 @@ See `brief.md` for UI specifications.
 ## Known Issues
 
 ### Critical 🔴
+
 None currently
 
 ### Major 🟠
+
 1. **No persistence**: Users cannot save/load their factory designs
 2. **No power tracking**: Power generators not implemented
 3. **Sequential IDs**: Risk of collisions in distributed scenarios
 
 ### Minor 🟡
+
 1. **Limited error messages**: Errors lack context for debugging
 2. **No overflow warnings**: System doesn't warn about item imbalances
 3. **Missing factory deletion**: Cannot remove factories once created
@@ -190,23 +207,27 @@ None currently
 ## Success Metrics
 
 ### Phase 0 (Complete)
+
 - ✅ All core data models implemented
 - ✅ 30+ passing unit tests
 - ✅ Type-safe logistics system
 - ✅ Working item calculation
 
 ### Phase 1 (Target)
+
 - [ ] 100% serializable state
 - [ ] Complete game mechanics coverage
 - [x] 96+ passing tests
 - [x] Zero compiler warnings
 
 ### Phase 2 (Target)
+
 - [ ] WASM build < 500KB
 - [ ] API calls < 10ms (90th percentile)
 - [ ] No panics in production
 
 ### Phase 3 (Target)
+
 - [ ] Full CRUD for all entities
 - [ ] Responsive UI (< 100ms interactions)
 - [ ] Playwright E2E test coverage

@@ -4,7 +4,7 @@
 
 Satisflow is built with a **layered architecture** separating concerns between the core engine (Rust) and future UI implementations (Vue.js/WASM).
 
-```
+```text
 ┌─────────────────────────────────────────┐
 │         UI Layer (Future)               │
 │    Vue.js + TypeScript + WASM           │
@@ -198,6 +198,7 @@ pub enum Purity {
 **Purpose**: Raw inputs represents a resource extraction source in the game
 
 **Extraction Mechanics**:
+
 - **Solid Resources** (Iron Ore, Copper Ore, etc.): Use Miners (Mk1/Mk2/Mk3) with purity affecting yield
 - **Liquids** (Water): Use Water Extractor at fixed 120 m³/min (no purity concept)
 - **Oil**: Use Oil Extractor with purity (Impure: 60, Normal: 120, Pure: 240 m³/min)
@@ -220,12 +221,14 @@ pub enum Purity {
   - Base rates: Impure 30, Normal 60, Pure 120 m³/min
 
 **System Logic**:
+
 - Extractors can only exist with a pressurizer
 - Clock speed affects all extractors simultaneously
 - Total extraction rate = sum of all extractor rates
 - Power consumption = pressurizer only
 
 **Validation**:
+
 - Extractor-resource compatibility
 - Clock speed range validation
 - Pressurizer requirement enforcement
@@ -262,7 +265,7 @@ pub enum Purity {
 
 ## Data Flow
 
-```
+```text
 User Action (Future UI)
     ↓
 SatisflowEngine API
@@ -277,7 +280,6 @@ Return to UI (JSON via WASM)
 ```
 
 ## Missing Components (To Be Implemented)
-
 
 1. **PowerGenerator** as distinct from ProductionLine
 2. **Persistence layer** (JSON serialization infrastructure)

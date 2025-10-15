@@ -70,6 +70,7 @@ pub enum Purity {
 ```
 
 **Extraction Mechanics**:
+
 - **Solid Resources** (Iron Ore, Copper Ore, etc.): Use Miners (Mk1/Mk2/Mk3) with purity affecting yield
 - **Liquids** (Water): Use Water Extractor at fixed 120 m³/min (no purity concept)
 - **Oil**: Use Oil Extractor with purity (Impure: 60, Normal: 120, Pure: 240 m³/min)
@@ -80,18 +81,21 @@ pub enum Purity {
 For advanced resource extraction, the game features Resource Well Pressurizers that control multiple satellite extractors:
 
 **Resource Well Pressurizer**:
+
 - Main building with 150MW base power consumption
 - Supports overclocking (0.000-250.000%)
 - Power formula: `base_power × (clock/100)^1.321928`
 - Controls all connected satellite extractors
 
 **Resource Well Extractors** (Satellites):
+
 - No individual power consumption (powered by pressurizer)
 - Each extractor has its own purity level
 - Base extraction rates: Impure (30), Normal (60), Pure (120) m³/min
 - Clock speed from pressurizer affects all extractors simultaneously
 
 **System Behavior**:
+
 - Extractors can only exist with a pressurizer
 - Total extraction rate = sum of all extractor rates
 - Power consumption comes from pressurizer only
@@ -197,11 +201,13 @@ These states are displayed in the Dashboard view and can be used as filters.
 The system should prevent invalid configurations through UI validation and engine-level checks:
 
 **UI-Level Validation**:
+
 - When creating a logistics line, the UI must offer factory selection dropdowns (cannot create line without valid source/destination)
 - Overclock values are validated in real-time (0.0 - 250.0 range)
 - Sommersloop limits are enforced based on machine type before submission
 
 **Engine-Level Validation** (currently uses `Box<dyn std::error::Error>`, needs custom error types):
+
 ```rust
 // Future error handling structure
 pub enum SatisflowError {
@@ -214,6 +220,7 @@ pub enum SatisflowError {
 ```
 
 **Existing Validations**:
+
 - Overclock range (0-250%) ✅
 - Sommersloop limits per machine type ✅
 - Factory existence when creating logistics lines ✅
@@ -238,18 +245,21 @@ eg: I take 120 iron ingo in input and got 10 reinforced plate on output, using 5
 Blueprints (ProductionLineBlueprint) can be imported and exported for reuse:
 
 **Blueprint Export**:
+
 - User can export a ProductionLineBlueprint to JSON format
 - Exported blueprints include all nested production lines with their configurations
 - Export includes: inputs, outputs, machine groups, and power consumption data
 - Blueprints can be saved to file system or shared with other players
 
 **Blueprint Import**:
+
 - User can import a blueprint JSON file
 - Import validates the blueprint structure and compatibility
 - Imported blueprints become available as custom recipe options
 - Blueprints maintain their nested production line configurations
 
 **Blueprint Storage**:
+
 - Blueprints are stored within the main save file as part of the engine state
 - Each blueprint has a unique ID and name for easy reference
 - Blueprints can be edited after import (modifying nested production lines)
@@ -259,17 +269,20 @@ Blueprints (ProductionLineBlueprint) can be imported and exported for reuse:
 The application uses a **main navigation bar** with three primary views:
 
 **Navigation Flow**:
+
 1. **Dashboard** - Global overview of all production
 2. **Factory** - Detailed view of a single factory with sub-tabs
 3. **Logistics** - All logistics lines with filtering
 
 **Dashboard Navigation**:
+
 - Main navbar link to Dashboard
 - Displays global item balance (engine-wide aggregation)
 - Filters: Factory name, amount produced, production groups, balance states (overflow/underflow/balanced)
 - Sorting: By item type, quantity, factory
 
 **Factory Navigation**:
+
 - Main navbar link to Factory view
 - Factory selector dropdown to choose which factory to display
 - Two sub-tabs per factory:
@@ -278,6 +291,7 @@ The application uses a **main navigation bar** with three primary views:
   - **Power Generation** tab: Add, view, edit, delete power generators
 
 **Logistics Navigation**:
+
 - Main navbar link to Logistics view
 - Display all logistics lines across all factories
 - Filtering options:
@@ -288,11 +302,10 @@ The application uses a **main navigation bar** with three primary views:
 - Grouped display for multi-item transports (Buses and Trains)
 
 **User Preferences**:
+
 - Filter settings and view preferences stored in browser localStorage (not in JSON save file)
 - Includes: selected factory, active filters, sort order, expanded/collapsed sections
 - Persists between sessions but independent of save file
-
-
 
 ## User interface
 
