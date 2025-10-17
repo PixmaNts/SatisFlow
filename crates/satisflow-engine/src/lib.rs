@@ -96,4 +96,39 @@ impl SatisflowEngine {
         });
         global_items
     }
+
+    /// Get global power statistics for all factories
+    pub fn global_power_stats(&self) -> models::PowerStats {
+        let mut total_generation = 0.0;
+        let mut total_consumption = 0.0;
+        let mut factory_stats = Vec::new();
+
+        for (factory_id, factory) in &self.factories {
+            let generation = factory.total_power_generation();
+            let consumption = factory.total_power_consumption();
+            let generator_count = factory.power_generators.len() as u32;
+
+            // Collect unique generator types
+            let mut generator_types = std::collections::HashSet::new();
+            for generator in factory.power_generators.values() {
+                generator_types.insert(generator.generator_type);
+            }
+            let generator_types: Vec<_> = generator_types.into_iter().collect();
+
+            let factory_stat = models::FactoryPowerStats::new(
+                *factory_id,
+                factory.name.clone(),
+                generation,
+                consumption,
+                generator_count,
+                generator_types,
+            );
+
+            total_generation += generation;
+            total_consumption += consumption;
+            factory_stats.push(factory_stat);
+        }
+
+        models::PowerStats::new(total_generation, total_consumption, factory_stats)
+    }
 }
