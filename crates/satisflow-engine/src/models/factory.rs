@@ -1,22 +1,21 @@
 use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
+    collections::HashMap
 };
+
+use serde::{Deserialize, Serialize};
 
 use crate::models::{
     logistics::LogisticsFlux, power_generator::PowerGenerator, production_line::ProductionLine,
     raw_input::RawInput, Item,
 };
 
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Factory {
     pub id: u32,
     pub name: String,
     pub description: Option<String>,
-    pub production_lines: HashMap<u64, Box<dyn ProductionLine>>,
-
-    pub logistics_output: HashMap<u64, Arc<Mutex<LogisticsFlux>>>,
-    pub logistics_input: HashMap<u64, Arc<Mutex<LogisticsFlux>>>,
-
+    pub production_lines: HashMap<u64, ProductionLine>,
     pub raw_inputs: HashMap<u64, RawInput>, // Raw resource extraction sources
     pub power_generators: HashMap<u64, PowerGenerator>, // Power generation systems
     pub items: HashMap<Item, f32>,          // Inventory of items in the factory
@@ -30,16 +29,13 @@ impl Factory {
             description,
             production_lines: HashMap::new(),
             items: HashMap::new(),
-            logistics_output: HashMap::new(),
-            logistics_input: HashMap::new(),
             raw_inputs: HashMap::new(),
             power_generators: HashMap::new(),
         }
     }
 
-    pub fn add_production_line(&mut self, line: Box<dyn ProductionLine>) {
+    pub fn add_production_line(&mut self, line: ProductionLine) {
         self.production_lines.insert(line.id(), line);
-        self.calculate_item();
     }
 
     /// Add a raw input to this factory
@@ -48,16 +44,13 @@ impl Factory {
         raw_input.validate().map_err(|e| e.to_string())?;
 
         self.raw_inputs.insert(raw_input.id, raw_input);
-        self.calculate_item();
+
         Ok(())
     }
 
     /// Remove a raw input from this factory
     pub fn remove_raw_input(&mut self, id: u64) -> Option<RawInput> {
         let removed = self.raw_inputs.remove(&id);
-        if removed.is_some() {
-            self.calculate_item();
-        }
         removed
     }
 
@@ -77,16 +70,12 @@ impl Factory {
         generator.validate().map_err(|e| e.to_string())?;
 
         self.power_generators.insert(generator.id, generator);
-        self.calculate_item();
         Ok(())
     }
 
     /// Remove a power generator from this factory
     pub fn remove_power_generator(&mut self, id: u64) -> Option<PowerGenerator> {
         let removed = self.power_generators.remove(&id);
-        if removed.is_some() {
-            self.calculate_item();
-        }
         removed
     }
 
@@ -129,19 +118,17 @@ impl Factory {
         production_power + raw_input_power
     }
 
-    pub fn calculate_item(&mut self) {
+    pub fn calculate_item(&mut self, logistics_lines: &HashMap<u64, LogisticsFlux>) {
         self.items.clear();
         // Add all inputs from logistics input lines
-        for line in self.logistics_input.values() {
-            let line = line.lock().unwrap();
-            for itemflow in &line.get_items() {
+        for line in logistics_lines.iter().filter(|(_k,v)| v.to_factory == self.id as u64) {
+            for itemflow in &line.1.get_items() {
                 *self.items.entry(itemflow.item).or_insert(0.0) += itemflow.quantity_per_min;
             }
         }
         // Subtract all outputs to logistics output lines
-        for line in self.logistics_output.values() {
-            let line = line.lock().unwrap();
-            for itemflow in &line.get_items() {
+        for line in logistics_lines.iter().filter(|(_k,v)| v.from_factory == self.id as u64) {
+            for itemflow in &line.1.get_items() {
                 *self.items.entry(itemflow.item).or_insert(0.0) -= itemflow.quantity_per_min;
             }
         }
@@ -179,7 +166,7 @@ impl Factory {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{ExtractorType, GeneratorGroup, GeneratorType, Purity};
+    use crate::models::{logistics, ExtractorType, GeneratorGroup, GeneratorType, Purity};
 
     #[test]
     fn test_add_raw_input() {
@@ -197,6 +184,8 @@ mod tests {
             .add_raw_input(raw_input.clone())
             .expect("Should add raw input");
 
+        let logistics_lines = HashMap::new();
+        factory.calculate_item(&logistics_lines);
         assert_eq!(factory.raw_inputs.len(), 1);
         assert_eq!(factory.get_raw_input(1), Some(&raw_input));
 
@@ -231,6 +220,8 @@ mod tests {
             .add_raw_input(copper_input)
             .expect("Should add copper input");
 
+        let logistics_lines = HashMap::new();
+        factory.calculate_item(&logistics_lines);
         assert_eq!(factory.raw_inputs.len(), 2);
         assert_eq!(factory.items.get(&Item::IronOre), Some(&480.0)); // Mk3 Pure = 240 * 2.0
         assert_eq!(factory.items.get(&Item::CopperOre), Some(&120.0)); // Mk2 Normal = 120 * 1.0
@@ -247,6 +238,8 @@ mod tests {
             .add_raw_input(water_input)
             .expect("Should add water input");
 
+        let logistics_lines = HashMap::new();
+        factory.calculate_item(&logistics_lines);
         assert_eq!(factory.items.get(&Item::Water), Some(&120.0));
     }
 
@@ -265,12 +258,16 @@ mod tests {
         factory
             .add_raw_input(raw_input.clone())
             .expect("Should add raw input");
+
+        let logistics_lines = HashMap::new();
+        factory.calculate_item(&logistics_lines);
+
         assert_eq!(factory.items.get(&Item::IronOre), Some(&120.0));
 
         let removed = factory.remove_raw_input(1);
         assert_eq!(removed, Some(raw_input));
         assert_eq!(factory.raw_inputs.len(), 0);
-
+        factory.calculate_item(&logistics_lines);
         // Items should be recalculated and iron should be gone
         assert_eq!(factory.items.get(&Item::IronOre), None);
     }
@@ -318,8 +315,8 @@ mod tests {
         if let Some(input) = factory.get_raw_input_mut(1) {
             input.quantity_per_min = 150.0; // Manual override for testing
         }
-
-        factory.calculate_item();
+        let logistics_lines = HashMap::new();
+        factory.calculate_item(&logistics_lines);
         assert_eq!(factory.items.get(&Item::IronOre), Some(&150.0));
     }
 
@@ -351,7 +348,9 @@ mod tests {
                 .expect("valid"),
             )
             .expect("Should add");
-
+        
+        let logistics_lines = HashMap::new();
+        factory.calculate_item(&logistics_lines);
         // Should have 60 + 120 = 180 iron ore per minute
         assert_eq!(factory.items.get(&Item::IronOre), Some(&180.0));
     }
@@ -383,7 +382,9 @@ mod tests {
                 .expect("valid"),
             )
             .expect("Should add");
-
+        
+        let logistics_lines = HashMap::new();
+        factory.calculate_item(&logistics_lines);
         // Impure: 60, Pure: 240, Total: 300
         assert_eq!(factory.items.get(&Item::CrudeOil), Some(&300.0));
     }
@@ -433,6 +434,8 @@ mod tests {
                 .expect("Should create valid resource well system");
 
         factory.add_raw_input(resource_well).expect("Should add");
+        let logistics_lines = HashMap::new();
+        factory.calculate_item(&logistics_lines);
 
         assert_eq!(factory.raw_inputs.len(), 4);
         assert_eq!(factory.items.get(&Item::IronOre), Some(&60.0));
@@ -456,6 +459,9 @@ mod tests {
             .add_power_generator(generator)
             .expect("Should add power generator");
 
+        let logistics_lines = HashMap::new();
+        factory.calculate_item(&logistics_lines);
+
         assert_eq!(factory.power_generators.len(), 1);
         assert_eq!(factory.total_power_generation(), 300.0); // 4 * 75MW
         assert_eq!(factory.power_balance(), 300.0); // No consumption yet
@@ -477,6 +483,8 @@ mod tests {
             .add_power_generator(generator)
             .expect("Should add power generator");
 
+        let logistics_lines = HashMap::new();
+        factory.calculate_item(&logistics_lines);
         assert_eq!(factory.total_power_generation(), 450.0); // 2 * 150MW * 1.5
         assert_eq!(factory.items.get(&Item::Turbofuel), Some(&-3.375)); // 2 * 4.5 * 0.25 * 1.5
     }
@@ -513,6 +521,8 @@ mod tests {
             .add_power_generator(generator)
             .expect("Should add power generator");
 
+        let logistics_lines = HashMap::new();
+        factory.calculate_item(&logistics_lines);
         assert_eq!(factory.total_power_generation(), 2500.0); // 1 * 2500MW
         assert_eq!(factory.power_balance(), 2500.0);
 
@@ -534,6 +544,8 @@ mod tests {
             .add_power_generator(generator.clone())
             .expect("Should add power generator");
 
+        let logistics_lines = HashMap::new();
+        factory.calculate_item(&logistics_lines);
         assert_eq!(factory.power_generators.len(), 1);
         assert_eq!(factory.total_power_generation(), 60.0);
         assert_eq!(factory.items.get(&Item::Biomass), Some(&-9.0)); // 2 * 4.5
@@ -542,7 +554,7 @@ mod tests {
         assert_eq!(removed, Some(generator));
         assert_eq!(factory.power_generators.len(), 0);
         assert_eq!(factory.total_power_generation(), 0.0);
-
+        factory.calculate_item(&logistics_lines);
         // Items should be recalculated
         assert_eq!(factory.items.get(&Item::Biomass), None);
     }
@@ -593,8 +605,9 @@ mod tests {
                     .expect("Should update clock speed");
             }
         }
-
-        factory.calculate_item();
+        // Recalculate items
+        let logistics_lines = HashMap::new();
+        factory.calculate_item(&logistics_lines);
         assert_eq!(factory.total_power_generation(), 600.0); // 2 * 150MW * 2.0
         assert_eq!(factory.items.get(&Item::Fuel), Some(&-18.0)); // 2 * 4.5 * 2.0
     }
@@ -622,6 +635,8 @@ mod tests {
             .add_power_generator(fuel_gen)
             .expect("Should add fuel generator");
 
+        let logistics_lines = HashMap::new();
+        factory.calculate_item(&logistics_lines);
         assert_eq!(factory.power_generators.len(), 2);
         assert_eq!(factory.total_power_generation(), 600.0); // 300MW (coal) + 300MW (fuel)
         assert_eq!(factory.items.get(&Item::Coal), Some(&-60.0)); // 4 * 15
@@ -699,6 +714,8 @@ mod tests {
             .add_power_generator(generator)
             .expect("Should add nuclear generator");
 
+        let logistics_lines = HashMap::new();
+        factory.calculate_item(&logistics_lines);
         // Calculate waste:
         // Group 1: 1 * 0.025 * 1.0 = 0.025
         // Group 2: 2 * 0.025 * 2.0 = 0.1
@@ -766,6 +783,8 @@ mod tests {
             .add_power_generator(geo_gen)
             .expect("Should add geothermal generator");
 
+        let logistics_lines = HashMap::new();
+        factory.calculate_item(&logistics_lines);
         // Check total power generation
         let expected_power = 30.0 + 75.0 + 150.0 + 2500.0 + 200.0; // Sum of all generators
         assert_eq!(factory.total_power_generation(), expected_power);
@@ -813,6 +832,9 @@ mod tests {
         factory
             .add_raw_input(iron_input)
             .expect("Should add iron input");
+
+        let logistics_lines = HashMap::new();
+        factory.calculate_item(&logistics_lines);
         assert_eq!(factory.items.get(&Item::IronOre), Some(&60.0));
 
         // Add power generator (should trigger recalculation)
@@ -824,7 +846,7 @@ mod tests {
         factory
             .add_power_generator(generator)
             .expect("Should add power generator");
-
+        factory.calculate_item(&logistics_lines);
         // Both iron ore and coal should be in items
         assert_eq!(factory.items.get(&Item::IronOre), Some(&60.0));
         assert_eq!(factory.items.get(&Item::Coal), Some(&-15.0));

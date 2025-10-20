@@ -1,20 +1,59 @@
+use std::fmt::Debug;
+
+use serde::{Deserialize, Serialize};
+
 use crate::models::{recipe_info, Item, Recipe};
 
-pub trait ProductionLine {
-    /// ID of the production line
-    fn id(&self) -> u64;
-    /// Total number of machines in the production line
-    fn total_machines(&self) -> u32;
-    /// Total number of sommersloop in the production line
-    fn total_sommersloop(&self) -> u32;
-    /// Output rate of the production line
-    fn output_rate(&self) -> Vec<(Item, f32)>;
-    /// Input rate of the production line
-    fn input_rate(&self) -> Vec<(Item, f32)>;
-    /// Total power consumption of the production line
-    fn total_power_consumption(&self) -> f32;
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ProductionLine {
+    ProductionLineRecipe(ProductionLineRecipe),
+    ProductionLineBlueprint(ProductionLineBlueprint),
+}
+impl ProductionLine {
+    pub fn id(&self) -> u64 {
+        match self {
+            ProductionLine::ProductionLineRecipe(line) => line.id(),
+            ProductionLine::ProductionLineBlueprint(blueprint) => blueprint.id(),
+        }
+    }
+
+    pub fn total_machines(&self) -> u32 {
+        match self {
+            ProductionLine::ProductionLineRecipe(line) => line.total_machines(),
+            ProductionLine::ProductionLineBlueprint(blueprint) => blueprint.total_machines(),
+        }
+    }
+
+    pub fn total_sommersloop(&self) -> u32 {
+        match self {
+            ProductionLine::ProductionLineRecipe(line) => line.total_sommersloop(),
+            ProductionLine::ProductionLineBlueprint(blueprint) => blueprint.total_sommersloop(),
+        }
+    }
+
+    pub fn output_rate(&self) -> Vec<(Item, f32)> {
+        match self {
+            ProductionLine::ProductionLineRecipe(line) => line.output_rate(),
+            ProductionLine::ProductionLineBlueprint(blueprint) => blueprint.output_rate(),
+        }
+    }
+
+    pub fn input_rate(&self) -> Vec<(Item, f32)> {
+        match self {
+            ProductionLine::ProductionLineRecipe(line) => line.input_rate(),
+            ProductionLine::ProductionLineBlueprint(blueprint) => blueprint.input_rate(),
+        }
+    }
+
+    pub fn total_power_consumption(&self) -> f32 {
+        match self {
+            ProductionLine::ProductionLineRecipe(line) => line.total_power_consumption(),
+            ProductionLine::ProductionLineBlueprint(blueprint) => blueprint.total_power_consumption(),
+        }
+    }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProductionLineRecipe {
     pub id: u64,
     pub name: String,
@@ -23,6 +62,7 @@ pub struct ProductionLineRecipe {
     pub machine_groups: Vec<MachineGroup>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProductionLineBlueprint {
     pub id: u64,
     pub name: String,
@@ -30,11 +70,12 @@ pub struct ProductionLineBlueprint {
     pub production_lines: Vec<ProductionLineRecipe>,
 }
 
-pub struct MachineGroup(
-    pub u32, // number of machine in the groupe
-    pub f32, // overclock value
-    pub u8,  // number of sommersloop per machine
-);
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MachineGroup {
+    pub number_of_machine: u32, // number of machine in the groupe
+    pub oc_value: f32, // overclock value
+    pub somersloop: u8,  // number of sommersloop per machine
+}
 
 impl ProductionLineRecipe {
     /// Create a new production line with no machine groups
@@ -54,29 +95,28 @@ impl ProductionLineRecipe {
         &mut self,
         group: MachineGroup,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        if group.2 > recipe_info(self.recipe).machine.max_sommersloop() {
-            return Err(format!("Cannot add machine group with more sommersloop than the machine type allows {} > {}", group.2, recipe_info(self.recipe).machine.max_sommersloop()).into());
+        if group.somersloop > recipe_info(self.recipe).machine.max_sommersloop() {
+            return Err(format!("Cannot add machine group with more sommersloop than the machine type allows {} > {}", group.somersloop, recipe_info(self.recipe).machine.max_sommersloop()).into());
         }
-        if group.1 < 0.0 || group.1 > 250.0 {
+        if group.oc_value < 0.0 || group.oc_value > 250.0 {
             return Err("Overclock value must be between 0.000 and 250.000".into());
         }
         self.machine_groups.push(group);
         Ok(())
     }
-}
-impl ProductionLine for ProductionLineRecipe {
+
     fn id(&self) -> u64 {
         self.id
     }
 
     fn total_machines(&self) -> u32 {
-        self.machine_groups.iter().map(|group| group.0).sum()
+        self.machine_groups.iter().map(|group| group.number_of_machine).sum()
     }
 
     fn total_sommersloop(&self) -> u32 {
         self.machine_groups
             .iter()
-            .map(|group| group.0 * group.2 as u32)
+            .map(|group| group.number_of_machine * group.somersloop as u32)
             .sum()
     }
 
@@ -85,11 +125,11 @@ impl ProductionLine for ProductionLineRecipe {
         let mut result = vec![];
         for (item, rate) in recipe_info.outputs.iter() {
             for group in &self.machine_groups {
-                let machine_output = rate * (group.1 / 100.0) * group.0 as f32;
-                if group.2 > 0 {
+                let machine_output = rate * (group.oc_value / 100.0) * group.number_of_machine as f32;
+                if group.somersloop > 0 {
                     // Sommersloop multiply the production rate depending on the number of sommersloop and the machine type
                     let sommersloop_multiplier =
-                        1.0 + (group.2 as f32 / recipe_info.machine.max_sommersloop() as f32);
+                        1.0 + (group.somersloop as f32 / recipe_info.machine.max_sommersloop() as f32);
                     result.push((*item, machine_output * sommersloop_multiplier));
                 } else {
                     result.push((*item, machine_output));
@@ -104,7 +144,7 @@ impl ProductionLine for ProductionLineRecipe {
         let mut result = vec![];
         for (item, rate) in recipe_info.inputs.iter() {
             for group in &self.machine_groups {
-                let machine_input = rate * (group.1 / 100.0) * group.0 as f32;
+                let machine_input = rate * (group.oc_value / 100.0) * group.number_of_machine as f32;
                 result.push((*item, machine_input));
             }
         }
@@ -118,14 +158,14 @@ impl ProductionLine for ProductionLineRecipe {
         let base_power = recipe_info.machine.base_power_mw();
         let mut total_power = 0.0;
         for group in &self.machine_groups {
-            let sommersloop_multiplier = if group.2 > 0 {
-                1.0 + (group.2 as f32 / recipe_info.machine.max_sommersloop() as f32)
+            let sommersloop_multiplier = if group.somersloop > 0 {
+                1.0 + (group.somersloop as f32 / recipe_info.machine.max_sommersloop() as f32)
             } else {
                 1.0
             };
             let power_multiplier = sommersloop_multiplier * sommersloop_multiplier;
-            total_power += base_power * power_multiplier * (group.1 / 100.0).powf(1.321928);
-            total_power *= group.0 as f32;
+            total_power += base_power * power_multiplier * (group.oc_value / 100.0).powf(1.321928);
+            total_power *= group.number_of_machine as f32;
         }
         total_power
     }
@@ -144,9 +184,7 @@ impl ProductionLineBlueprint {
     pub fn add_production_line(&mut self, line: ProductionLineRecipe) {
         self.production_lines.push(line);
     }
-}
 
-impl ProductionLine for ProductionLineBlueprint {
     fn id(&self) -> u64 {
         self.id
     }
@@ -203,7 +241,11 @@ impl ProductionLine for ProductionLineBlueprint {
 
 impl MachineGroup {
     pub fn new(number_of_machines: u32, overclock: f32, sommersloop_per_machine: u8) -> Self {
-        Self(number_of_machines, overclock, sommersloop_per_machine)
+        Self {
+            number_of_machine: number_of_machines,
+            oc_value: overclock,
+            somersloop: sommersloop_per_machine,
+        }
     }
 }
 
@@ -231,9 +273,9 @@ mod tests {
             .add_machine_group(machine_group)
             .expect("Invalide group");
         assert_eq!(production_line.machine_groups.len(), 1);
-        assert_eq!(production_line.machine_groups[0].0, 5);
-        assert_eq!(production_line.machine_groups[0].1, 150.0);
-        assert_eq!(production_line.machine_groups[0].2, 2);
+        assert_eq!(production_line.machine_groups[0].number_of_machine, 5);
+        assert_eq!(production_line.machine_groups[0].oc_value, 150.0);
+        assert_eq!(production_line.machine_groups[0].somersloop, 2);
     }
 
     #[test]

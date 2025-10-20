@@ -1,13 +1,13 @@
 use std::{
     collections::HashMap,
-    sync::{Arc, Mutex},
 };
 
 pub mod models;
+pub mod examples;
 
 pub struct SatisflowEngine {
     factories: HashMap<u64, models::factory::Factory>,
-    logistics_lines: HashMap<u64, Arc<Mutex<models::logistics::LogisticsFlux>>>,
+    logistics_lines: HashMap<u64, models::logistics::LogisticsFlux>,
 }
 
 impl Default for SatisflowEngine {
@@ -62,33 +62,23 @@ impl SatisflowEngine {
         if !self.factories.contains_key(&to) {
             return Err(format!("Factory with id {} does not exist", to).into());
         }
-        let line = Arc::new(Mutex::new(line));
-        self.logistics_lines.insert(id, line.clone());
-        self.factories
-            .get_mut(&from)
-            .unwrap()
-            .logistics_output
-            .insert(id, line.clone()); // Safe to unwrap because we checked above
-        self.factories
-            .get_mut(&to)
-            .unwrap()
-            .logistics_input
-            .insert(id, line.clone()); // Safe to unwrap because we checked above
+        
+        self.logistics_lines.insert(id, line);
         Ok(id)
     }
 
     pub fn get_logistics_line(
         &self,
         id: u64,
-    ) -> Option<Arc<Mutex<models::logistics::LogisticsFlux>>> {
-        self.logistics_lines.get(&id).cloned()
+    ) -> Option<&models::logistics::LogisticsFlux> {
+        self.logistics_lines.get(&id)
     }
 
     pub fn update(&mut self) -> HashMap<models::Item, f32> {
         let mut global_items = HashMap::new();
         self.factories.iter_mut().for_each(|(_id, factory)| {
             // Update each factory
-            factory.calculate_item();
+            factory.calculate_item(&self.logistics_lines);
             // Aggregate items
             factory.items.iter().for_each(|(item, qty)| {
                 *global_items.entry(*item).or_insert(0.0) += qty;
