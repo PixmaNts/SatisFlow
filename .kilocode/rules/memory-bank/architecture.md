@@ -2,20 +2,32 @@
 
 ## System Overview
 
-Satisflow is built with a **layered architecture** separating concerns between the core engine (Rust) and future UI implementations (Vue.js/WASM).
+Satisfflow is built with a **three-tier architecture** separating concerns between the frontend UI, backend REST API, and core engine.
 
 ```text
 ┌─────────────────────────────────────────┐
-│         UI Layer (Future)               │
-│    Vue.js + TypeScript + WASM           │
+│      Frontend UI (Vue.js)               │
+│    Vue 3 + TypeScript + Vite            │
+│    - Dashboard View                     │
+│    - Factory View                       │
+│    - Logistics View                     │
 └─────────────────────────────────────────┘
-                    ↓
+                    ↓ HTTP/REST
 ┌─────────────────────────────────────────┐
-│      Satisflow Engine (Rust)            │
-│  - Core Business Logic                  │
-│  - Data Models                          │
-│  - Calculations                         │
-│  - Persistence (JSON)                   │
+│      Backend Server (Axum)              │
+│    Rust Web Server                      │
+│    - REST API Endpoints                 │
+│    - State Management                   │
+│    - Error Handling                     │
+│    - CORS & Logging                     │
+└─────────────────────────────────────────┘
+                    ↓ Direct calls
+┌─────────────────────────────────────────┐
+│      Satisfflow Engine (Rust)           │
+│    Core Business Logic                  │
+│    - Data Models                        │
+│    - Calculations                       │
+│    - Game Data                          │
 └─────────────────────────────────────────┘
 ```
 
@@ -266,8 +278,10 @@ pub enum Purity {
 ## Data Flow
 
 ```text
-User Action (Future UI)
-    ↓
+User Action (Vue.js UI)
+    ↓ HTTP Request
+Backend Server (Axum)
+    ↓ Function call
 SatisflowEngine API
     ↓
 Factory/Logistics Updates
@@ -275,16 +289,100 @@ Factory/Logistics Updates
 calculate_item() per Factory
     ↓
 Aggregate Global State
-    ↓
-Return to UI (JSON via WASM)
+    ↓ JSON Response
+Backend Server
+    ↓ HTTP Response
+Vue.js UI (Update)
 ```
+
+## Backend Server Components
+
+### Axum Web Server (`crates/satisflow-server/`)
+
+**Purpose**: Production-ready REST API server providing HTTP access to the engine
+
+**Key Components**:
+
+- **State Management** (`state.rs`): Thread-safe engine wrapper using `Arc<RwLock<SatisflowEngine>>`
+- **Error Handling** (`error.rs`): Custom error types with proper HTTP status codes
+- **API Handlers** (`handlers/`):
+  - `factory.rs`: Factory CRUD operations
+  - `logistics.rs`: Logistics line management
+  - `dashboard.rs`: Global statistics and aggregations
+  - `game_data.rs`: Static game data endpoints (recipes, items, machines)
+
+**Features**:
+
+- Environment-based configuration (.env support)
+- CORS middleware (configurable for dev/prod)
+- Structured logging (tracing + tracing-subscriber)
+- Graceful shutdown (SIGINT, SIGTERM)
+- Health check endpoint (/health)
+
+**Deployment**:
+
+- Docker support with multi-stage builds
+- Non-root container execution
+- Docker Compose configuration
+- Production-ready with health checks
+
+### REST API Endpoints
+
+**Factory Endpoints**:
+- `GET /api/factories` - List all factories
+- `GET /api/factories/:id` - Get specific factory
+- `POST /api/factories` - Create factory
+- `PUT /api/factories/:id` - Update factory
+- `DELETE /api/factories/:id` - Delete factory
+
+**Logistics Endpoints**:
+- `GET /api/logistics` - List all logistics lines
+- `GET /api/logistics/:id` - Get specific line
+- `POST /api/logistics` - Create logistics line
+- `DELETE /api/logistics/:id` - Delete line
+
+**Dashboard Endpoints**:
+- `GET /api/dashboard/summary` - Global statistics
+- `GET /api/dashboard/items` - Item balance data
+- `GET /api/dashboard/power` - Power statistics
+
+**Game Data Endpoints**:
+- `GET /api/game-data/recipes` - All available recipes
+- `GET /api/game-data/items` - All game items
+- `GET /api/game-data/machines` - All machine types
+
+### Testing Infrastructure
+
+**Integration Tests** (`crates/satisflow-server/tests/`):
+- 484 lines of comprehensive test coverage
+- Factory CRUD operation tests
+- Logistics management tests
+- Dashboard endpoint validation
+- Game data endpoint tests
+- CORS functionality tests
+- Error handling tests
+- Concurrent request handling tests
+
+**Test Utilities**:
+- Helper functions for common operations
+- Assertion helpers for response validation
+- Test data generators
+- Isolated test server instances
+
+## Completed Components
+
+1. ✅ **PowerGenerator** system (5 generator types with fuel consumption)
+2. ✅ **Raw Input** system with Resource Well Pressurizer mechanics
+3. ✅ **Backend REST API** with complete CRUD operations
+4. ✅ **Testing infrastructure** with 484 lines of integration tests
+5. ✅ **Deployment setup** with Docker and Docker Compose
 
 ## Missing Components (To Be Implemented)
 
-1. **PowerGenerator** as distinct from ProductionLine
-2. **Persistence layer** (JSON serialization infrastructure)
-3. **Blueprint custom recipes** (ProductionLineBlueprint exists but needs UI integration)
-4. **Validation layer** for user inputs (partially done in add_machine_group)
+1. **Persistence layer** (JSON file save/load - only serialization exists)
+2. **Frontend UI implementation** (scaffolding complete, components needed)
+3. **Blueprint import/export UI** (ProductionLineBlueprint exists but needs UI)
+4. **Enhanced validation layer** for user inputs
 
 ## Performance Considerations
 

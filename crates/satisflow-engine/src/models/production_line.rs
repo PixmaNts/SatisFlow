@@ -17,6 +17,13 @@ impl ProductionLine {
         }
     }
 
+    pub fn name(&self) -> &str {
+        match self {
+            ProductionLine::ProductionLineRecipe(line) => line.name(),
+            ProductionLine::ProductionLineBlueprint(blueprint) => blueprint.name(),
+        }
+    }
+
     pub fn total_machines(&self) -> u32 {
         match self {
             ProductionLine::ProductionLineRecipe(line) => line.total_machines(),
@@ -109,6 +116,10 @@ impl ProductionLineRecipe {
         self.id
     }
 
+    fn name(&self) -> &str {
+        &self.name
+    }
+
     fn total_machines(&self) -> u32 {
         self.machine_groups.iter().map(|group| group.number_of_machine).sum()
     }
@@ -187,6 +198,10 @@ impl ProductionLineBlueprint {
 
     fn id(&self) -> u64 {
         self.id
+    }
+
+    fn name(&self) -> &str {
+        &self.name
     }
 
     fn total_machines(&self) -> u32 {
