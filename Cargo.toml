@@ -4,7 +4,7 @@ members = [
     "crates/satisflow-engine", "crates/satisflow-server",
 ]
 default-members = [
-    "crates/satisflow-engine",
+    "crates/satisflow-engine", "crates/satisflow-server",
 ]
 
 [workspace.dependencies]

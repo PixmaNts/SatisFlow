@@ -23,6 +23,12 @@ pub enum AppError {
     
     #[error("Engine error: {0}")]
     EngineError(String),
+    
+    #[error("Validation error: {0}")]
+    ValidationError(String),
+    
+    #[error("Conflict: {0}")]
+    Conflict(String),
 }
 
 impl IntoResponse for AppError {
@@ -30,13 +36,20 @@ impl IntoResponse for AppError {
         let (status, error_message) = match self {
             AppError::NotFound(msg) => (StatusCode::NOT_FOUND, msg),
             AppError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg),
-            AppError::InternalError(_) => (
+            AppError::ValidationError(msg) => (StatusCode::BAD_REQUEST, msg),
+            AppError::Conflict(msg) => (StatusCode::CONFLICT, msg),
+            AppError::InternalError(ref e) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "Internal server error".to_string(),
+                // Don't expose internal error details in production
+                if cfg!(debug_assertions) {
+                    e.to_string()
+                } else {
+                    "An internal error occurred".to_string()
+                }
             ),
             AppError::SerializationError(_) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "Serialization error".to_string(),
+                "Failed to serialize/deserialize data".to_string()
             ),
             AppError::EngineError(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg),
         };
