@@ -1,14 +1,8 @@
 // crates/satisflow-server/src/handlers/dashboard.rs
-use axum::{
-    extract::State,
-    Json,
-    Router,
-    routing::get,
-};
+use axum::{extract::State, routing::get, Json, Router};
 use serde::Serialize;
 
 use crate::{error::Result, state::AppState};
-use satisflow_engine::{models::{Item, PowerStats, FactoryPowerStats}, SatisflowEngine};
 
 #[derive(Serialize)]
 pub struct DashboardSummary {
@@ -49,33 +43,31 @@ pub struct PowerStatisticsResponse {
     pub factory_stats: Vec<FactoryPowerStatsResponse>,
 }
 
-pub async fn get_summary(
-    State(state): State<AppState>,
-) -> Result<Json<DashboardSummary>> {
+pub async fn get_summary(State(state): State<AppState>) -> Result<Json<DashboardSummary>> {
     let mut engine = state.engine.write().await;
-    
+
     // Update all factories to get current calculations
     let _global_items = engine.update();
-    
+
     let factories = engine.get_all_factories();
     let logistics_lines = engine.get_all_logistics();
-    
+
     // Calculate totals
     let total_factories = factories.len();
     let total_logistics_lines = logistics_lines.len();
-    
+
     let mut total_production_lines = 0;
     let mut total_power_consumption = 0.0;
     let mut total_power_generation = 0.0;
-    
+
     for factory in factories.values() {
         total_production_lines += factory.production_lines.len();
         total_power_consumption += factory.total_power_consumption();
         total_power_generation += factory.total_power_generation();
     }
-    
+
     let net_power = total_power_generation - total_power_consumption;
-    
+
     Ok(Json(DashboardSummary {
         total_factories,
         total_production_lines,
@@ -86,16 +78,14 @@ pub async fn get_summary(
     }))
 }
 
-pub async fn get_item_balances(
-    State(state): State<AppState>,
-) -> Result<Json<Vec<ItemBalance>>> {
+pub async fn get_item_balances(State(state): State<AppState>) -> Result<Json<Vec<ItemBalance>>> {
     let mut engine = state.engine.write().await;
-    
+
     // Update all factories to get current calculations
     let global_items = engine.update();
-    
+
     let mut item_balances = Vec::new();
-    
+
     for (item, balance) in global_items {
         let state = if balance > 0.0 {
             "overflow".to_string()
@@ -104,17 +94,17 @@ pub async fn get_item_balances(
         } else {
             "balanced".to_string()
         };
-        
+
         item_balances.push(ItemBalance {
             item: format!("{:?}", item),
             balance,
             state,
         });
     }
-    
+
     // Sort by item name for consistent ordering
     item_balances.sort_by(|a, b| a.item.cmp(&b.item));
-    
+
     Ok(Json(item_balances))
 }
 
@@ -122,12 +112,13 @@ pub async fn get_power_statistics(
     State(state): State<AppState>,
 ) -> Result<Json<PowerStatisticsResponse>> {
     let engine = state.engine.read().await;
-    
+
     // Get power statistics from the engine
     let power_stats = engine.global_power_stats();
-    
+
     // Convert factory stats to response format
-    let factory_stats: Vec<FactoryPowerStatsResponse> = power_stats.factory_stats
+    let factory_stats: Vec<FactoryPowerStatsResponse> = power_stats
+        .factory_stats
         .iter()
         .map(|stat| FactoryPowerStatsResponse {
             factory_id: stat.factory_id,
@@ -136,13 +127,14 @@ pub async fn get_power_statistics(
             consumption: stat.consumption,
             balance: stat.balance,
             generator_count: stat.generator_count,
-            generator_types: stat.generator_types
+            generator_types: stat
+                .generator_types
                 .iter()
                 .map(|gt| format!("{:?}", gt))
                 .collect(),
         })
         .collect();
-    
+
     let response = PowerStatisticsResponse {
         total_generation: power_stats.total_generation,
         total_consumption: power_stats.total_consumption,
@@ -152,7 +144,7 @@ pub async fn get_power_statistics(
         is_balanced: power_stats.is_balanced(),
         factory_stats,
     };
-    
+
     Ok(Json(response))
 }
 

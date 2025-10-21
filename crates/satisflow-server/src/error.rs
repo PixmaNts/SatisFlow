@@ -11,22 +11,22 @@ use thiserror::Error;
 pub enum AppError {
     #[error("Not found: {0}")]
     NotFound(String),
-    
+
     #[error("Bad request: {0}")]
     BadRequest(String),
-    
+
     #[error("Internal server error: {0}")]
     InternalError(#[from] anyhow::Error),
-    
+
     #[error("Serialization error: {0}")]
     SerializationError(#[from] serde_json::Error),
-    
+
     #[error("Engine error: {0}")]
     EngineError(String),
-    
+
     #[error("Validation error: {0}")]
     ValidationError(String),
-    
+
     #[error("Conflict: {0}")]
     Conflict(String),
 }
@@ -45,11 +45,11 @@ impl IntoResponse for AppError {
                     e.to_string()
                 } else {
                     "An internal error occurred".to_string()
-                }
+                },
             ),
             AppError::SerializationError(_) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to serialize/deserialize data".to_string()
+                "Failed to serialize/deserialize data".to_string(),
             ),
             AppError::EngineError(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg),
         };

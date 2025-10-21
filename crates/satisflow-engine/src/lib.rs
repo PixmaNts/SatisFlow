@@ -1,9 +1,7 @@
-use std::{
-    collections::HashMap,
-};
+use std::collections::HashMap;
 
-pub mod models;
 pub mod examples;
+pub mod models;
 
 pub struct SatisflowEngine {
     factories: HashMap<u64, models::factory::Factory>,
@@ -62,15 +60,12 @@ impl SatisflowEngine {
         if !self.factories.contains_key(&to) {
             return Err(format!("Factory with id {} does not exist", to).into());
         }
-        
+
         self.logistics_lines.insert(id, line);
         Ok(id)
     }
 
-    pub fn get_logistics_line(
-        &self,
-        id: u64,
-    ) -> Option<&models::logistics::LogisticsFlux> {
+    pub fn get_logistics_line(&self, id: u64) -> Option<&models::logistics::LogisticsFlux> {
         self.logistics_lines.get(&id)
     }
 
@@ -140,14 +135,12 @@ impl SatisflowEngine {
         }
 
         // Remove all logistics lines connected to this factory
-        self.logistics_lines.retain(|_, logistics| {
-            logistics.from_factory != id && logistics.to_factory != id
-        });
-        
+        self.logistics_lines
+            .retain(|_, logistics| logistics.from_factory != id && logistics.to_factory != id);
+
         // Remove the factory
-        self.factories.remove(&id)
-            .ok_or("Factory not found")?;
-        
+        self.factories.remove(&id).ok_or("Factory not found")?;
+
         Ok(())
     }
 
@@ -158,9 +151,10 @@ impl SatisflowEngine {
             return Err(format!("Logistics line with id {} does not exist", id).into());
         }
 
-        self.logistics_lines.remove(&id)
+        self.logistics_lines
+            .remove(&id)
             .ok_or("Logistics line not found")?;
-        
+
         Ok(())
     }
 }
@@ -170,31 +164,34 @@ mod tests {
     use super::*;
     use crate::models::{
         logistics::{LogisticsFlux, TransportType, TruckTransport},
-        production_line::{ProductionLine, ProductionLineRecipe, ProductionLineBlueprint, MachineGroup},
+        production_line::{
+            MachineGroup, ProductionLine, ProductionLineBlueprint, ProductionLineRecipe,
+        },
         Item, Recipe,
     };
 
     #[test]
     fn test_get_all_factories() {
         let mut engine = SatisflowEngine::new();
-        
+
         // Create some factories
         let factory1_id = engine.create_factory("Factory 1".to_string(), None);
-        let factory2_id = engine.create_factory("Factory 2".to_string(), Some("Test factory".to_string()));
-        
+        let factory2_id =
+            engine.create_factory("Factory 2".to_string(), Some("Test factory".to_string()));
+
         // Get all factories
         let all_factories = engine.get_all_factories();
-        
+
         // Verify all factories are returned
         assert_eq!(all_factories.len(), 2);
         assert!(all_factories.contains_key(&factory1_id));
         assert!(all_factories.contains_key(&factory2_id));
-        
+
         // Verify factory details
         let factory1 = all_factories.get(&factory1_id).unwrap();
         assert_eq!(factory1.name, "Factory 1");
         assert!(factory1.description.is_none());
-        
+
         let factory2 = all_factories.get(&factory2_id).unwrap();
         assert_eq!(factory2.name, "Factory 2");
         assert_eq!(factory2.description.as_ref().unwrap(), "Test factory");
@@ -203,36 +200,40 @@ mod tests {
     #[test]
     fn test_get_all_logistics() {
         let mut engine = SatisflowEngine::new();
-        
+
         // Create factories first
         let factory1_id = engine.create_factory("Factory 1".to_string(), None);
         let factory2_id = engine.create_factory("Factory 2".to_string(), None);
-        
+
         // Create some logistics lines
         let transport1 = TransportType::Truck(TruckTransport::new(1, Item::IronOre, 60.0));
-        let logistics1_id = engine.create_logistics_line(
-            factory1_id,
-            factory2_id,
-            transport1,
-            "Test truck".to_string(),
-        ).unwrap();
-        
+        let logistics1_id = engine
+            .create_logistics_line(
+                factory1_id,
+                factory2_id,
+                transport1,
+                "Test truck".to_string(),
+            )
+            .unwrap();
+
         let transport2 = TransportType::Truck(TruckTransport::new(2, Item::CopperOre, 120.0));
-        let logistics2_id = engine.create_logistics_line(
-            factory2_id,
-            factory1_id,
-            transport2,
-            "Test truck 2".to_string(),
-        ).unwrap();
-        
+        let logistics2_id = engine
+            .create_logistics_line(
+                factory2_id,
+                factory1_id,
+                transport2,
+                "Test truck 2".to_string(),
+            )
+            .unwrap();
+
         // Get all logistics
         let all_logistics = engine.get_all_logistics();
-        
+
         // Verify all logistics lines are returned
         assert_eq!(all_logistics.len(), 2);
         assert!(all_logistics.contains_key(&logistics1_id));
         assert!(all_logistics.contains_key(&logistics2_id));
-        
+
         // Verify logistics details
         let logistics1 = all_logistics.get(&logistics1_id).unwrap();
         assert_eq!(logistics1.from_factory, factory1_id);
@@ -243,32 +244,34 @@ mod tests {
     #[test]
     fn test_delete_factory() {
         let mut engine = SatisflowEngine::new();
-        
+
         // Create factories
         let factory1_id = engine.create_factory("Factory 1".to_string(), None);
         let factory2_id = engine.create_factory("Factory 2".to_string(), None);
-        
+
         // Create logistics line between factories
         let transport = TransportType::Truck(TruckTransport::new(1, Item::IronOre, 60.0));
-        let logistics_id = engine.create_logistics_line(
-            factory1_id,
-            factory2_id,
-            transport,
-            "Test truck".to_string(),
-        ).unwrap();
-        
+        let logistics_id = engine
+            .create_logistics_line(
+                factory1_id,
+                factory2_id,
+                transport,
+                "Test truck".to_string(),
+            )
+            .unwrap();
+
         // Verify initial state
         assert_eq!(engine.get_all_factories().len(), 2);
         assert_eq!(engine.get_all_logistics().len(), 1);
-        
+
         // Delete factory
         engine.delete_factory(factory1_id).unwrap();
-        
+
         // Verify factory is deleted
         assert_eq!(engine.get_all_factories().len(), 1);
         assert!(!engine.get_all_factories().contains_key(&factory1_id));
         assert!(engine.get_all_factories().contains_key(&factory2_id));
-        
+
         // Verify connected logistics lines are also deleted
         assert_eq!(engine.get_all_logistics().len(), 0);
         assert!(!engine.get_all_logistics().contains_key(&logistics_id));
@@ -277,42 +280,47 @@ mod tests {
     #[test]
     fn test_delete_factory_not_found() {
         let mut engine = SatisflowEngine::new();
-        
+
         // Try to delete non-existent factory
         let result = engine.delete_factory(999);
-        
+
         // Verify error
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("Factory with id 999 does not exist"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("Factory with id 999 does not exist"));
     }
 
     #[test]
     fn test_delete_logistics_line() {
         let mut engine = SatisflowEngine::new();
-        
+
         // Create factories
         let factory1_id = engine.create_factory("Factory 1".to_string(), None);
         let factory2_id = engine.create_factory("Factory 2".to_string(), None);
-        
+
         // Create logistics line
         let transport = TransportType::Truck(TruckTransport::new(1, Item::IronOre, 60.0));
-        let logistics_id = engine.create_logistics_line(
-            factory1_id,
-            factory2_id,
-            transport,
-            "Test truck".to_string(),
-        ).unwrap();
-        
+        let logistics_id = engine
+            .create_logistics_line(
+                factory1_id,
+                factory2_id,
+                transport,
+                "Test truck".to_string(),
+            )
+            .unwrap();
+
         // Verify initial state
         assert_eq!(engine.get_all_logistics().len(), 1);
-        
+
         // Delete logistics line
         engine.delete_logistics_line(logistics_id).unwrap();
-        
+
         // Verify logistics line is deleted
         assert_eq!(engine.get_all_logistics().len(), 0);
         assert!(!engine.get_all_logistics().contains_key(&logistics_id));
-        
+
         // Verify factories are still there
         assert_eq!(engine.get_all_factories().len(), 2);
     }
@@ -320,13 +328,16 @@ mod tests {
     #[test]
     fn test_delete_logistics_line_not_found() {
         let mut engine = SatisflowEngine::new();
-        
+
         // Try to delete non-existent logistics line
         let result = engine.delete_logistics_line(999);
-        
+
         // Verify error
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("Logistics line with id 999 does not exist"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("Logistics line with id 999 does not exist"));
     }
 
     #[test]
@@ -340,7 +351,7 @@ mod tests {
         );
         let production_line = ProductionLine::ProductionLineRecipe(recipe_line);
         assert_eq!(production_line.name(), "Test Recipe Line");
-        
+
         // Test ProductionLineBlueprint
         let blueprint_line = ProductionLineBlueprint::new(
             2,

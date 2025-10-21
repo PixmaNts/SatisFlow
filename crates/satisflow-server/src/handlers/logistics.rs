@@ -2,19 +2,22 @@
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    Json,
-    Router,
-    routing::{get, post, delete},
+    routing::get,
+    Json, Router,
+};
+use satisflow_engine::models::{
+    logistics::{
+        ConveyorSpeed, DroneTransport, PipelineCapacity, Transport,
+        TransportType, TruckTransport, WagonType,
+    },
+    Item,
 };
 use serde::{Deserialize, Serialize};
-use satisflow_engine::{
-    models::{
-        logistics::{TransportType, Bus, Train, TruckTransport, DroneTransport, ConveyorSpeed, PipelineCapacity, Wagon, WagonType, Conveyor, Pipeline, Transport},
-        Item,
-    },
-};
 
-use crate::{error::{AppError, Result}, state::AppState};
+use crate::{
+    error::{AppError, Result},
+    state::AppState,
+};
 
 #[derive(Serialize, Deserialize)]
 pub struct CreateLogisticsRequest {
@@ -123,7 +126,10 @@ fn parse_item(item_str: &str) -> Result<Item> {
         "NITROGENGAS" => Ok(Item::NitrogenGas),
         "URANIUMFUELROD" => Ok(Item::UraniumFuelRod),
         "URANIUMWASTE" => Ok(Item::UraniumWaste),
-        _ => Err(AppError::BadRequest(format!("Unknown item type: {}", item_str))),
+        _ => Err(AppError::BadRequest(format!(
+            "Unknown item type: {}",
+            item_str
+        ))),
     }
 }
 
@@ -136,7 +142,10 @@ fn parse_conveyor_speed(speed_str: &str) -> Result<ConveyorSpeed> {
         "MK4" => Ok(ConveyorSpeed::Mk4),
         "MK5" => Ok(ConveyorSpeed::Mk5),
         "MK6" => Ok(ConveyorSpeed::Mk6),
-        _ => Err(AppError::BadRequest(format!("Unknown conveyor speed: {}", speed_str))),
+        _ => Err(AppError::BadRequest(format!(
+            "Unknown conveyor speed: {}",
+            speed_str
+        ))),
     }
 }
 
@@ -145,7 +154,10 @@ fn parse_pipeline_capacity(capacity_str: &str) -> Result<PipelineCapacity> {
     match capacity_str.to_uppercase().as_str() {
         "MK1" => Ok(PipelineCapacity::Mk1),
         "MK2" => Ok(PipelineCapacity::Mk2),
-        _ => Err(AppError::BadRequest(format!("Unknown pipeline capacity: {}", capacity_str))),
+        _ => Err(AppError::BadRequest(format!(
+            "Unknown pipeline capacity: {}",
+            capacity_str
+        ))),
     }
 }
 
@@ -154,12 +166,17 @@ fn parse_wagon_type(wagon_type_str: &str) -> Result<WagonType> {
     match wagon_type_str.to_uppercase().as_str() {
         "CARGO" => Ok(WagonType::Cargo),
         "FLUID" => Ok(WagonType::Fluid),
-        _ => Err(AppError::BadRequest(format!("Unknown wagon type: {}", wagon_type_str))),
+        _ => Err(AppError::BadRequest(format!(
+            "Unknown wagon type: {}",
+            wagon_type_str
+        ))),
     }
 }
 
 // Helper function to convert ItemFlow to response
-fn convert_item_flows(item_flows: Vec<satisflow_engine::models::logistics::ItemFlow>) -> Vec<ItemFlowResponse> {
+fn convert_item_flows(
+    item_flows: Vec<satisflow_engine::models::logistics::ItemFlow>,
+) -> Vec<ItemFlowResponse> {
     item_flows
         .into_iter()
         .map(|flow| ItemFlowResponse {
@@ -169,33 +186,34 @@ fn convert_item_flows(item_flows: Vec<satisflow_engine::models::logistics::ItemF
         .collect()
 }
 
-pub async fn get_logistics(
-    State(state): State<AppState>,
-) -> Result<Json<Vec<LogisticsResponse>>> {
+pub async fn get_logistics(State(state): State<AppState>) -> Result<Json<Vec<LogisticsResponse>>> {
     let engine = state.engine.read().await;
     let logistics_lines = engine.get_all_logistics();
-    
+
     let mut responses = Vec::new();
-    
+
     for (id, logistics) in logistics_lines {
         let items = convert_item_flows(logistics.get_items());
         let total_quantity = logistics.total_quantity_per_min();
-        
+
         let response = LogisticsResponse {
             id: *id,
             from_factory: logistics.from_factory,
             to_factory: logistics.to_factory,
-            transport_type: logistics.transport_type.get_transport_type_name().to_string(),
+            transport_type: logistics
+                .transport_type
+                .get_transport_type_name()
+                .to_string(),
             transport_id: logistics.transport_type.get_transport_id(),
             transport_name: logistics.transport_type.get_transport_name(),
             transport_details: logistics.transport_details.clone(),
             items,
             total_quantity_per_min: total_quantity,
         };
-        
+
         responses.push(response);
     }
-    
+
     Ok(Json(responses))
 }
 
@@ -204,25 +222,29 @@ pub async fn get_logistics_line(
     Path(id): Path<u64>,
 ) -> Result<Json<LogisticsResponse>> {
     let engine = state.engine.read().await;
-    
-    let logistics = engine.get_logistics_line(id)
+
+    let logistics = engine
+        .get_logistics_line(id)
         .ok_or_else(|| AppError::NotFound(format!("Logistics line with id {} not found", id)))?;
-    
+
     let items = convert_item_flows(logistics.get_items());
     let total_quantity = logistics.total_quantity_per_min();
-    
+
     let response = LogisticsResponse {
         id,
         from_factory: logistics.from_factory,
         to_factory: logistics.to_factory,
-        transport_type: logistics.transport_type.get_transport_type_name().to_string(),
+        transport_type: logistics
+            .transport_type
+            .get_transport_type_name()
+            .to_string(),
         transport_id: logistics.transport_type.get_transport_id(),
         transport_name: logistics.transport_type.get_transport_name(),
         transport_details: logistics.transport_details.clone(),
         items,
         total_quantity_per_min: total_quantity,
     };
-    
+
     Ok(Json(response))
 }
 
@@ -231,60 +253,69 @@ pub async fn create_logistics(
     Json(request): Json<CreateLogisticsRequest>,
 ) -> Result<(StatusCode, Json<LogisticsResponse>)> {
     let mut engine = state.engine.write().await;
-    
+
     // Extract from_factory and to_factory from the request
     let from_factory = request.from_factory;
     let to_factory = request.to_factory;
-    
+
     // Create a simple truck transport for now based on the test expectations
     let transport_type = match request.transport_type.to_lowercase().as_str() {
         "truck" => {
             // For simple truck transport, create a default truck with Iron Ore
             TransportType::Truck(TruckTransport::new(1, Item::IronOre, 60.0))
-        },
+        }
         "drone" => {
             // For simple drone transport, create a default drone with Iron Ore
             TransportType::Drone(DroneTransport::new(1, Item::IronOre, 30.0))
-        },
+        }
         _ => {
-            return Err(AppError::BadRequest(format!("Unsupported transport type: {}", request.transport_type)));
+            return Err(AppError::BadRequest(format!(
+                "Unsupported transport type: {}",
+                request.transport_type
+            )));
         }
     };
-    
+
     // Validate that factories exist
     if engine.get_factory(from_factory).is_none() {
-        return Err(AppError::BadRequest(format!("Source factory with id {} does not exist", from_factory)));
+        return Err(AppError::BadRequest(format!(
+            "Source factory with id {} does not exist",
+            from_factory
+        )));
     }
-    
+
     if engine.get_factory(to_factory).is_none() {
-        return Err(AppError::BadRequest(format!("Destination factory with id {} does not exist", to_factory)));
+        return Err(AppError::BadRequest(format!(
+            "Destination factory with id {} does not exist",
+            to_factory
+        )));
     }
-    
+
     let transport_details = format!("{:?}", transport_type);
-    
-    let logistics_id = engine.create_logistics_line(
-        from_factory,
-        to_factory,
-        transport_type,
-        transport_details,
-    ).map_err(|e| AppError::BadRequest(format!("Failed to create logistics line: {}", e)))?;
-    
+
+    let logistics_id = engine
+        .create_logistics_line(from_factory, to_factory, transport_type, transport_details)
+        .map_err(|e| AppError::BadRequest(format!("Failed to create logistics line: {}", e)))?;
+
     let logistics = engine.get_logistics_line(logistics_id).unwrap();
     let items = convert_item_flows(logistics.get_items());
     let total_quantity = logistics.total_quantity_per_min();
-    
+
     let response = LogisticsResponse {
         id: logistics_id,
         from_factory: logistics.from_factory,
         to_factory: logistics.to_factory,
-        transport_type: logistics.transport_type.get_transport_type_name().to_string(),
+        transport_type: logistics
+            .transport_type
+            .get_transport_type_name()
+            .to_string(),
         transport_id: logistics.transport_type.get_transport_id(),
         transport_name: logistics.transport_type.get_transport_name(),
         transport_details: logistics.transport_details.clone(),
         items,
         total_quantity_per_min: total_quantity,
     };
-    
+
     Ok((StatusCode::CREATED, Json(response)))
 }
 
@@ -293,10 +324,11 @@ pub async fn delete_logistics(
     Path(id): Path<u64>,
 ) -> Result<StatusCode> {
     let mut engine = state.engine.write().await;
-    
-    engine.delete_logistics_line(id)
+
+    engine
+        .delete_logistics_line(id)
         .map_err(|_| AppError::NotFound(format!("Logistics line with id {} not found", id)))?;
-    
+
     Ok(StatusCode::NO_CONTENT)
 }
 

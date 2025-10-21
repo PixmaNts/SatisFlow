@@ -1,19 +1,19 @@
 // Test runner utility for satisflow-server
-use std::process::Command;
 use std::env;
+use std::process::Command;
 
 fn main() {
     println!("Running Satisflow Server API Tests");
     println!("==================================");
-    
+
     let args: Vec<String> = env::args().collect();
-    
+
     // Run tests with different options based on arguments
     let mut cmd = Command::new("cargo");
     cmd.arg("test");
     cmd.arg("--package");
     cmd.arg("satisflow-server");
-    
+
     if args.len() > 1 {
         match args[1].as_str() {
             "verbose" => {
@@ -63,9 +63,9 @@ fn main() {
             }
         }
     }
-    
+
     let status = cmd.status().expect("Failed to execute cargo test");
-    
+
     if status.success() {
         println!("\n✅ All tests passed!");
     } else {

@@ -1,6 +1,4 @@
-use std::{
-    collections::HashMap
-};
+use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
@@ -8,7 +6,6 @@ use crate::models::{
     logistics::LogisticsFlux, power_generator::PowerGenerator, production_line::ProductionLine,
     raw_input::RawInput, Item,
 };
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Factory {
@@ -50,8 +47,8 @@ impl Factory {
 
     /// Remove a raw input from this factory
     pub fn remove_raw_input(&mut self, id: u64) -> Option<RawInput> {
-        let removed = self.raw_inputs.remove(&id);
-        removed
+        
+        self.raw_inputs.remove(&id)
     }
 
     /// Get a reference to a raw input by ID
@@ -75,8 +72,8 @@ impl Factory {
 
     /// Remove a power generator from this factory
     pub fn remove_power_generator(&mut self, id: u64) -> Option<PowerGenerator> {
-        let removed = self.power_generators.remove(&id);
-        removed
+        
+        self.power_generators.remove(&id)
     }
 
     /// Get a reference to a power generator by ID
@@ -121,13 +118,19 @@ impl Factory {
     pub fn calculate_item(&mut self, logistics_lines: &HashMap<u64, LogisticsFlux>) {
         self.items.clear();
         // Add all inputs from logistics input lines
-        for line in logistics_lines.iter().filter(|(_k,v)| v.to_factory == self.id as u64) {
+        for line in logistics_lines
+            .iter()
+            .filter(|(_k, v)| v.to_factory == self.id as u64)
+        {
             for itemflow in &line.1.get_items() {
                 *self.items.entry(itemflow.item).or_insert(0.0) += itemflow.quantity_per_min;
             }
         }
         // Subtract all outputs to logistics output lines
-        for line in logistics_lines.iter().filter(|(_k,v)| v.from_factory == self.id as u64) {
+        for line in logistics_lines
+            .iter()
+            .filter(|(_k, v)| v.from_factory == self.id as u64)
+        {
             for itemflow in &line.1.get_items() {
                 *self.items.entry(itemflow.item).or_insert(0.0) -= itemflow.quantity_per_min;
             }
@@ -348,7 +351,7 @@ mod tests {
                 .expect("valid"),
             )
             .expect("Should add");
-        
+
         let logistics_lines = HashMap::new();
         factory.calculate_item(&logistics_lines);
         // Should have 60 + 120 = 180 iron ore per minute
@@ -382,7 +385,7 @@ mod tests {
                 .expect("valid"),
             )
             .expect("Should add");
-        
+
         let logistics_lines = HashMap::new();
         factory.calculate_item(&logistics_lines);
         // Impure: 60, Pure: 240, Total: 300

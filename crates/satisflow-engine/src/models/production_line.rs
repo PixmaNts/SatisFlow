@@ -55,7 +55,9 @@ impl ProductionLine {
     pub fn total_power_consumption(&self) -> f32 {
         match self {
             ProductionLine::ProductionLineRecipe(line) => line.total_power_consumption(),
-            ProductionLine::ProductionLineBlueprint(blueprint) => blueprint.total_power_consumption(),
+            ProductionLine::ProductionLineBlueprint(blueprint) => {
+                blueprint.total_power_consumption()
+            }
         }
     }
 }
@@ -80,8 +82,8 @@ pub struct ProductionLineBlueprint {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MachineGroup {
     pub number_of_machine: u32, // number of machine in the groupe
-    pub oc_value: f32, // overclock value
-    pub somersloop: u8,  // number of sommersloop per machine
+    pub oc_value: f32,          // overclock value
+    pub somersloop: u8,         // number of sommersloop per machine
 }
 
 impl ProductionLineRecipe {
@@ -121,7 +123,10 @@ impl ProductionLineRecipe {
     }
 
     fn total_machines(&self) -> u32 {
-        self.machine_groups.iter().map(|group| group.number_of_machine).sum()
+        self.machine_groups
+            .iter()
+            .map(|group| group.number_of_machine)
+            .sum()
     }
 
     fn total_sommersloop(&self) -> u32 {
@@ -136,11 +141,12 @@ impl ProductionLineRecipe {
         let mut result = vec![];
         for (item, rate) in recipe_info.outputs.iter() {
             for group in &self.machine_groups {
-                let machine_output = rate * (group.oc_value / 100.0) * group.number_of_machine as f32;
+                let machine_output =
+                    rate * (group.oc_value / 100.0) * group.number_of_machine as f32;
                 if group.somersloop > 0 {
                     // Sommersloop multiply the production rate depending on the number of sommersloop and the machine type
-                    let sommersloop_multiplier =
-                        1.0 + (group.somersloop as f32 / recipe_info.machine.max_sommersloop() as f32);
+                    let sommersloop_multiplier = 1.0
+                        + (group.somersloop as f32 / recipe_info.machine.max_sommersloop() as f32);
                     result.push((*item, machine_output * sommersloop_multiplier));
                 } else {
                     result.push((*item, machine_output));
@@ -155,7 +161,8 @@ impl ProductionLineRecipe {
         let mut result = vec![];
         for (item, rate) in recipe_info.inputs.iter() {
             for group in &self.machine_groups {
-                let machine_input = rate * (group.oc_value / 100.0) * group.number_of_machine as f32;
+                let machine_input =
+                    rate * (group.oc_value / 100.0) * group.number_of_machine as f32;
                 result.push((*item, machine_input));
             }
         }

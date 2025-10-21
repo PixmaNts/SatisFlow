@@ -1,5 +1,10 @@
 // Test utilities for satisflow-server
 use axum::Router;
+use satisflow_server::{
+    handlers::{dashboard, factory, game_data, logistics},
+    state::AppState,
+};
+use serde_json::json;
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tower::ServiceBuilder;
@@ -7,8 +12,6 @@ use tower_http::{
     cors::{Any, CorsLayer},
     trace::TraceLayer,
 };
-use satisflow_server::{state::AppState, handlers::{factory, logistics, dashboard, game_data}};
-use serde_json::json;
 
 /// Test server configuration
 pub struct TestServer {
@@ -28,10 +31,8 @@ pub async fn create_test_server() -> TestServer {
         .nest("/api/logistics", logistics::routes())
         .nest("/api/dashboard", dashboard::routes())
         .nest("/api/game-data", game_data::routes())
-        
         // Health check
         .route("/health", axum::routing::get(|| async { "OK" }))
-        
         // Global middleware
         .layer(
             ServiceBuilder::new()
@@ -39,7 +40,12 @@ pub async fn create_test_server() -> TestServer {
                 .layer(
                     CorsLayer::new()
                         .allow_origin(Any)
-                        .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT, axum::http::Method::DELETE])
+                        .allow_methods([
+                            axum::http::Method::GET,
+                            axum::http::Method::POST,
+                            axum::http::Method::PUT,
+                            axum::http::Method::DELETE,
+                        ])
                         .allow_headers(Any),
                 ),
         )
