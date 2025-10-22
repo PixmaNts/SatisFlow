@@ -277,20 +277,67 @@ Define TypeScript interfaces for API data:
 ```typescript
 // frontend/src/api/types.ts
 
-// Base types
+// ===== Base & shared types =====
 export interface BaseEntity {
   id: number
 }
 
-// Factory types
+export type Item =
+  | 'IronOre'
+  | 'CopperOre'
+  | 'IronIngot'
+  | 'CopperIngot'
+  | 'Coal'
+  | 'Water'
+  | 'NitrogenGas'
+  // ...extend to match full backend item list
+
+export type Purity = 'Impure' | 'Normal' | 'Pure'
+
+export type ExtractorType =
+  | 'MinerMk1'
+  | 'MinerMk2'
+  | 'MinerMk3'
+  | 'WaterExtractor'
+  | 'OilExtractor'
+  | 'ResourceWellExtractor'
+
+export type GeneratorType =
+  | 'Biomass'
+  | 'Coal'
+  | 'Fuel'
+  | 'Nuclear'
+  | 'Geothermal'
+
+export type MachineType =
+  | 'Smelter'
+  | 'Constructor'
+  | 'Assembler'
+  | 'Manufacturer'
+  // ...extend with remaining machine types
+
+export type ConveyorTier = 'Mk1' | 'Mk2' | 'Mk3' | 'Mk4' | 'Mk5' | 'Mk6'
+export type PipelineTier = 'Mk1' | 'Mk2'
+export type WagonCarType = 'Cargo' | 'Fluid'
+export type LogisticsTransportType = 'Truck' | 'Drone' | 'Bus' | 'Train'
+
+// ===== Factory types =====
+export interface FactoryItem {
+  item: Item
+  quantity: number
+}
+
 export interface Factory extends BaseEntity {
   name: string
-  description?: string
-  notes?: string
+  description: string | null
+  notes: string | null
   production_lines: ProductionLine[]
   raw_inputs: RawInput[]
   power_generators: PowerGenerator[]
-  items: Record<string, number>
+  items: FactoryItem[]
+  total_power_consumption: number
+  total_power_generation: number
+  power_balance: number
 }
 
 export interface CreateFactoryRequest {
@@ -305,90 +352,133 @@ export interface UpdateFactoryRequest {
   notes?: string
 }
 
-// Production Line types
-export interface ProductionLine extends BaseEntity {
-  name: string
-  description?: string
-  production_type: 'recipe' | 'blueprint'
-  // Add other fields as needed
+// ===== Production line types =====
+export interface MachineGroup {
+  number_of_machine: number
+  oc_value: number // 0.000 - 250.000
+  somersloop: number // 0, 1, 2, 4 depending on machine type
 }
 
-export interface CreateProductionLineRequest {
+export interface ProductionLineRecipe {
+  id: number
   name: string
   description?: string
   recipe: string
   machine_groups: MachineGroup[]
 }
 
-export interface MachineGroup {
-  machine_type: string
-  num_machines: number
-  overclock: number
-  sommersloop: number
+export interface ProductionLineBlueprint {
+  id: number
+  name: string
+  description?: string
+  nested_lines: ProductionLineRecipe[]
 }
 
-// Raw Input types
+export type ProductionLine =
+  | { ProductionLineRecipe: ProductionLineRecipe }
+  | { ProductionLineBlueprint: ProductionLineBlueprint }
+
+export interface CreateRecipeProductionLineRequest {
+  name: string
+  description?: string
+  recipe: string
+  machine_groups: MachineGroup[]
+}
+
+export interface CreateBlueprintProductionLineRequest {
+  name: string
+  description?: string
+  nested_lines: ProductionLineRecipe[]
+}
+
+export type CreateProductionLineRequest =
+  | { type: 'recipe'; data: CreateRecipeProductionLineRequest }
+  | { type: 'blueprint'; data: CreateBlueprintProductionLineRequest }
+
+// ===== Raw input types =====
+export interface ResourceWellPressurizer {
+  id: number
+  clock_speed: number // 0.000 - 250.000
+}
+
+export interface ResourceWellExtractor {
+  id: number
+  purity: Purity
+}
+
 export interface RawInput extends BaseEntity {
-  extractor_type: string
-  item: string
-  purity?: string
+  extractor_type: ExtractorType
+  item: Item
+  purity: Purity | null
   quantity_per_min: number
+  pressurizer: ResourceWellPressurizer | null
+  extractors: ResourceWellExtractor[]
 }
 
 export interface CreateRawInputRequest {
-  extractor_type: string
-  item: string
-  purity?: string
+  extractor_type: ExtractorType
+  item: Item
+  purity?: Purity
   quantity_per_min: number
+  pressurizer?: {
+    clock_speed: number
+  }
+  extractors?: Array<{
+    purity: Purity
+  }>
 }
 
-// Power Generator types
+// ===== Power generator types =====
+export interface GeneratorGroup {
+  number_of_generators: number
+  clock_speed: number
+}
+
 export interface PowerGenerator extends BaseEntity {
-  generator_type: string
-  fuel_type?: string
-  power_output: number
+  generator_type: GeneratorType
+  fuel_type: Item
+  groups: GeneratorGroup[]
 }
 
 export interface CreatePowerGeneratorRequest {
-  generator_type: string
-  fuel_type?: string
-  num_machines: number
-  overclock: number
+  generator_type: GeneratorType
+  fuel_type: Item
+  groups: GeneratorGroup[]
 }
 
-// Logistics response
-export interface Logistics extends BaseEntity {
+// ===== Logistics types =====
+export interface LogisticsItem {
+  item: Item
+  quantity_per_min: number
+}
+
+export interface LogisticsLine extends BaseEntity {
   from_factory: number
   to_factory: number
-  transport_type: TransportType
+  transport_type: LogisticsTransportType
   transport_id: string
   transport_name: string | null
   transport_details: string
-  items: ItemFlow[]
+  items: LogisticsItem[]
   total_quantity_per_min: number
 }
 
-// Logistics payloads
-export type ConveyorTier = 'Mk1' | 'Mk2' | 'Mk3' | 'Mk4' | 'Mk5' | 'Mk6'
-export type PipelineTier = 'Mk1' | 'Mk2'
-export type WagonCarType = 'Cargo' | 'Fluid'
-
 export interface BusConveyorPayload {
-  line_id?: string
+  line_id: string
   conveyor_type: ConveyorTier
   item: Item
   quantity_per_min: number
 }
 
 export interface BusPipelinePayload {
-  pipeline_id?: string
+  pipeline_id: string
   pipeline_type: PipelineTier
   item: Item
   quantity_per_min: number
 }
 
 export interface TrainWagonPayload {
-  wagon_id?: string
+  wagon_id: string
   wagon_type: WagonCarType
   item: Item
   quantity_per_min: number
@@ -427,12 +517,7 @@ export type CreateLogisticsRequest =
       wagons: TrainWagonPayload[]
     }
 
-export interface ItemFlow {
-  item: string
-  quantity_per_min: number
-}
-
-// Dashboard types
+// ===== Dashboard types =====
 export interface DashboardSummary {
   total_factories: number
   total_production_lines: number
@@ -442,32 +527,56 @@ export interface DashboardSummary {
   net_power: number
 }
 
+export type ItemBalanceState = 'overflow' | 'underflow' | 'balanced'
+
 export interface ItemBalance {
-  item: string
+  item: Item
   balance: number
-  state: 'overflow' | 'underflow' | 'balanced'
+  state: ItemBalanceState
 }
 
-// Game Data types
+export interface PowerSummaryFactoryStat {
+  factory_id: number
+  factory_name: string
+  generation: number
+  consumption: number
+  balance: number
+  generator_count: number
+  generator_types: GeneratorType[]
+}
+
+export interface PowerSummary {
+  total_generation: number
+  total_consumption: number
+  power_balance: number
+  has_surplus: boolean
+  has_deficit: boolean
+  is_balanced: boolean
+  factory_stats: PowerSummaryFactoryStat[]
+}
+
+// ===== Game data types =====
+export interface ItemQuantity {
+  item: Item
+  quantity: number
+}
+
 export interface Recipe {
   name: string
-  machine: string
+  machine: MachineType
   inputs: ItemQuantity[]
   outputs: ItemQuantity[]
 }
 
-export interface ItemQuantity {
-  item: string
-  quantity: number
-}
-
 export interface Machine {
-  name: string
+  name: MachineType
   base_power: number
   max_sommersloop: number
 }
 
-// API Response types
+export type ItemListResponse = Item[]
+
+// ===== API response helpers =====
 export interface ApiResponse<T> {
   data: T
   message?: string
@@ -496,12 +605,14 @@ import type {
   CreateRawInputRequest,
   PowerGenerator,
   CreatePowerGeneratorRequest,
-  Logistics,
+  LogisticsLine,
   CreateLogisticsRequest,
   DashboardSummary,
   ItemBalance,
+  PowerSummary,
   Recipe,
-  Machine
+  Machine,
+  ItemListResponse
 } from './types'
 
 // Factory endpoints
@@ -527,14 +638,17 @@ export const factoryApi = {
     apiClient.delete(`/factories/${id}`),
   
   // Production lines
+  // TODO: Backend endpoint pending implementation
   createProductionLine: (factoryId: number, data: CreateProductionLineRequest): Promise<ProductionLine> => 
     apiClient.post(`/factories/${factoryId}/production-lines`, data),
   
   // Raw inputs
+  // TODO: Backend endpoint pending implementation
   createRawInput: (factoryId: number, data: CreateRawInputRequest): Promise<RawInput> => 
     apiClient.post(`/factories/${factoryId}/raw-inputs`, data),
   
   // Power generators
+  // TODO: Backend endpoint pending implementation
   createPowerGenerator: (factoryId: number, data: CreatePowerGeneratorRequest): Promise<PowerGenerator> => 
     apiClient.post(`/factories/${factoryId}/power-generators`, data),
 }
@@ -542,17 +656,17 @@ export const factoryApi = {
 // Logistics endpoints
 export const logisticsApi = {
   // Get all logistics
-  getLogistics: (): Promise<Logistics[]> => 
+  getLogistics: (): Promise<LogisticsLine[]> =>
     apiClient.get('/logistics'),
-  
+
   // Get logistics by ID
-  getLogisticsLine: (id: number): Promise<Logistics> => 
+  getLogisticsLine: (id: number): Promise<LogisticsLine> =>
     apiClient.get(`/logistics/${id}`),
-  
+
   // Create logistics
-  createLogistics: (data: CreateLogisticsRequest): Promise<Logistics> => 
+  createLogistics: (data: CreateLogisticsRequest): Promise<LogisticsLine> =>
     apiClient.post('/logistics', data),
-  
+
   // Delete logistics
   deleteLogistics: (id: number): Promise<void> => 
     apiClient.delete(`/logistics/${id}`),
@@ -587,13 +701,13 @@ export const dashboardApi = {
   // Get summary
   getSummary: (): Promise<DashboardSummary> => 
     apiClient.get('/dashboard/summary'),
-  
+
   // Get item balances
   getItemBalances: (): Promise<ItemBalance[]> => 
     apiClient.get('/dashboard/items'),
-  
+
   // Get power statistics
-  getPowerStatistics: (): Promise<Record<string, number>> => 
+  getPowerStatistics: (): Promise<PowerSummary> =>
     apiClient.get('/dashboard/power'),
 }
 
@@ -602,11 +716,11 @@ export const gameDataApi = {
   // Get recipes
   getRecipes: (): Promise<Recipe[]> => 
     apiClient.get('/game-data/recipes'),
-  
+
   // Get items
-  getItems: (): Promise<string[]> => 
+  getItems: (): Promise<ItemListResponse> =>
     apiClient.get('/game-data/items'),
-  
+
   // Get machines
   getMachines: (): Promise<Machine[]> => 
     apiClient.get('/game-data/machines'),

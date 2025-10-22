@@ -125,15 +125,23 @@ export type PipelineCapacity = 'Mk1' | 'Mk2'
 export type WagonType = 'Cargo' | 'Fluid'
 
 // ===== Factory Types =====
+export interface FactoryItem {
+  item: Item
+  quantity: number
+}
+
 export interface Factory {
   id: number
   name: string
-  description?: string
-  notes?: string
+  description: string | null
+  notes: string | null
   production_lines: ProductionLine[]
   raw_inputs: RawInput[]
   power_generators: PowerGenerator[]
-  items: Record<Item, number> // Calculated inventory
+  items: FactoryItem[]
+  total_power_consumption: number
+  total_power_generation: number
+  power_balance: number
 }
 
 // ===== Production Line Types =====
@@ -159,8 +167,8 @@ export interface ProductionLineBlueprint {
 }
 
 export type ProductionLine = 
-  | { type: 'Recipe'; data: ProductionLineRecipe }
-  | { type: 'Blueprint'; data: ProductionLineBlueprint }
+  | { ProductionLineRecipe: ProductionLineRecipe }
+  | { ProductionLineBlueprint: ProductionLineBlueprint }
 
 // ===== Raw Input Types =====
 export interface ResourceWellPressurizer {
@@ -177,9 +185,9 @@ export interface RawInput {
   id: number
   extractor_type: ExtractorType
   item: Item
-  purity?: Purity
+  purity: Purity | null
   quantity_per_min: number
-  pressurizer?: ResourceWellPressurizer
+  pressurizer: ResourceWellPressurizer | null
   extractors: ResourceWellExtractor[]
 }
 
@@ -197,64 +205,44 @@ export interface PowerGenerator {
 }
 
 // ===== Logistics Types =====
-export interface Conveyor {
-  line_id: number
-  speed: ConveyorSpeed
+export type LogisticsTransportType = 'Truck' | 'Drone' | 'Bus' | 'Train'
+
+export interface LogisticsItem {
   item: Item
   quantity_per_min: number
 }
 
-export interface Pipeline {
-  pipeline_id: number
-  capacity: PipelineCapacity
+export interface BusConveyor {
+  line_id: string
+  conveyor_type: ConveyorSpeed
   item: Item
   quantity_per_min: number
 }
 
-export interface Bus {
-  bus_id: number
-  bus_name: string
-  lines: Conveyor[]
-  pipelines: Pipeline[]
+export interface BusPipeline {
+  pipeline_id: string
+  pipeline_type: PipelineCapacity
+  item: Item
+  quantity_per_min: number
 }
 
-export interface Wagon {
-  wagon_id: number
+export interface TrainWagon {
+  wagon_id: string
   wagon_type: WagonType
   item: Item
   quantity_per_min: number
 }
 
-export interface Train {
-  train_id: number
-  train_name: string
-  wagons: Wagon[]
-}
-
-export interface TruckTransport {
-  truck_id: number
-  item: Item
-  quantity_per_min: number
-}
-
-export interface DroneTransport {
-  drone_id: number
-  item: Item
-  quantity_per_min: number
-}
-
-export type TransportType =
-  | { type: 'Bus'; data: Bus }
-  | { type: 'Train'; data: Train }
-  | { type: 'Truck'; data: TruckTransport }
-  | { type: 'Drone'; data: DroneTransport }
-
-export interface LogisticsFlux {
+export interface LogisticsLine {
   id: number
   from_factory: number
   to_factory: number
-  transport_type: TransportType
+  transport_type: LogisticsTransportType
+  transport_id: string
+  transport_name: string | null
   transport_details: string
+  items: LogisticsItem[]
+  total_quantity_per_min: number
 }
 
 // ===== API Request/Response Types =====
@@ -266,13 +254,49 @@ export interface CreateFactoryRequest {
 export interface UpdateFactoryRequest {
   name?: string
   description?: string
+  notes?: string
 }
 
-export interface CreateLogisticsRequest {
+export interface TruckLogisticsPayload {
   from_factory: number
   to_factory: number
-  transport_type: string
-  transport_details: string
+  transport_type: 'Truck'
+  item: Item
+  quantity_per_min: number
+  truck_id?: string
+}
+
+export interface DroneLogisticsPayload {
+  from_factory: number
+  to_factory: number
+  transport_type: 'Drone'
+  item: Item
+  quantity_per_min: number
+  drone_id?: string
+}
+
+export interface BusLogisticsPayload {
+  from_factory: number
+  to_factory: number
+  transport_type: 'Bus'
+  bus_name?: string
+  conveyors: BusConveyor[]
+  pipelines: BusPipeline[]
+}
+
+export interface TrainLogisticsPayload {
+  from_factory: number
+  to_factory: number
+  transport_type: 'Train'
+  train_name?: string
+  wagons: TrainWagon[]
+}
+
+export type CreateLogisticsRequest =
+  | TruckLogisticsPayload
+  | DroneLogisticsPayload
+  | BusLogisticsPayload
+  | TrainLogisticsPayload
 }
 
 // ===== Dashboard Types =====
@@ -286,9 +310,29 @@ export interface DashboardSummary {
 }
 
 export interface ItemBalance {
-  item: string
+  item: Item
   balance: number
-  state: 'Overflow' | 'Underflow' | 'Balanced'
+  state: 'overflow' | 'underflow' | 'balanced'
+}
+
+export interface PowerSummaryFactoryStat {
+  factory_id: number
+  factory_name: string
+  generation: number
+  consumption: number
+  balance: number
+  generator_count: number
+  generator_types: GeneratorType[]
+}
+
+export interface PowerSummary {
+  total_generation: number
+  total_consumption: number
+  power_balance: number
+  has_surplus: boolean
+  has_deficit: boolean
+  is_balanced: boolean
+  factory_stats: PowerSummaryFactoryStat[]
 }
 
 // ===== Game Data Types =====
@@ -299,16 +343,13 @@ export interface RecipeInfo {
   outputs: Array<{ item: Item; quantity: number }>
 }
 
-export interface ItemInfo {
-  name: string
-  display_name: string
-}
-
 export interface MachineInfo {
-  type: MachineType
+  name: MachineType
   base_power: number
   max_sommersloop: number
 }
+
+export type ItemListResponse = Item[]
 ```
 
 **Total Size**: ~500 lines covering all backend DTOs and engine models
@@ -381,9 +422,9 @@ export const apiClient = new APIClient()
 import { apiClient } from './client'
 import type {
   Factory, CreateFactoryRequest, UpdateFactoryRequest,
-  LogisticsFlux, CreateLogisticsRequest,
-  DashboardSummary, ItemBalance,
-  RecipeInfo, ItemInfo, MachineInfo
+  LogisticsLine, CreateLogisticsRequest,
+  DashboardSummary, ItemBalance, PowerSummary,
+  RecipeInfo, ItemListResponse, MachineInfo
 } from './types'
 
 // ===== Factory Endpoints =====
@@ -399,10 +440,10 @@ export const factoryAPI = {
 
 // ===== Logistics Endpoints =====
 export const logisticsAPI = {
-  getAll: () => apiClient.get<LogisticsFlux[]>('/logistics'),
-  getById: (id: number) => apiClient.get<LogisticsFlux>(`/logistics/${id}`),
+  getAll: () => apiClient.get<LogisticsLine[]>('/logistics'),
+  getById: (id: number) => apiClient.get<LogisticsLine>(`/logistics/${id}`),
   create: (data: CreateLogisticsRequest) =>
-    apiClient.post<LogisticsFlux>('/logistics', data),
+    apiClient.post<LogisticsLine>('/logistics', data),
   delete: (id: number) => apiClient.delete(`/logistics/${id}`)
 }
 
@@ -410,13 +451,13 @@ export const logisticsAPI = {
 export const dashboardAPI = {
   getSummary: () => apiClient.get<DashboardSummary>('/dashboard/summary'),
   getItemBalances: () => apiClient.get<ItemBalance[]>('/dashboard/items'),
-  getPowerStats: () => apiClient.get<any>('/dashboard/power')
+  getPowerStats: () => apiClient.get<PowerSummary>('/dashboard/power')
 }
 
 // ===== Game Data Endpoints =====
 export const gameDataAPI = {
   getRecipes: () => apiClient.get<RecipeInfo[]>('/game-data/recipes'),
-  getItems: () => apiClient.get<ItemInfo[]>('/game-data/items'),
+  getItems: () => apiClient.get<ItemListResponse>('/game-data/items'),
   getMachines: () => apiClient.get<MachineInfo[]>('/game-data/machines')
 }
 ```
@@ -620,6 +661,9 @@ export function useDashboard() {
 +-------------------------------------------+
 ```
 
+- Truck/Drone variants show `Identifier` input (prefilled with suggested `TRK-###`/`DRN-###`) plus item + quantity fields.
+- Train variant collects `train_name` and dynamic wagon rows (`wagon_type`, item, quantity).
+
 **Validation Rules**:
 - OC: 0.000 - 250.000 (3 decimal places)
 - Sommersloop: 0, 1, 2, 4 (based on machine type)
@@ -694,18 +738,24 @@ export function useDashboard() {
 | Grouped by Transport Type                |
 +------------------------------------------+
 | ▼ Buses (3)                              |
-|   Bus-1: Factory A -> Factory B          |
+|   Main Conveyor Bus (BUS-1)              |
+|   Factory A → Factory B                  |
 |   - Conveyor Mk5: Iron Ore (780/min)     |
 |   - Pipeline Mk2: Water (450/min)        |
 |                                          |
 | ▼ Trains (2)                             |
-|   Train-1: Iron Express (Factory A -> B) |
+|   Northern Line (TRN-1)                  |
+|   Factory A → Factory B                  |
 |   - Wagon 1: Iron Ore (500/min)          |
 |   - Wagon 2: Coal (300/min)              |
 +------------------------------------------+
 | [+ Create Logistics Line]                |
 +------------------------------------------+
 ```
+
+- Accordion headers display `transport_name ?? transport_id` alongside factory endpoints.
+- A "Details" toggle reveals the raw `transport_details` string for debugging.
+- Totals row summarizes `total_quantity_per_min` per transport group.
 
 **Create Logistics Form**:
 ```

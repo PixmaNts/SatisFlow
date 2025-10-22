@@ -178,6 +178,55 @@ pub trait Transport {
 - Lazy-loaded item database
 - ItemParseError for validation
 
+#### PowerGenerator (`models/power_generator.rs`)
+
+**Structure**:
+
+```rust
+pub struct PowerGenerator {
+    pub id: u64,
+    pub generator_type: GeneratorType,
+    pub fuel: Option<Item>,
+    pub num_generators: u32,
+    pub overclock: f32,
+}
+
+pub enum GeneratorType {
+    BiomassBurner,
+    CoalGenerator,
+    FuelGenerator,
+    NuclearPowerPlant,
+    GeothermalGenerator,
+}
+```
+
+**Purpose**: Power generation system separate from production lines
+
+**Power Generation Mechanics**:
+
+- **Biomass Burner**: 30 MW base, uses solid biofuel (Biomass, Solid Biofuel, etc.)
+- **Coal Generator**: 75 MW base, uses Coal or Compacted Coal
+- **Fuel Generator**: 150 MW base, uses Fuel, Turbofuel, or Liquid Biofuel
+- **Nuclear Power Plant**: 2500 MW base, uses Uranium/Plutonium/Ficsonium Fuel Rods (produces waste)
+- **Geothermal Generator**: 200 MW fixed (no fuel, no overclocking)
+
+**Important Notes**:
+
+- Power generators have different overclocking behavior than consumers
+- Fuel consumption rate scales proportionally with power production
+- Overclocking doesn't increase fuel efficiency (burns fuel faster/slower)
+- Nuclear generators produce waste items (Uranium/Plutonium Waste)
+
+**Power Calculation**:
+```
+Power = Base Power × (overclock/100) × num_generators
+```
+
+**Fuel Consumption**:
+```
+Fuel Rate = Base Fuel Rate × fuel_multiplier × (overclock/100) × num_generators
+```
+
 #### Raw Input (`models/raw_input.rs`)
 
 **Structure**:

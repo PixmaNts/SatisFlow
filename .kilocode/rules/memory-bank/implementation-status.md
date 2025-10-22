@@ -1,6 +1,6 @@
-# Satisflow Implementation Status
+# Satisfflow Implementation Status
 
-**Last Updated**: 2025-10-20
+**Last Updated**: 2025-10-22
 
 ## Phase 0: Core Engine Foundation ✅ COMPLETE
 
@@ -199,8 +199,6 @@
 - [x] Health check integration
 - [x] Deployment scripts (shell + batch)
 
-**Documentation**: Complete backend guide (1191 lines) in docs/BACKEND_GUIDE.md
-
 ## Phase 3: Frontend Foundation ✅ COMPLETE
 
 **Completed**: 2025-10-20
@@ -226,24 +224,287 @@
 - [x] Production build optimization
 - [x] Development scripts (dev, build, test, lint)
 
-### Documentation ✅
-
-- [x] Complete implementation plan (380+ lines)
-- [x] Backend implementation guide (1191 lines)
-- [x] Frontend implementation guide (1446 lines)
-- [x] API endpoint documentation
-- [x] Deployment instructions
-- [x] Development workflow examples
-
 **Status**: Project scaffolded, ready for component implementation
 **Next Step**: Implement Vue components and views
 
-**Documentation**:
-- docs/IMPLEMENTATION_PLAN.md
-- docs/BACKEND_GUIDE.md
-- docs/FRONTEND_GUIDE.md
+## Phase 4: Frontend Implementation 🚧 IN PROGRESS
 
-## Phase 4: WASM Integration 📅 OPTIONAL
+### Component Architecture
+
+**Project Structure**:
+```
+frontend/src/
+├── components/
+│   ├── layout/
+│   │   ├── MainNav.vue          # Top navigation bar
+│   │   ├── PageHeader.vue       # Page title and actions
+│   │   └── AppLayout.vue        # Main layout wrapper
+│   │
+│   ├── ui/
+│   │   ├── Button.vue           # Reusable button component
+│   │   ├── Modal.vue            # Modal dialog
+│   │   ├── LoadingSpinner.vue   # Loading indicator
+│   │   ├── Tabs.vue             # Tab navigation
+│   │   ├── DataTable.vue        # Sortable/filterable table
+│   │   ├── ConfirmDialog.vue    # Confirmation dialog
+│   │   └── Alert.vue            # Alert/notification
+│   │
+│   ├── forms/
+│   │   ├── FormInput.vue        # Text input with validation
+│   │   ├── FormSelect.vue       # Dropdown select
+│   │   ├── FormNumber.vue       # Number input (OC, Sommersloop)
+│   │   ├── ItemSelector.vue     # Item type selector
+│   │   ├── RecipeSelector.vue   # Recipe selector
+│   │   └── ValidationMessage.vue # Error message display
+│   │
+│   ├── factory/
+│   │   ├── FactorySelector.vue       # Factory dropdown
+│   │   ├── ProductionLineList.vue    # Production line table
+│   │   ├── ProductionLineForm.vue    # Create/edit production line
+│   │   ├── MachineGroupEditor.vue    # Machine group configuration
+│   │   ├── RawInputList.vue          # Raw input table
+│   │   ├── RawInputForm.vue          # Create/edit raw input
+│   │   ├── PowerGeneratorList.vue    # Power generator table
+│   │   └── PowerGeneratorForm.vue    # Create/edit generator
+│   │
+│   ├── logistics/
+│   │   ├── LogisticsLineList.vue    # Logistics table
+│   │   ├── LogisticsLineForm.vue    # Create/edit logistics
+│   │   ├── TransportSelector.vue    # Transport type selector
+│   │   ├── BusEditor.vue            # Bus configuration
+│   │   └── TrainEditor.vue          # Train configuration
+│   │
+│   └── dashboard/
+│       ├── SummaryCards.vue         # Summary statistics
+│       ├── ItemBalanceTable.vue     # Item balance table
+│       ├── PowerStatsCard.vue       # Power statistics
+│       └── ItemBalanceFilters.vue   # Filter controls
+│
+├── views/
+│   ├── DashboardView.vue         # Dashboard main view
+│   ├── FactoryView.vue           # Factory main view
+│   └── LogisticsView.vue         # Logistics main view
+│
+├── composables/
+│   ├── useFactory.ts             # Factory CRUD operations
+│   ├── useLogistics.ts           # Logistics CRUD operations
+│   ├── useDashboard.ts           # Dashboard data fetching
+│   ├── useGameData.ts            # Game data (recipes, items)
+│   ├── useValidation.ts          # Form validation logic
+│   └── useLocalStorage.ts        # Local storage persistence
+│
+└── stores/
+    ├── factory.ts                # Pinia store for factories
+    ├── logistics.ts              # Pinia store for logistics
+    ├── gameData.ts               # Pinia store for game data
+    └── preferences.ts            # Pinia store for user prefs
+```
+
+### Implementation Roadmap
+
+#### Phase 4.1: Foundation Layer (Week 1)
+- [x] Vite configuration with API proxy
+- [ ] TypeScript type definitions (complete ~500 lines)
+- [ ] Axios API client with interceptors
+- [ ] API endpoint functions
+- [ ] Router setup with views
+- [ ] Base UI components (Button, Modal, LoadingSpinner)
+
+#### Phase 4.2: Core Features (Week 2-3)
+- [ ] Factory store and composables
+- [ ] Dashboard view implementation
+- [ ] Factory view with tabs
+- [ ] Production line CRUD
+- [ ] Raw input CRUD
+- [ ] Power generator CRUD
+
+#### Phase 4.3: Logistics (Week 4)
+- [ ] Logistics store and composables
+- [ ] Logistics view implementation
+- [ ] Transport type forms (Bus, Train, Truck, Drone)
+- [ ] Validation system
+
+#### Phase 4.4: Polish (Week 5)
+- [ ] Error handling and user feedback
+- [ ] Local storage integration
+- [ ] UI/UX improvements
+- [ ] Accessibility (ARIA labels, keyboard navigation)
+
+#### Phase 4.5: Testing (Week 6)
+- [ ] Vitest unit tests
+- [ ] Playwright E2E tests
+- [ ] Performance optimization
+- [ ] Documentation
+
+### Key Features to Implement
+
+#### Dashboard View
+- **Route**: `/`
+- **Components**: SummaryCards, ItemBalanceTable, ItemBalanceFilters
+- **Features**:
+  - 6 summary cards (factories, production lines, logistics, power stats)
+  - Sortable/filterable item balance table
+  - Real-time updates via polling (5s interval)
+  - Filters: Balance state, Factory, Item type
+
+#### Factory View
+- **Route**: `/factory`
+- **Components**: FactorySelector, Tabs (Production/Raw/Power)
+- **Features**:
+  - Factory dropdown selector
+  - Three tabs for different factory aspects
+  - Production Line tab: Create/edit/delete production lines
+  - Raw Input tab: Manage resource extractors
+  - Power Generation tab: Manage power generators
+  - Real-time power and item calculations
+
+#### Logistics View
+- **Route**: `/logistics`
+- **Components**: LogisticsLineList, LogisticsLineForm, TransportEditors
+- **Features**:
+  - Grouped display by transport type
+  - Filters: Transport type, Source, Destination, Item
+  - Support for all 4 transport types
+  - Multi-item transport configuration (Bus, Train)
+
+### Validation System
+
+**Validation Rules**:
+- Overclock: 0.000 - 250.000 (3 decimal places)
+- Sommersloop: 0, 1, 2, 4 (based on machine type)
+- Machine count > 0
+- Factory name required
+- Transport endpoints must exist
+
+**Implementation**:
+```typescript
+// composables/useValidation.ts
+export function useValidation() {
+  function validateOverclock(value: number): string | null {
+    if (value < 0 || value > 250) {
+      return 'Overclock must be between 0.000 and 250.000'
+    }
+    return null
+  }
+  
+  function validateSommersloop(value: number, machineType: MachineType): string | null {
+    const limits = { Constructor: 1, Assembler: 2, Manufacturer: 4 }
+    const max = limits[machineType] || 0
+    if (value > max) {
+      return `${machineType} supports max ${max} Sommersloop`
+    }
+    return null
+  }
+  
+  return { validateOverclock, validateSommersloop }
+}
+```
+
+### State Management (Pinia)
+
+**Factory Store**:
+```typescript
+export const useFactoryStore = defineStore('factory', () => {
+  const factories = ref<Factory[]>([])
+  const currentFactoryId = ref<number | null>(null)
+  const loading = ref(false)
+  const error = ref<Error | null>(null)
+  
+  const currentFactory = computed(() => 
+    factories.value.find(f => f.id === currentFactoryId.value)
+  )
+  
+  async function fetchAll() { /* ... */ }
+  async function create(request: CreateFactoryRequest) { /* ... */ }
+  async function update(id: number, request: UpdateFactoryRequest) { /* ... */ }
+  async function remove(id: number) { /* ... */ }
+  
+  return { factories, currentFactoryId, currentFactory, loading, error, fetchAll, create, update, remove }
+})
+```
+
+### Local Storage Integration
+
+**Preferences Store**:
+- Selected factory ID
+- Dashboard filters (balance state, factory, item)
+- Factory view active tab
+- Logistics view filters
+
+**Implementation**:
+```typescript
+export const usePreferencesStore = defineStore('preferences', () => {
+  const selectedFactoryId = ref<number | null>(null)
+  const dashboardFilters = ref({ balanceState: null, factoryId: null, itemType: null })
+  
+  function loadFromStorage() {
+    const saved = localStorage.getItem('satisflow-preferences')
+    if (saved) {
+      const data = JSON.parse(saved)
+      selectedFactoryId.value = data.selectedFactoryId
+      dashboardFilters.value = data.dashboardFilters
+    }
+  }
+  
+  watch([selectedFactoryId, dashboardFilters], () => {
+    localStorage.setItem('satisflow-preferences', JSON.stringify({
+      selectedFactoryId: selectedFactoryId.value,
+      dashboardFilters: dashboardFilters.value
+    }))
+  }, { deep: true })
+  
+  loadFromStorage()
+  
+  return { selectedFactoryId, dashboardFilters }
+})
+```
+
+### Testing Strategy
+
+**Vitest Unit Tests**:
+- Coverage targets: Composables (90%+), Stores (85%+), Validation (100%)
+- Test utilities in `src/test-utils/`
+- Mock API responses
+- Component unit tests
+
+**Playwright E2E Tests**:
+- Factory creation flow
+- Logistics creation (all transport types)
+- Dashboard filtering
+- Power generation calculations
+- Validation error handling
+
+**Example E2E Test**:
+```typescript
+test('create production line', async ({ page }) => {
+  await page.goto('/factory')
+  await page.selectOption('[data-test="factory-selector"]', '1')
+  await page.click('[data-test="create-production-line"]')
+  await page.selectOption('[data-test="recipe-select"]', 'IronIngot')
+  await page.fill('[data-test="name-input"]', 'Iron Smelting')
+  await page.fill('[data-test="machines-input"]', '10')
+  await page.fill('[data-test="oc-input"]', '150')
+  await page.click('[data-test="submit-btn"]')
+  await expect(page.locator('text=Iron Smelting')).toBeVisible()
+})
+```
+
+### Estimated File Counts and Sizes
+
+| Category | Files | Est. Lines |
+|----------|-------|------------|
+| Types | 1 | 500 |
+| API Layer | 2 | 300 |
+| Stores | 4 | 800 |
+| Composables | 6 | 600 |
+| UI Components | 10 | 1500 |
+| Form Components | 6 | 1200 |
+| Feature Components | 15 | 3000 |
+| Views | 3 | 1500 |
+| Tests | 30 | 2000 |
+| **Total** | **77** | **~11,400** |
+
+## Phase 5: WASM Integration 📅 OPTIONAL
 
 ### Prerequisites
 
@@ -263,38 +524,6 @@
 **Rationale**: Current client-server architecture provides better debugging, multi-user support, and standard web patterns. WASM can be added later for offline mode if needed.
 **Estimated Effort**: 1-2 weeks
 
-## Phase 5: Vue.js UI Implementation 🚧 NEXT
-
-See [`brief.md`](.kilocode/rules/memory-bank/brief.md) and [`docs/FRONTEND_GUIDE.md`](../../../docs/FRONTEND_GUIDE.md) for specifications.
-
-### Core Views (To Implement)
-
-- [ ] Dashboard view
-  - [ ] Summary cards component
-  - [ ] Item balance table with filters
-  - [ ] Real-time updates (polling)
-- [ ] Factory view
-  - [ ] Factory selector dropdown
-  - [ ] Production lines tab with CRUD
-  - [ ] Raw inputs tab with CRUD
-  - [ ] Power generation tab with CRUD
-  - [ ] Create/edit modals
-- [ ] Logistics view
-  - [ ] Logistics list with grouping
-  - [ ] Transport type filters
-  - [ ] Create/edit logistics modals
-
-### UI Components (To Implement)
-
-- [ ] Layout components (MainNav, PageHeader)
-- [ ] Reusable UI (Button, Modal, Loading, Tabs)
-- [ ] Form components with validation
-- [ ] Table components with sorting/filtering
-- [ ] API integration composables
-
-**Status**: Foundation ready, awaiting implementation
-**Estimated Effort**: 3-4 weeks
-
 ## Known Issues
 
 ### Critical 🔴
@@ -305,32 +534,35 @@ None currently
 
 1. **No persistence**: Users cannot save/load their factory designs
 2. **Sequential IDs**: Risk of collisions in distributed scenarios
+3. **Factory deletion cascade**: Logistics lines are deleted but no UI confirmation
 
 ### Minor 🟡
 
 1. **Limited error messages**: Errors lack context for debugging
 2. **No overflow warnings**: System doesn't warn about item imbalances
-3. **Missing factory deletion**: Cannot remove factories once created
+3. **Limited real-time updates**: Dashboard polling interval could be configurable
+4. **No data export**: Cannot export factory configurations to share
 
 ## Technical Debt
 
-1. **Documentation**: Missing inline docs for many public APIs
-2. **Integration tests**: Only unit tests exist, no end-to-end tests
-3. **Examples**: No example usage in codebase
-4. **Benchmarks**: No performance benchmarks established
-5. **CI/CD**: No automated testing pipeline
+1. **Documentation**: Some inline docs missing for complex functions
+2. **Benchmarks**: No performance benchmarks established
+3. **CI/CD**: No automated testing pipeline
+4. **Persistence**: No actual file I/O implementation (only serialization)
+5. **Blueprint UI**: ProductionLineBlueprint exists but no UI for import/export
 
 ## Next Steps (Recommended Order)
 
-1. **Build persistence layer** - Enables save/load functionality
-2. **Improve ID management** - Prevents future bugs
-3. **Create integration tests** - Validates system behavior
-4. **Add WASM support** - Prepares for UI integration
-5. **Start Vue.js UI** - Makes tool usable by end users
+1. **Implement Vue.js UI components** - Start with Dashboard view
+2. **Add persistence layer** - Enable save/load functionality
+3. **Improve ID management** - Replace sequential IDs with UUIDs
+4. **Add E2E tests** - Playwright test coverage for critical workflows
+5. **Performance optimization** - Add caching for dashboard aggregations
+6. **Blueprint import/export UI** - Enable sharing of production configurations
 
 ## Success Metrics
 
-### Phase 0 (Complete)
+### Phase 0 (Complete) ✅
 
 - ✅ All core data models implemented
 - ✅ 30+ passing unit tests
@@ -344,14 +576,17 @@ None currently
 - [x] 160+ passing tests
 - [x] Zero compiler warnings
 
-### Phase 2 (Target)
+### Phase 2 (Backend - Complete) ✅
 
-- [ ] WASM build < 500KB
-- [ ] API calls < 10ms (90th percentile)
-- [ ] No panics in production
+- ✅ API calls functional
+- ✅ No panics in production (comprehensive error handling)
+- ✅ CORS configured
+- ✅ Docker deployment ready
 
-### Phase 3 (Target)
+### Phase 3 (Frontend - In Progress) 🚧
 
-- [ ] Full CRUD for all entities
+- [ ] Full CRUD UI for all entities
 - [ ] Responsive UI (< 100ms interactions)
 - [ ] Playwright E2E test coverage
+- [ ] Local storage for preferences
+- [ ] Real-time dashboard updates
