@@ -1,9 +1,5 @@
 // crates/satisflow-server/src/main.rs
-use axum::{
-    http::Method,
-    routing::get,
-    Router,
-};
+use axum::{http::Method, routing::get, Router};
 use serde_json::json;
 use std::env;
 use std::net::SocketAddr;

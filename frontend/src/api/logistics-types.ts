@@ -1,6 +1,15 @@
 // Extended types for logistics forms and UI
 
-import type { TransportType, Item } from './types'
+import type {
+  TransportType,
+  Item,
+  BusConveyorPayload,
+  BusPipelinePayload,
+  TrainWagonPayload,
+  ConveyorTier,
+  PipelineTier,
+  WagonCarType,
+} from './types'
 
 // Base transport configuration
 export interface BaseTransportConfig {
@@ -10,33 +19,35 @@ export interface BaseTransportConfig {
 // Bus transport configuration
 export interface BusConfig extends BaseTransportConfig {
   transport_type: 'Bus'
+  bus_name?: string
   conveyors: ConveyorConfig[]
   pipelines: PipelineConfig[]
 }
 
-export interface ConveyorConfig {
+export interface ConveyorConfig extends BusConveyorPayload {
   line_id: string
+  conveyor_type: ConveyorTier
   item: Item
-  conveyor_type: 'Mk1' | 'Mk2' | 'Mk3' | 'Mk4' | 'Mk5' | 'Mk6'
   quantity_per_min: number
 }
 
-export interface PipelineConfig {
+export interface PipelineConfig extends BusPipelinePayload {
   pipeline_id: string
+  pipeline_type: PipelineTier
   item: Item
-  pipeline_type: 'Mk1' | 'Mk2'
   quantity_per_min: number
 }
 
 // Train transport configuration
 export interface TrainConfig extends BaseTransportConfig {
   transport_type: 'Train'
+  train_name?: string
   wagons: WagonConfig[]
 }
 
-export interface WagonConfig {
+export interface WagonConfig extends TrainWagonPayload {
   wagon_id: string
-  wagon_type: 'Cargo' | 'Fluid'
+  wagon_type: WagonCarType
   item: Item
   quantity_per_min: number
 }

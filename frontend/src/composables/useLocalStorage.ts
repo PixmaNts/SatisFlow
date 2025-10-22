@@ -1,4 +1,4 @@
-import { ref, watch, computed, onUnmounted } from 'vue'
+import { ref, watch, onUnmounted, getCurrentInstance } from 'vue'
 
 /**
  * Options for useLocalStorage composable
@@ -71,6 +71,7 @@ export function useLocalStorage<T>(
   const storedValue = ref<T>(defaultValue)
   const error = ref<Error | null>(null)
   const isAvailable = ref<boolean>(true)
+  const exists = ref<boolean>(false)
 
   // Check if localStorage is available
   const checkLocalStorageAvailability = (): boolean => {
@@ -79,7 +80,12 @@ export function useLocalStorage<T>(
       localStorage.setItem(testKey, 'test')
       localStorage.removeItem(testKey)
       return true
-    } catch {
+    } catch (err) {
+      const availabilityError =
+        err instanceof Error ? err : new Error(String(err))
+      error.value = availabilityError
+      exists.value = false
+      onError(availabilityError)
       return false
     }
   }
@@ -87,12 +93,15 @@ export function useLocalStorage<T>(
   // Read from localStorage
   const read = (): T => {
     if (!isAvailable.value) {
+      exists.value = false
       return defaultValue
     }
 
     try {
       const rawValue = localStorage.getItem(key)
-      if (rawValue === null) {
+      const hasValue = rawValue !== null
+      exists.value = hasValue
+      if (!hasValue) {
         return defaultValue
       }
       return serializer.read(rawValue)
@@ -111,6 +120,7 @@ export function useLocalStorage<T>(
 
     try {
       localStorage.setItem(key, serializer.write(value))
+      exists.value = true
       error.value = null
     } catch (err) {
       error.value = err instanceof Error ? err : new Error(String(err))
@@ -126,27 +136,26 @@ export function useLocalStorage<T>(
 
     try {
       localStorage.removeItem(key)
+      // Temporarily stop the main watcher to prevent it from writing back the default value
+      stopWatcher()
       storedValue.value = defaultValue
+      exists.value = false
       error.value = null
+      // Restart the watcher
+      stopWatcher = setupWatcher()
     } catch (err) {
       error.value = err instanceof Error ? err : new Error(String(err))
       onError(error.value)
     }
   }
 
-  // Check if key exists in localStorage
-  const exists = computed((): boolean => {
-    if (!isAvailable.value) {
-      return false
-    }
-    return localStorage.getItem(key) !== null
-  })
-
   // Initialize value
   const initialize = () => {
     isAvailable.value = checkLocalStorageAvailability()
     if (isAvailable.value) {
       storedValue.value = read()
+    } else {
+      exists.value = false
     }
   }
 
@@ -163,12 +172,14 @@ export function useLocalStorage<T>(
         try {
           const newValue = serializer.read(event.newValue)
           storedValue.value = newValue
+          exists.value = true
         } catch (err) {
           error.value = err instanceof Error ? err : new Error(String(err))
           onError(error.value)
         }
       } else if (event.key === key && event.newValue === null) {
         storedValue.value = defaultValue
+        exists.value = false
       }
     }
 
@@ -183,25 +194,39 @@ export function useLocalStorage<T>(
   }
 
   // Watch for changes and sync to localStorage
-  const stopWatcher = watch(
-    storedValue,
-    (newValue) => {
-      if (isAvailable.value) {
-        write(newValue)
-      }
-    },
-    { deep: true }
-  )
+  const setupWatcher = () => {
+    return watch(
+      storedValue,
+      (newValue) => {
+        if (isAvailable.value) {
+          write(newValue)
+        }
+      },
+      { deep: true }
+    )
+  }
+
+  let stopWatcher = setupWatcher()
 
   // Initialize and setup listeners
   initialize()
   setupStorageListener()
 
-  // Cleanup on unmount
-  onUnmounted(() => {
-    cleanupStorageListener()
-    stopWatcher()
-  })
+  // Cleanup on unmount (only if in a Vue component context)
+  if (typeof window !== 'undefined' && window.document) {
+    try {
+      // Check if we're in a Vue component context
+      const instance = getCurrentInstance()
+      if (instance) {
+        onUnmounted(() => {
+          cleanupStorageListener()
+          stopWatcher()
+        })
+      }
+    } catch {
+      // Not in a Vue component context, skip lifecycle hooks
+    }
+  }
 
   return {
     /**

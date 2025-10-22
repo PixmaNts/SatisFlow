@@ -326,53 +326,82 @@ const handleCancel = () => {
 }
 
 const convertToApiRequest = (formData: LogisticsFormData): CreateLogisticsRequest => {
-  // Convert the complex transport config to the simple API format
-  // This is a simplified conversion - in a real implementation, you'd
-  // serialize the full transport config to JSON
   const config = formData.transport_config
 
-  let transportDetails = ''
-
   switch (config.transport_type) {
-    case 'Bus':
+    case 'Bus': {
       const busConfig = config as BusConfig
-      transportDetails = JSON.stringify({
-        conveyors: busConfig.conveyors,
-        pipelines: busConfig.pipelines
-      })
-      break
+      const conveyors = busConfig.conveyors
+        .filter(conveyor => conveyor.item && conveyor.quantity_per_min > 0)
+        .map(conveyor => ({
+          line_id: conveyor.line_id,
+          conveyor_type: conveyor.conveyor_type,
+          item: conveyor.item,
+          quantity_per_min: conveyor.quantity_per_min
+        }))
 
-    case 'Train':
+      const pipelines = busConfig.pipelines
+        .filter(pipeline => pipeline.item && pipeline.quantity_per_min > 0)
+        .map(pipeline => ({
+          pipeline_id: pipeline.pipeline_id,
+          pipeline_type: pipeline.pipeline_type,
+          item: pipeline.item,
+          quantity_per_min: pipeline.quantity_per_min
+        }))
+
+      return {
+        from_factory: formData.from_factory,
+        to_factory: formData.to_factory,
+        transport_type: 'Bus',
+        bus_name: busConfig.bus_name,
+        conveyors,
+        pipelines
+      }
+    }
+    case 'Train': {
       const trainConfig = config as TrainConfig
-      transportDetails = JSON.stringify({
-        wagons: trainConfig.wagons
-      })
-      break
+      const wagons = trainConfig.wagons
+        .filter(wagon => wagon.item && wagon.quantity_per_min > 0)
+        .map(wagon => ({
+          wagon_id: wagon.wagon_id,
+          wagon_type: wagon.wagon_type,
+          item: wagon.item,
+          quantity_per_min: wagon.quantity_per_min
+        }))
 
-    case 'Truck':
+      return {
+        from_factory: formData.from_factory,
+        to_factory: formData.to_factory,
+        transport_type: 'Train',
+        train_name: trainConfig.train_name,
+        wagons
+      }
+    }
+    case 'Truck': {
       const truckConfig = config as TruckConfig
-      transportDetails = JSON.stringify({
+      return {
+        from_factory: formData.from_factory,
+        to_factory: formData.to_factory,
+        transport_type: 'Truck',
         item: truckConfig.item,
         quantity_per_min: truckConfig.quantity_per_min,
-        truck_id: truckConfig.truck_id
-      })
-      break
-
-    case 'Drone':
+        truck_id: truckConfig.truck_id || undefined
+      }
+    }
+    case 'Drone': {
       const droneConfig = config as DroneConfig
-      transportDetails = JSON.stringify({
+      return {
+        from_factory: formData.from_factory,
+        to_factory: formData.to_factory,
+        transport_type: 'Drone',
         item: droneConfig.item,
         quantity_per_min: droneConfig.quantity_per_min,
-        drone_id: droneConfig.drone_id
-      })
-      break
-  }
-
-  return {
-    from_factory: formData.from_factory,
-    to_factory: formData.to_factory,
-    transport_type: config.transport_type.toLowerCase() as 'truck' | 'drone',
-    transport_details: transportDetails
+        drone_id: droneConfig.drone_id || undefined
+      }
+    }
+    default: {
+      throw new Error(`Unsupported transport type: ${(config as { transport_type: string }).transport_type}`)
+    }
   }
 }
 

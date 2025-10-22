@@ -447,17 +447,83 @@ Get a specific logistics line by ID.
 
 Create a new logistics line.
 
-**Request Body**:
+**Request Body Examples**:
+
+*Truck*
 ```json
 {
   "from_factory": 1,
   "to_factory": 2,
-  "transport_type": "truck",
-  "transport_details": "Simple truck transport"
+  "transport_type": "Truck",
+  "item": "IronOre",
+  "quantity_per_min": 60.0,
+  "truck_id": "TRK-001"
 }
 ```
 
-**Supported transport types**: `"truck"`, `"drone"`
+*Drone*
+```json
+{
+  "from_factory": 1,
+  "to_factory": 2,
+  "transport_type": "Drone",
+  "item": "IronPlate",
+  "quantity_per_min": 30.0,
+  "drone_id": "DRN-003"
+}
+```
+
+*Bus*
+```json
+{
+  "from_factory": 1,
+  "to_factory": 3,
+  "transport_type": "Bus",
+  "bus_name": "Main Conveyor Bus",
+  "conveyors": [
+    {
+      "line_id": "CV-001",
+      "conveyor_type": "Mk3",
+      "item": "IronPlate",
+      "quantity_per_min": 120.0
+    }
+  ],
+  "pipelines": [
+    {
+      "pipeline_id": "PL-001",
+      "pipeline_type": "Mk1",
+      "item": "Water",
+      "quantity_per_min": 240.0
+    }
+  ]
+}
+```
+
+*Train*
+```json
+{
+  "from_factory": 2,
+  "to_factory": 4,
+  "transport_type": "Train",
+  "train_name": "Northern Line",
+  "wagons": [
+    {
+      "wagon_id": "WG-001",
+      "wagon_type": "Cargo",
+      "item": "CopperSheet",
+      "quantity_per_min": 200.0
+    },
+    {
+      "wagon_id": "WG-002",
+      "wagon_type": "Fluid",
+      "item": "Water",
+      "quantity_per_min": 300.0
+    }
+  ]
+}
+```
+
+**Supported transport types**: `"Truck"`, `"Drone"`, `"Bus"`, `"Train"`
 
 **Response**: `LogisticsResponse` with HTTP 201
 
@@ -640,7 +706,7 @@ Transport IDs follow these patterns:
 
 ### Transport Details
 
-The `transport_details` field contains a debug representation of the transport type and is primarily for debugging purposes.
+The `transport_details` field contains a JSON snapshot of the submitted transport payload and is primarily returned for debugging or auditing purposes.
 
 ## Power System Details
 

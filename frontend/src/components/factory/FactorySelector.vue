@@ -28,7 +28,7 @@
         class="factory-select"
         @change="handleFactoryChange"
       >
-        <option value="">Choose a factory...</option>
+        <option :value="null">Choose a factory...</option>
         <option
           v-for="factory in factories"
           :key="factory.id"
@@ -137,14 +137,28 @@ const newFactory = ref<CreateFactoryRequest>({
 // Computed
 const factories = computed(() => factoryStore.factories)
 const currentFactory = computed(() => factoryStore.currentFactory)
-const selectedFactoryId = ref<number | ''>('')
+const selectedFactoryId = ref<number | null | string>(null)
 
 // Methods
 const handleFactoryChange = () => {
-  if (selectedFactoryId.value) {
-    factoryStore.setCurrentFactory(selectedFactoryId.value)
-    preferencesStore.setSelectedFactoryId(selectedFactoryId.value)
+  const rawValue = selectedFactoryId.value
+
+  if (rawValue === null || rawValue === undefined || rawValue === '' || rawValue === 'null') {
+    selectedFactoryId.value = null
+    factoryStore.setCurrentFactory(null)
+    preferencesStore.setSelectedFactoryId(null)
+    return
+  }
+
+  const parsedValue =
+    typeof rawValue === 'number' ? rawValue : Number(rawValue)
+
+  if (Number.isFinite(parsedValue)) {
+    selectedFactoryId.value = parsedValue
+    factoryStore.setCurrentFactory(parsedValue)
+    preferencesStore.setSelectedFactoryId(parsedValue)
   } else {
+    selectedFactoryId.value = null
     factoryStore.setCurrentFactory(null)
     preferencesStore.setSelectedFactoryId(null)
   }
@@ -188,7 +202,7 @@ const clearError = () => {
 
 // Watch for current factory changes
 watch(() => factoryStore.currentFactoryId, (newId) => {
-  selectedFactoryId.value = newId || ''
+  selectedFactoryId.value = newId ?? null
 }, { immediate: true })
 
 // Load factories on mount

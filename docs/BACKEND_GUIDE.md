@@ -468,182 +468,60 @@ pub fn routes() -> Router<AppState> {
 
 ### 5. Logistics Handlers (handlers/logistics.rs)
 
-Implement logistics-related endpoints:
+Implement logistics-related endpoints. The server now accepts *structured* payloads for each
+transport type and converts them into the appropriate `TransportType` variant before storing the
+new `LogisticsFlux` in the engine.
 
 ```rust
-// crates/satisflow-server/src/handlers/logistics.rs
-use axum::{
-    extract::{Path, State},
-    http::StatusCode,
-    response::IntoResponse,
-    Json,
-};
-use serde::{Deserialize, Serialize};
-
-use crate::{error::{AppError, Result}, state::AppState};
-use satisflow_engine::models::{LogisticsFlux, TransportType};
-
+// crates/satisflow-server/src/handlers/logistics.rs (excerpt)
 #[derive(Serialize, Deserialize)]
 pub struct CreateLogisticsRequest {
     pub from_factory: u64,
     pub to_factory: u64,
-    pub transport_type: String, // "bus", "train", "truck", "drone"
-    pub transport_details: String,
+    #[serde(flatten)]
+    pub transport: CreateLogisticsTransport,
 }
 
-#[derive(Serialize)]
-pub struct LogisticsResponse {
-    pub id: u64,
-    pub from_factory: u64,
-    pub to_factory: u64,
-    pub transport_type: String,
-    pub transport_details: String,
-    pub items: Vec<ItemFlowResponse>,
-}
-
-#[derive(Serialize)]
-pub struct ItemFlowResponse {
-    pub item: String,
-    pub quantity_per_min: f32,
-}
-
-impl From<&LogisticsFlux> for LogisticsResponse {
-    fn from(logistics: &LogisticsFlux) -> Self {
-        Self {
-            id: logistics.id,
-            from_factory: logistics.from_factory,
-            to_factory: logistics.to_factory,
-            transport_type: format!("{:?}", logistics.transport_type),
-            transport_details: logistics.transport_details.clone(),
-            items: logistics.transport_type.get_items()
-                .into_iter()
-                .map(|item_flow| ItemFlowResponse {
-                    item: format!("{:?}", item_flow.item),
-                    quantity_per_min: item_flow.quantity_per_min,
-                })
-                .collect(),
-        }
-    }
-}
-
-pub async fn get_logistics(
-    State(state): State<AppState>,
-) -> Result<Json<Vec<LogisticsResponse>>> {
-    let engine = state.engine.read().await;
-    
-    let logistics: Vec<LogisticsResponse> = engine.get_all_logistics()
-        .values()
-        .map(LogisticsResponse::from)
-        .collect();
-    
-    Ok(Json(logistics))
-}
-
-pub async fn get_logistics_line(
-    State(state): State<AppState>,
-    Path(id): Path<u64>,
-) -> Result<Json<LogisticsResponse>> {
-    let engine = state.engine.read().await;
-    
-    let logistics = engine.get_logistics_line(id)
-        .ok_or_else(|| AppError::NotFound(format!("Logistics line {} not found", id)))?;
-    
-    let logistics = logistics.lock().unwrap();
-    Ok(Json(LogisticsResponse::from(&*logistics)))
-}
-
-pub async fn create_logistics(
-    State(state): State<AppState>,
-    Json(request): Json<CreateLogisticsRequest>,
-) -> Result<(StatusCode, Json<LogisticsResponse>)> {
-    let mut engine = state.engine.write().await;
-    
-    // Validate factories exist
-    if engine.get_factory(request.from_factory).is_none() {
-        return Err(AppError::BadRequest(format!(
-            "Source factory {} not found", request.from_factory
-        )));
-    }
-    
-    if engine.get_factory(request.to_factory).is_none() {
-        return Err(AppError::BadRequest(format!(
-            "Destination factory {} not found", request.to_factory
-        )));
-    }
-    
-    // Parse transport type (simplified - you'd need proper parsing logic)
-    let transport_type = parse_transport_type(&request.transport_type, &request.transport_details)?;
-    
-    let logistics_id = engine.create_logistics_line(
-        request.from_factory,
-        request.to_factory,
-        transport_type,
-        request.transport_details,
-    )?;
-    
-    let logistics = engine.get_logistics_line(logistics_id)
-        .expect("Logistics should exist after creation");
-    
-    let logistics = logistics.lock().unwrap();
-    Ok((StatusCode::CREATED, Json(LogisticsResponse::from(&*logistics))))
-}
-
-pub async fn delete_logistics(
-    State(state): State<AppState>,
-    Path(id): Path<u64>,
-) -> Result<StatusCode> {
-    let mut engine = state.engine.write().await;
-    
-    engine.delete_logistics_line(id)
-        .map_err(|_| AppError::NotFound(format!("Logistics line {} not found", id)))?;
-    
-    Ok(StatusCode::NO_CONTENT)
-}
-
-// Helper function to parse transport type (simplified)
-fn parse_transport_type(transport_type: &str, details: &str) -> Result<TransportType> {
-    match transport_type.to_lowercase().as_str() {
-        "bus" => {
-            // Parse bus details from JSON string
-            // This is simplified - you'd need proper JSON parsing
-            Ok(TransportType::Bus(
-                // Parse bus from details
-                todo!("Implement bus parsing")
-            ))
-        },
-        "train" => {
-            // Parse train details from JSON string
-            Ok(TransportType::Train(
-                // Parse train from details
-                todo!("Implement train parsing")
-            ))
-        },
-        "truck" => {
-            // Parse truck details from JSON string
-            Ok(TransportType::Truck(
-                // Parse truck from details
-                todo!("Implement truck parsing")
-            ))
-        },
-        "drone" => {
-            // Parse drone details from JSON string
-            Ok(TransportType::Drone(
-                // Parse drone from details
-                todo!("Implement drone parsing")
-            ))
-        },
-        _ => Err(AppError::BadRequest(format!(
-            "Invalid transport type: {}", transport_type
-        )))
-    }
-}
-
-pub fn routes() -> Router<AppState> {
-    Router::new()
-        .route("/", get(get_logistics).post(create_logistics))
-        .route("/:id", get(get_logistics_line).delete(delete_logistics))
+#[derive(Serialize, Deserialize)]
+#[serde(tag = "transport_type")]
+pub enum CreateLogisticsTransport {
+    #[serde(rename = "Truck", alias = "truck")]
+    Truck { item: String, quantity_per_min: f32, #[serde(default)] truck_id: Option<String> },
+    #[serde(rename = "Drone", alias = "drone")]
+    Drone { item: String, quantity_per_min: f32, #[serde(default)] drone_id: Option<String> },
+    #[serde(rename = "Bus", alias = "bus")]
+    Bus {
+        #[serde(default)] bus_name: Option<String>,
+        #[serde(default)] conveyors: Vec<BusConveyorRequest>,
+        #[serde(default)] pipelines: Vec<BusPipelineRequest>,
+    },
+    #[serde(rename = "Train", alias = "train")]
+    Train {
+        #[serde(default)] train_name: Option<String>,
+        #[serde(default)] wagons: Vec<TrainWagonRequest>,
+    },
 }
 ```
+
+`create_logistics` now delegates to a `build_transport` helper that performs the heavy lifting:
+
+```rust
+let (transport_type, transport_details) = build_transport(&engine, request.transport)?;
+let logistics_id = engine.create_logistics_line(
+    request.from_factory,
+    request.to_factory,
+    transport_type,
+    transport_details,
+)?;
+```
+
+`build_transport` validates throughput, maps string enums (`Mk3`, `Cargo`, …) to the strongly typed
+engine enums, and serializes a concise JSON diagnostic payload that is returned as
+`transport_details`. The helper covers all four transport variants, so the API can now accept the
+same payload shape the frontend sends for buses and trains.
+
+> **Testing note:** `tests/api_tests.rs::test_logistics_crud_operations` exercises truck, bus, and
+> train creation to ensure the handler continues working whenever the request contract evolves.
 
 ### 6. Dashboard Handlers (handlers/dashboard.rs)
 

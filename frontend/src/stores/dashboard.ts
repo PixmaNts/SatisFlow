@@ -17,6 +17,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const powerStats = ref<PowerStats | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const pendingRequests = ref(0)
 
   // Getters
   const netPower = computed(() => {
@@ -97,79 +98,91 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
   // Actions
 
+  const runWithLoading = async (
+    operation: () => Promise<void>,
+    options: { resetError?: boolean; errorContext: string }
+  ): Promise<void> => {
+    pendingRequests.value += 1
+    loading.value = true
+
+    if (options.resetError) {
+      error.value = null
+    }
+
+    try {
+      await operation()
+    } catch (err) {
+      const formattedError = handleApiError(err)
+      if (!error.value) {
+        error.value = formattedError
+      }
+      console.error(`${options.errorContext}:`, err)
+    } finally {
+      pendingRequests.value = Math.max(0, pendingRequests.value - 1)
+      if (pendingRequests.value === 0) {
+        loading.value = false
+      }
+    }
+  }
+
   /**
    * Fetch dashboard summary statistics
    */
-  const fetchSummary = async (): Promise<void> => {
-    loading.value = true
-    error.value = null
-
-    try {
-      const data = await dashboardApi.getSummary()
-      summary.value = data
-    } catch (err) {
-      error.value = handleApiError(err)
-      console.error('Failed to fetch dashboard summary:', err)
-    } finally {
-      loading.value = false
-    }
+  const fetchSummary = async (options: { resetError?: boolean } = {}): Promise<void> => {
+    await runWithLoading(
+      async () => {
+        const data = await dashboardApi.getSummary()
+        summary.value = data
+      },
+      {
+        resetError: options.resetError ?? false,
+        errorContext: 'Failed to fetch dashboard summary'
+      }
+    )
   }
 
   /**
    * Fetch item balance data across all factories
    */
-  const fetchItemBalances = async (): Promise<void> => {
-    loading.value = true
-    error.value = null
-
-    try {
-      const data = await dashboardApi.getItemBalances()
-      itemBalances.value = data
-    } catch (err) {
-      error.value = handleApiError(err)
-      console.error('Failed to fetch item balances:', err)
-    } finally {
-      loading.value = false
-    }
+  const fetchItemBalances = async (options: { resetError?: boolean } = {}): Promise<void> => {
+    await runWithLoading(
+      async () => {
+        const data = await dashboardApi.getItemBalances()
+        itemBalances.value = data
+      },
+      {
+        resetError: options.resetError ?? false,
+        errorContext: 'Failed to fetch item balances'
+      }
+    )
   }
 
   /**
    * Fetch power statistics across all factories
    */
-  const fetchPowerStats = async (): Promise<void> => {
-    loading.value = true
-    error.value = null
-
-    try {
-      const data = await dashboardApi.getPowerStats()
-      powerStats.value = data
-    } catch (err) {
-      error.value = handleApiError(err)
-      console.error('Failed to fetch power statistics:', err)
-    } finally {
-      loading.value = false
-    }
+  const fetchPowerStats = async (options: { resetError?: boolean } = {}): Promise<void> => {
+    await runWithLoading(
+      async () => {
+        const data = await dashboardApi.getPowerStats()
+        powerStats.value = data
+      },
+      {
+        resetError: options.resetError ?? false,
+        errorContext: 'Failed to fetch power statistics'
+      }
+    )
   }
 
   /**
    * Fetch all dashboard data at once
    */
   const fetchAllData = async (): Promise<void> => {
-    loading.value = true
-    error.value = null
-
-    try {
-      await Promise.all([
-        fetchSummary(),
-        fetchItemBalances(),
-        fetchPowerStats()
-      ])
-    } catch (err) {
-      error.value = handleApiError(err)
-      console.error('Failed to fetch dashboard data:', err)
-    } finally {
-      loading.value = false
-    }
+    clearError()
+    await Promise.all([
+      fetchSummary(),
+      fetchItemBalances(),
+      fetchPowerStats()
+    ])
   }
 
   /**
@@ -234,6 +247,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     powerStats.value = null
     loading.value = false
     error.value = null
+    pendingRequests.value = 0
   }
 
   return {

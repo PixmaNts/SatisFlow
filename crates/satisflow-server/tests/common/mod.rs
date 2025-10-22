@@ -1,10 +1,15 @@
-// Test utilities for satisflow-server
+//! Shared integration-test harness for the Satisflow backend.
+//!
+//! Builders and assertions in this module encapsulate the factory lifecycle and
+//! logistics scenarios listed in the backend testing checklist: blank-name and
+//! whitespace validation for factories, cascade behaviour across logistics, and
+//! payload builders for each transport type (truck, bus, train) so tests can
+//! focus on behaviour instead of JSON boilerplate.
 use axum::Router;
 use satisflow_server::{
     handlers::{dashboard, factory, game_data, logistics},
     state::AppState,
 };
-use serde_json::json;
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tower::ServiceBuilder;
@@ -13,13 +18,13 @@ use tower_http::{
     trace::TraceLayer,
 };
 
-/// Test server configuration
+/// Minimal wrapper around the spawned Axum server.
 pub struct TestServer {
     pub addr: SocketAddr,
     pub base_url: String,
 }
 
-/// Create a test server with all routes
+/// Create a test server with the full routing tree used by integration tests.
 pub async fn create_test_server() -> TestServer {
     // Create application state
     let state = AppState::new();
@@ -64,7 +69,7 @@ pub async fn create_test_server() -> TestServer {
     TestServer { addr, base_url }
 }
 
-/// Create a reqwest client for testing
+/// Construct a reqwest client configured for integration testing.
 pub fn create_test_client() -> reqwest::Client {
     reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
@@ -76,6 +81,7 @@ pub fn create_test_client() -> reqwest::Client {
 pub mod test_data {
     use serde_json::json;
 
+    /// Fully populated factory creation payload for metadata-based flows.
     pub fn create_factory_request() -> serde_json::Value {
         json!({
             "name": "Test Factory",
@@ -84,6 +90,12 @@ pub mod test_data {
         })
     }
 
+    /// Minimal factory payload exercising the "name only" happy path.
+    pub fn minimal_factory_request(name: &str) -> serde_json::Value {
+        json!({ "name": name })
+    }
+
+    /// Standard factory update payload including optional fields.
     pub fn update_factory_request() -> serde_json::Value {
         json!({
             "name": "Updated Factory",
@@ -92,15 +104,12 @@ pub mod test_data {
         })
     }
 
-    pub fn create_logistics_request() -> serde_json::Value {
-        json!({
-            "from_factory": 1,
-            "to_factory": 2,
-            "transport_type": "truck",
-            "transport_details": "Test truck transport"
-        })
+    /// Update payload dedicated to manipulating the notes field.
+    pub fn update_factory_notes_request(notes: &str) -> serde_json::Value {
+        json!({ "notes": notes })
     }
 
+    /// Negative factory payload that forces blank-name validation.
     pub fn invalid_factory_request() -> serde_json::Value {
         json!({
             "name": "", // Empty name should be invalid
@@ -108,12 +117,173 @@ pub mod test_data {
         })
     }
 
+    /// Factory payload with user-supplied notes to test trimming behaviour.
+    pub fn factory_with_notes_request(name: &str, notes: &str) -> serde_json::Value {
+        json!({
+            "name": name,
+            "notes": notes
+        })
+    }
+
+    /// Truck payload using generated identifiers to validate defaults.
+    pub fn truck_logistics_request(
+        from_factory: u64,
+        to_factory: u64,
+        item: &str,
+        quantity_per_min: f32,
+    ) -> serde_json::Value {
+        json!({
+            "from_factory": from_factory,
+            "to_factory": to_factory,
+            "transport_type": "Truck",
+            "item": item,
+            "quantity_per_min": quantity_per_min
+        })
+    }
+
+    /// Truck payload providing an explicit identifier to validate parsing.
+    pub fn truck_logistics_with_id_request(
+        from_factory: u64,
+        to_factory: u64,
+        item: &str,
+        quantity_per_min: f32,
+        truck_id: &str,
+    ) -> serde_json::Value {
+        json!({
+            "from_factory": from_factory,
+            "to_factory": to_factory,
+            "transport_type": "Truck",
+            "item": item,
+            "quantity_per_min": quantity_per_min,
+            "truck_id": truck_id
+        })
+    }
+
+    /// Bus payload with no segments, used for validation failure.
+    pub fn empty_bus_logistics_request(
+        from_factory: u64,
+        to_factory: u64,
+    ) -> serde_json::Value {
+        json!({
+            "from_factory": from_factory,
+            "to_factory": to_factory,
+            "transport_type": "Bus",
+            "conveyors": [],
+            "pipelines": []
+        })
+    }
+
+    /// Mixed conveyor/pipeline bus payload for aggregation assertions.
+    pub fn mixed_bus_logistics_request(
+        from_factory: u64,
+        to_factory: u64,
+    ) -> serde_json::Value {
+        json!({
+            "from_factory": from_factory,
+            "to_factory": to_factory,
+            "transport_type": "Bus",
+            "bus_name": "Hybrid Bus Route",
+            "conveyors": [
+                {
+                    "line_id": "CV-101",
+                    "conveyor_type": "Mk4",
+                    "item": "IronPlate",
+                    "quantity_per_min": 180.0
+                }
+            ],
+            "pipelines": [
+                {
+                    "pipeline_id": "PL-501",
+                    "pipeline_type": "Mk2",
+                    "item": "Water",
+                    "quantity_per_min": 480.0
+                }
+            ]
+        })
+    }
+
+    /// Bus payload containing whitespace-only name to trigger defaulting.
+    pub fn bus_with_whitespace_name_request(
+        from_factory: u64,
+        to_factory: u64,
+    ) -> serde_json::Value {
+        json!({
+            "from_factory": from_factory,
+            "to_factory": to_factory,
+            "transport_type": "Bus",
+            "bus_name": "   ",
+            "conveyors": [
+                {
+                    "conveyor_type": "Mk2",
+                    "item": "Wire",
+                    "quantity_per_min": 120.0
+                }
+            ]
+        })
+    }
+
+    /// Bus payload containing zero-throughput pipeline to trigger validation.
+    pub fn bus_with_zero_pipeline_request(
+        from_factory: u64,
+        to_factory: u64,
+    ) -> serde_json::Value {
+        json!({
+            "from_factory": from_factory,
+            "to_factory": to_factory,
+            "transport_type": "Bus",
+            "pipelines": [
+                {
+                    "pipeline_type": "Mk1",
+                    "item": "Water",
+                    "quantity_per_min": 0.0
+                }
+            ]
+        })
+    }
+
+    /// Train payload helper for type-specific wagon construction.
+    pub fn train_logistics_request(
+        from_factory: u64,
+        to_factory: u64,
+        wagon_type: &str,
+        item: &str,
+        quantity_per_min: f32,
+    ) -> serde_json::Value {
+        json!({
+            "from_factory": from_factory,
+            "to_factory": to_factory,
+            "transport_type": "Train",
+            "train_name": "Test Train",
+            "wagons": [
+                {
+                    "wagon_id": "WG-900",
+                    "wagon_type": wagon_type,
+                    "item": item,
+                    "quantity_per_min": quantity_per_min
+                }
+            ]
+        })
+    }
+
+    /// Train payload with no wagons used to assert minimum elements.
+    pub fn train_empty_wagons_request(from_factory: u64, to_factory: u64) -> serde_json::Value {
+        json!({
+            "from_factory": from_factory,
+            "to_factory": to_factory,
+            "transport_type": "Train",
+            "train_name": "Edge Train",
+            "wagons": []
+        })
+    }
+
+    /// Negative logistics payload pointing to unknown factories and zero flow.
     pub fn invalid_logistics_request() -> serde_json::Value {
         json!({
             "from_factory": 999, // Non-existent factory
             "to_factory": 1000,
-            "transport_type": "invalid",
-            "transport_details": ""
+            "transport_type": "Truck",
+            "item": "IronOre",
+            "quantity_per_min": 0.0
         })
     }
 }
@@ -123,6 +293,8 @@ pub mod assertions {
     use reqwest::Response;
     use serde_json::Value;
 
+    /// Assert that a response carries the expected status code and include an
+    /// informative panic message when it does not.
     pub async fn assert_status(response: Response, expected_status: u16) {
         assert_eq!(
             response.status().as_u16(),
@@ -133,30 +305,36 @@ pub mod assertions {
         );
     }
 
+    /// Obtain a 200 OK JSON payload, panicking otherwise.
     pub async fn assert_json_response(response: Response) -> Value {
         let status = response.status();
         assert_eq!(status.as_u16(), 200);
         response.json().await.unwrap()
     }
 
+    /// Obtain a 201 Created JSON payload, panicking otherwise.
     pub async fn assert_created_response(response: Response) -> Value {
         let status = response.status();
         assert_eq!(status.as_u16(), 201);
         response.json().await.unwrap()
     }
 
+    /// Convenience helper asserting a 204 No Content status.
     pub async fn assert_no_content(response: Response) {
         assert_status(response, 204).await;
     }
 
+    /// Convenience helper asserting a 404 Not Found status.
     pub async fn assert_not_found(response: Response) {
         assert_status(response, 404).await;
     }
 
+    /// Convenience helper asserting a 400 Bad Request status.
     pub async fn assert_bad_request(response: Response) {
         assert_status(response, 400).await;
     }
 
+    /// Assert that a JSON error payload contains a descriptive substring.
     pub fn assert_contains_error(json: &Value, expected_error: &str) {
         let error = json.get("error").and_then(|e| e.as_str()).unwrap_or("");
         assert!(

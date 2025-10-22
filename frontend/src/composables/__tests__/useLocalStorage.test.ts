@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { nextTick } from 'vue'
 import { useLocalStorage } from '../useLocalStorage'
 
 describe('useLocalStorage', () => {
@@ -21,11 +22,14 @@ describe('useLocalStorage', () => {
     expect(value.value).toEqual(defaultValue)
   })
 
-  it('should save and retrieve values from localStorage', () => {
+  it('should save and retrieve values from localStorage', async () => {
     const { value } = useLocalStorage(testKey, { defaultValue })
 
     // Update the value
     value.value = { name: 'updated', value: 100 }
+
+    // Wait for the watcher to execute
+    await nextTick()
 
     // Check that it's saved to localStorage
     const stored = localStorage.getItem(testKey)
@@ -58,23 +62,32 @@ describe('useLocalStorage', () => {
     expect(value.value).toEqual(defaultValue)
   })
 
-  it('should provide error handling', () => {
-    // Mock localStorage to throw an error
+  it('should provide error handling', async () => {
+    // Store original setItem
     const originalSetItem = localStorage.setItem
-    localStorage.setItem = () => {
-      throw new Error('Storage quota exceeded')
+
+    try {
+      // Mock localStorage to throw an error
+      const mockSetItem = vi.fn(() => {
+        throw new Error('Storage quota exceeded')
+      })
+      localStorage.setItem = mockSetItem
+
+      const { error, write } = useLocalStorage(testKey, { defaultValue })
+
+      // Try to set a value using the write method directly
+      write({ name: 'error-test', value: 1 })
+
+      // Check that an error is set
+      expect(error.value).toBeInstanceOf(Error)
+      expect(error.value?.message).toBe('Storage quota exceeded')
+
+      // Verify the mock was called
+      expect(mockSetItem).toHaveBeenCalled()
+    } finally {
+      // Restore localStorage in finally block to ensure it's always restored
+      localStorage.setItem = originalSetItem
     }
-
-    const { value, error } = useLocalStorage(testKey, { defaultValue })
-
-    // Try to set a value
-    value.value = { name: 'error-test', value: 1 }
-
-    // Check that an error is set
-    expect(error.value).toBeInstanceOf(Error)
-
-    // Restore localStorage
-    localStorage.setItem = originalSetItem
   })
 
   it('should provide exists property', () => {
@@ -93,24 +106,34 @@ describe('useLocalStorage', () => {
     expect(exists2.value).toBe(true)
   })
 
-  it('should provide remove method', () => {
+  it('should provide remove method', async () => {
     const { value, remove, exists } = useLocalStorage(testKey, { defaultValue })
 
     // Set a value
     value.value = { name: 'to-remove', value: 1 }
 
+    // Wait for the watcher to execute
+    await nextTick()
+
     // Check that it exists
     expect(exists.value).toBe(true)
+    expect(localStorage.getItem(testKey)).not.toBeNull()
 
     // Remove it
     remove()
 
-    // Check that it's gone
+    // Wait for any reactive updates
+    await nextTick()
+
+    // Check that it's gone from localStorage
+    expect(localStorage.getItem(testKey)).toBeNull()
+
+    // Check that the reactive values are updated
     expect(exists.value).toBe(false)
     expect(value.value).toEqual(defaultValue)
   })
 
-  it('should work with custom serializer', () => {
+  it('should work with custom serializer', async () => {
     const customSerializer = {
       read: (value: string) => {
         const parsed = JSON.parse(value)
@@ -128,6 +151,9 @@ describe('useLocalStorage', () => {
 
     // Update the value
     value.value = { name: 'custom', value: 1 }
+
+    // Wait for the watcher to execute
+    await nextTick()
 
     // Check the stored value
     const stored = localStorage.getItem(testKey)

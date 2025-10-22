@@ -120,13 +120,17 @@ export const handlers = [
     return HttpResponse.json(factory)
   }),
 
-  http.post('/api/factories', async ({ request }: { request: Request }) => {
+  http.post('/api/factories', async ({ request }) => {
     const newFactory = await request.json() as CreateFactoryRequest
+    const sanitizedNotes =
+      typeof newFactory.notes === 'string' && newFactory.notes.trim().length === 0
+        ? null
+        : newFactory.notes ?? null
     const factory: FactoryResponse = {
       id: mockFactories.length + 1,
       name: newFactory.name || 'New Factory',
       description: newFactory.description || null,
-      notes: newFactory.notes || null,
+      notes: sanitizedNotes,
       production_lines: [],
       raw_inputs: [],
       power_generators: [],
@@ -139,21 +143,33 @@ export const handlers = [
     return HttpResponse.json(factory, { status: 201 })
   }),
 
-  http.put('/api/factories/:id', async ({ params, request }: { params: { id: string }, request: Request }) => {
-    const { id } = params
+  http.put('/api/factories/:id', async ({ params, request }) => {
+    const idParam = params?.id
+    if (!idParam) {
+      return HttpResponse.json({ error: 'Factory id is required' }, { status: 400 })
+    }
+    const factoryId = Number(idParam)
+    if (!Number.isFinite(factoryId)) {
+      return HttpResponse.json({ error: 'Factory id is invalid' }, { status: 400 })
+    }
     const updates = await request.json() as Partial<FactoryResponse>
-    const index = mockFactories.findIndex(f => f.id === Number(id))
+    const index = mockFactories.findIndex(f => f.id === factoryId)
     if (index === -1) {
       return HttpResponse.json({ error: 'Factory not found' }, { status: 404 })
     }
 
     // Simple update - just merge the updates
     const currentFactory = mockFactories[index]!
+    const sanitizedNotes =
+      typeof updates.notes === 'string'
+        ? (updates.notes.trim().length === 0 ? null : updates.notes)
+        : updates.notes ?? currentFactory.notes
+
     const updatedFactory: FactoryResponse = {
       id: currentFactory.id,
       name: updates.name ?? currentFactory.name,
       description: updates.description ?? currentFactory.description,
-      notes: updates.notes ?? currentFactory.notes,
+      notes: sanitizedNotes,
       production_lines: updates.production_lines ?? currentFactory.production_lines,
       raw_inputs: updates.raw_inputs ?? currentFactory.raw_inputs,
       power_generators: updates.power_generators ?? currentFactory.power_generators,
@@ -167,9 +183,16 @@ export const handlers = [
     return HttpResponse.json(updatedFactory)
   }),
 
-  http.delete('/api/factories/:id', ({ params }: { params: { id: string } }) => {
-    const { id } = params
-    const index = mockFactories.findIndex(f => f.id === Number(id))
+  http.delete('/api/factories/:id', ({ params }) => {
+    const idParam = params?.id
+    if (!idParam) {
+      return HttpResponse.json({ error: 'Factory id is required' }, { status: 400 })
+    }
+    const factoryId = Number(idParam)
+    if (!Number.isFinite(factoryId)) {
+      return HttpResponse.json({ error: 'Factory id is invalid' }, { status: 400 })
+    }
+    const index = mockFactories.findIndex(f => f.id === factoryId)
     if (index === -1) {
       return HttpResponse.json({ error: 'Factory not found' }, { status: 404 })
     }
@@ -182,31 +205,140 @@ export const handlers = [
     return HttpResponse.json(mockLogistics)
   }),
 
-  http.get('/api/logistics/:id', ({ params }: { params: { id: string } }) => {
-    const { id } = params
-    const logistics = mockLogistics.find(l => l.id === Number(id))
+  http.get('/api/logistics/:id', ({ params }) => {
+    const idParam = params?.id
+    if (!idParam) {
+      return HttpResponse.json({ error: 'Logistics id is required' }, { status: 400 })
+    }
+    const logisticsId = Number(idParam)
+    if (!Number.isFinite(logisticsId)) {
+      return HttpResponse.json({ error: 'Logistics id is invalid' }, { status: 400 })
+    }
+    const logistics = mockLogistics.find(l => l.id === logisticsId)
     if (!logistics) {
       return HttpResponse.json({ error: 'Logistics line not found' }, { status: 404 })
     }
     return HttpResponse.json(logistics)
   }),
 
-  http.post('/api/logistics', async ({ request }: { request: Request }) => {
-    const newLogistics = await request.json() as CreateLogisticsRequest
-    const transportType = newLogistics.transport_type === 'truck' ? 'Truck' : 'Drone'
-    const logistics: LogisticsResponse = {
-      id: mockLogistics.length + 1,
-      from_factory: newLogistics.from_factory,
-      to_factory: newLogistics.to_factory,
-      transport_type: transportType,
-      transport_id: `${transportType}-${mockLogistics.length + 1}`,
-      transport_name: null,
-      transport_details: newLogistics.transport_details,
-      items: [],
-      total_quantity_per_min: 0,
+  http.post('/api/logistics', async ({ request }) => {
+    const payload = await request.json() as CreateLogisticsRequest
+    const newId = mockLogistics.length + 1
+
+    const buildResponse = (response: Omit<LogisticsResponse, 'id'>): LogisticsResponse => ({
+      id: newId,
+      ...response,
+    })
+
+    const base = {
+      from_factory: payload.from_factory,
+      to_factory: payload.to_factory,
     }
-    mockLogistics.push(logistics)
-    return HttpResponse.json(logistics, { status: 201 })
+
+    let response: LogisticsResponse
+
+    switch (payload.transport_type) {
+      case 'Truck': {
+        const quantity = payload.quantity_per_min ?? 0
+        response = buildResponse({
+          ...base,
+          transport_type: 'Truck',
+          transport_id: payload.truck_id || `Truck-${newId}`,
+          transport_name: null,
+          transport_details: JSON.stringify({
+            item: payload.item,
+            quantity_per_min: payload.quantity_per_min,
+            truck_id: payload.truck_id,
+          }),
+          items: quantity > 0 && payload.item
+            ? [{ item: payload.item, quantity_per_min: quantity }]
+            : [],
+          total_quantity_per_min: quantity,
+        })
+        break
+      }
+      case 'Drone': {
+        const quantity = payload.quantity_per_min ?? 0
+        response = buildResponse({
+          ...base,
+          transport_type: 'Drone',
+          transport_id: payload.drone_id || `Drone-${newId}`,
+          transport_name: null,
+          transport_details: JSON.stringify({
+            item: payload.item,
+            quantity_per_min: payload.quantity_per_min,
+            drone_id: payload.drone_id,
+          }),
+          items: quantity > 0 && payload.item
+            ? [{ item: payload.item, quantity_per_min: quantity }]
+            : [],
+          total_quantity_per_min: quantity,
+        })
+        break
+      }
+      case 'Bus': {
+        const conveyors = payload.conveyors ?? []
+        const pipelines = payload.pipelines ?? []
+        const flows = [
+          ...conveyors.map(entry => ({
+            item: entry.item,
+            quantity_per_min: entry.quantity_per_min,
+          })),
+          ...pipelines.map(entry => ({
+            item: entry.item,
+            quantity_per_min: entry.quantity_per_min,
+          })),
+        ].filter(flow => flow.item && flow.quantity_per_min > 0)
+
+        const total = flows.reduce((sum, flow) => sum + flow.quantity_per_min, 0)
+
+        response = buildResponse({
+          ...base,
+          transport_type: 'Bus',
+          transport_id: `Bus-${newId}`,
+          transport_name: payload.bus_name || null,
+          transport_details: JSON.stringify({
+            bus_name: payload.bus_name,
+            conveyors: conveyors,
+            pipelines: pipelines,
+          }),
+          items: flows,
+          total_quantity_per_min: total,
+        })
+        break
+      }
+      case 'Train': {
+        const wagons = payload.wagons ?? []
+        const flows = wagons
+          .map(wagon => ({
+            item: wagon.item,
+            quantity_per_min: wagon.quantity_per_min,
+          }))
+          .filter(flow => flow.item && flow.quantity_per_min > 0)
+
+        const total = flows.reduce((sum, flow) => sum + flow.quantity_per_min, 0)
+
+        response = buildResponse({
+          ...base,
+          transport_type: 'Train',
+          transport_id: `Train-${newId}`,
+          transport_name: payload.train_name || null,
+          transport_details: JSON.stringify({
+            train_name: payload.train_name,
+            wagons,
+          }),
+          items: flows,
+          total_quantity_per_min: total,
+        })
+        break
+      }
+      default: {
+        return HttpResponse.json({ error: 'Unsupported transport type' }, { status: 400 })
+      }
+    }
+
+    mockLogistics.push(response)
+    return HttpResponse.json(response, { status: 201 })
   }),
 
   http.delete('/api/logistics/:id', ({ params }: { params: { id: string } }) => {

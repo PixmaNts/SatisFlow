@@ -12,6 +12,7 @@ pub struct Factory {
     pub id: u32,
     pub name: String,
     pub description: Option<String>,
+    pub notes: Option<String>,
     pub production_lines: HashMap<u64, ProductionLine>,
     pub raw_inputs: HashMap<u64, RawInput>, // Raw resource extraction sources
     pub power_generators: HashMap<u64, PowerGenerator>, // Power generation systems
@@ -24,6 +25,7 @@ impl Factory {
             id,
             name,
             description,
+            notes: None,
             production_lines: HashMap::new(),
             items: HashMap::new(),
             raw_inputs: HashMap::new(),
@@ -47,7 +49,6 @@ impl Factory {
 
     /// Remove a raw input from this factory
     pub fn remove_raw_input(&mut self, id: u64) -> Option<RawInput> {
-        
         self.raw_inputs.remove(&id)
     }
 
@@ -72,7 +73,6 @@ impl Factory {
 
     /// Remove a power generator from this factory
     pub fn remove_power_generator(&mut self, id: u64) -> Option<PowerGenerator> {
-        
         self.power_generators.remove(&id)
     }
 

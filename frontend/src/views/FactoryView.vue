@@ -149,12 +149,6 @@ if (preferencesStore.selectedFactoryId && !currentFactory.value) {
   factoryStore.fetchById(preferencesStore.selectedFactoryId)
 }
 
-// Watch for factory changes to refresh data
-watch(() => currentFactory.value?.id, (factoryId) => {
-  if (factoryId) {
-    factoryStore.fetchById(factoryId)
-  }
-}, { immediate: true })
 </script>
 
 <style scoped lang="scss">

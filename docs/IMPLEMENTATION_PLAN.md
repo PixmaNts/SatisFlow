@@ -113,6 +113,23 @@ Satisflow/
 - [ ] Documentation updates
 - [ ] User guide creation
 
+## Code Review Findings (2025-02-17)
+
+### Frontend
+- `frontend/src/components/factory/FactorySelector.vue`: the `<select>` binding leaves `selectedFactoryId` as a string, so `setCurrentFactory` stores `'id'` and `currentFactory` never resolves; the Factory view stays in its empty state.
+- `frontend/src/views/FactoryView.vue`: two identical watchers on the active factory run immediately, issuing duplicate `fetchById` calls and re-saving preferences on every change.
+- `frontend/src/stores/dashboard.ts`: `fetchAllData` awaits helper functions that each toggle `loading`/`error`, so one failure is cleared by the next request and the spinner flickers while other calls are still pending.
+
+### Server
+- `crates/satisflow-server/src/handlers/factory.rs`: the API accepts `notes` but never persists or returns them, so the value is dropped on create/update.
+- `crates/satisflow-server/src/handlers/logistics.rs`: `create_logistics` ignores the request payload, hard-codes truck/drone transports with fixed IDs/items, and rejects buses/trains that the frontend exposes.
+
+### Remediations (2025-02-17)
+- Factory notes now persist end-to-end: the engine model exposes a `notes` field, handlers hydrate it on create/update, and MSW mocks plus API tests cover the behaviour.
+- Duplicate factory fetches were eliminated and selector IDs stay numeric, so the UI correctly resolves the selected factory.
+- Dashboard loading/error handling uses a shared pending-request counter, preventing oscillating spinners and swallowed errors during parallel fetches.
+- Logistics creation accepts full payloads for trucks, drones, buses, and trains; both the backend handler and frontend request types were updated and documented, with tests covering the supported variants.
+
 ## Quick Start Commands
 
 ### Backend Development

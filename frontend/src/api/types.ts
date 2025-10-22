@@ -252,6 +252,33 @@ export type MachineType =
 // Transport types
 export type TransportType = "Bus" | "Train" | "Truck" | "Drone";
 
+// Logistics transport tiers
+export type ConveyorTier = "Mk1" | "Mk2" | "Mk3" | "Mk4" | "Mk5" | "Mk6";
+export type PipelineTier = "Mk1" | "Mk2";
+export type WagonCarType = "Cargo" | "Fluid";
+
+// Logistics transport payloads
+export interface BusConveyorPayload {
+  line_id?: string;
+  conveyor_type: ConveyorTier;
+  item: Item;
+  quantity_per_min: number;
+}
+
+export interface BusPipelinePayload {
+  pipeline_id?: string;
+  pipeline_type: PipelineTier;
+  item: Item;
+  quantity_per_min: number;
+}
+
+export interface TrainWagonPayload {
+  wagon_id?: string;
+  wagon_type: WagonCarType;
+  item: Item;
+  quantity_per_min: number;
+}
+
 // Item balance states
 export type ItemBalanceState = "overflow" | "underflow" | "balanced";
 
@@ -453,12 +480,38 @@ export interface UpdateFactoryRequest {
 }
 
 // Create logistics request
-export interface CreateLogisticsRequest {
-  from_factory: number;
-  to_factory: number;
-  transport_type: "truck" | "drone";
-  transport_details: string;
-}
+export type CreateLogisticsRequest =
+  | {
+      from_factory: number;
+      to_factory: number;
+      transport_type: "Truck";
+      item: Item;
+      quantity_per_min: number;
+      truck_id?: string;
+    }
+  | {
+      from_factory: number;
+      to_factory: number;
+      transport_type: "Drone";
+      item: Item;
+      quantity_per_min: number;
+      drone_id?: string;
+    }
+  | {
+      from_factory: number;
+      to_factory: number;
+      transport_type: "Bus";
+      bus_name?: string;
+      conveyors: BusConveyorPayload[];
+      pipelines: BusPipelinePayload[];
+    }
+  | {
+      from_factory: number;
+      to_factory: number;
+      transport_type: "Train";
+      train_name?: string;
+      wagons: TrainWagonPayload[];
+    };
 
 // Create production line request
 export interface CreateProductionLineRequest {

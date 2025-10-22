@@ -356,21 +356,76 @@ export interface CreatePowerGeneratorRequest {
   overclock: number
 }
 
-// Logistics types
+// Logistics response
 export interface Logistics extends BaseEntity {
   from_factory: number
   to_factory: number
-  transport_type: 'bus' | 'train' | 'truck' | 'drone'
+  transport_type: TransportType
+  transport_id: string
+  transport_name: string | null
   transport_details: string
   items: ItemFlow[]
+  total_quantity_per_min: number
 }
 
-export interface CreateLogisticsRequest {
-  from_factory: number
-  to_factory: number
-  transport_type: 'bus' | 'train' | 'truck' | 'drone'
-  transport_details: string
+// Logistics payloads
+export type ConveyorTier = 'Mk1' | 'Mk2' | 'Mk3' | 'Mk4' | 'Mk5' | 'Mk6'
+export type PipelineTier = 'Mk1' | 'Mk2'
+export type WagonCarType = 'Cargo' | 'Fluid'
+
+export interface BusConveyorPayload {
+  line_id?: string
+  conveyor_type: ConveyorTier
+  item: Item
+  quantity_per_min: number
 }
+
+export interface BusPipelinePayload {
+  pipeline_id?: string
+  pipeline_type: PipelineTier
+  item: Item
+  quantity_per_min: number
+}
+
+export interface TrainWagonPayload {
+  wagon_id?: string
+  wagon_type: WagonCarType
+  item: Item
+  quantity_per_min: number
+}
+
+export type CreateLogisticsRequest =
+  | {
+      from_factory: number
+      to_factory: number
+      transport_type: 'Truck'
+      item: Item
+      quantity_per_min: number
+      truck_id?: string
+    }
+  | {
+      from_factory: number
+      to_factory: number
+      transport_type: 'Drone'
+      item: Item
+      quantity_per_min: number
+      drone_id?: string
+    }
+  | {
+      from_factory: number
+      to_factory: number
+      transport_type: 'Bus'
+      bus_name?: string
+      conveyors: BusConveyorPayload[]
+      pipelines: BusPipelinePayload[]
+    }
+  | {
+      from_factory: number
+      to_factory: number
+      transport_type: 'Train'
+      train_name?: string
+      wagons: TrainWagonPayload[]
+    }
 
 export interface ItemFlow {
   item: string
@@ -502,6 +557,30 @@ export const logisticsApi = {
   deleteLogistics: (id: number): Promise<void> => 
     apiClient.delete(`/logistics/${id}`),
 }
+
+// Example: create a bus logistics line
+await logisticsApi.createLogistics({
+  from_factory: 1,
+  to_factory: 3,
+  transport_type: 'Bus',
+  bus_name: 'Main Conveyor Bus',
+  conveyors: [
+    {
+      line_id: 'CV-001',
+      conveyor_type: 'Mk3',
+      item: 'IronPlate',
+      quantity_per_min: 120
+    }
+  ],
+  pipelines: [
+    {
+      pipeline_id: 'PL-001',
+      pipeline_type: 'Mk1',
+      item: 'Water',
+      quantity_per_min: 240
+    }
+  ]
+})
 
 // Dashboard endpoints
 export const dashboardApi = {

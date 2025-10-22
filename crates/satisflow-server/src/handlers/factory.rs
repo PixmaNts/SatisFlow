@@ -12,9 +12,7 @@ use crate::{
     error::{AppError, Result},
     state::AppState,
 };
-use satisflow_engine::{
-    models::{production_line::ProductionLine, Item, PowerGenerator, RawInput}
-};
+use satisflow_engine::models::{production_line::ProductionLine, Item, PowerGenerator, RawInput};
 
 // DTOs for API requests/responses
 #[derive(Serialize, Deserialize)]
@@ -133,7 +131,7 @@ pub async fn get_factories(State(state): State<AppState>) -> Result<Json<Vec<Fac
             id: *id,
             name: factory.name.clone(),
             description: factory.description.clone(),
-            notes: None, // Factory model doesn't have notes field yet
+            notes: factory.notes.clone(),
             production_lines: convert_production_lines_to_response(&factory.production_lines),
             raw_inputs: convert_raw_inputs_to_response(&factory.raw_inputs),
             power_generators: convert_power_generators_to_response(&factory.power_generators),
@@ -168,7 +166,7 @@ pub async fn get_factory(
         id,
         name: factory.name.clone(),
         description: factory.description.clone(),
-        notes: None, // Factory model doesn't have notes field yet
+        notes: factory.notes.clone(),
         production_lines: convert_production_lines_to_response(&factory.production_lines),
         raw_inputs: convert_raw_inputs_to_response(&factory.raw_inputs),
         power_generators: convert_power_generators_to_response(&factory.power_generators),
@@ -196,13 +194,20 @@ pub async fn create_factory(
 
     let factory_id = engine.create_factory(request.name.clone(), request.description.clone());
 
+    if let Some(factory) = engine.get_factory_mut(factory_id) {
+        factory.notes = match request.notes.clone() {
+            Some(notes) if notes.trim().is_empty() => None,
+            other => other,
+        };
+    }
+
     let factory = engine.get_factory(factory_id).unwrap(); // We just created it
 
     let response = FactoryResponse {
         id: factory_id,
         name: factory.name.clone(),
         description: factory.description.clone(),
-        notes: None,
+        notes: factory.notes.clone(),
         production_lines: convert_production_lines_to_response(&factory.production_lines),
         raw_inputs: convert_raw_inputs_to_response(&factory.raw_inputs),
         power_generators: convert_power_generators_to_response(&factory.power_generators),
@@ -240,7 +245,13 @@ pub async fn update_factory(
         factory.description = Some(description);
     }
 
-    // Notes field is not in the Factory model yet, so we skip it for now
+    if let Some(notes) = request.notes {
+        if notes.trim().is_empty() {
+            factory.notes = None;
+        } else {
+            factory.notes = Some(notes);
+        }
+    }
 
     // Get the updated factory
     let updated_factory = engine.get_factory(id).unwrap();
@@ -252,7 +263,7 @@ pub async fn update_factory(
         id,
         name: updated_factory.name.clone(),
         description: updated_factory.description.clone(),
-        notes: None,
+        notes: updated_factory.notes.clone(),
         production_lines: convert_production_lines_to_response(&updated_factory.production_lines),
         raw_inputs: convert_raw_inputs_to_response(&updated_factory.raw_inputs),
         power_generators: convert_power_generators_to_response(&updated_factory.power_generators),

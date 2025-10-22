@@ -7,12 +7,14 @@ use axum::{
 };
 use satisflow_engine::models::{
     logistics::{
-        ConveyorSpeed, DroneTransport, PipelineCapacity, Transport,
-        TransportType, TruckTransport, WagonType,
+        Bus, Conveyor, ConveyorSpeed, DroneTransport, Pipeline, PipelineCapacity, Train, Transport,
+        TransportType, TruckTransport, Wagon, WagonType,
     },
     Item,
 };
+use satisflow_engine::SatisflowEngine;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 use crate::{
     error::{AppError, Result},
@@ -23,67 +25,67 @@ use crate::{
 pub struct CreateLogisticsRequest {
     pub from_factory: u64,
     pub to_factory: u64,
-    pub transport_type: String,
-    pub transport_details: String,
+    #[serde(flatten)]
+    pub transport: CreateLogisticsTransport,
 }
 
-// For more complex logistics requests in the future
 #[derive(Serialize, Deserialize)]
-#[serde(tag = "type")]
-pub enum CreateLogisticsRequestV2 {
+#[serde(tag = "transport_type")]
+pub enum CreateLogisticsTransport {
+    #[serde(rename = "Truck", alias = "truck")]
     Truck {
-        from_factory: u64,
-        to_factory: u64,
-        truck_id: u64,
         item: String,
         quantity_per_min: f32,
+        #[serde(default)]
+        truck_id: Option<String>,
     },
+    #[serde(rename = "Drone", alias = "drone")]
     Drone {
-        from_factory: u64,
-        to_factory: u64,
-        drone_id: u64,
         item: String,
         quantity_per_min: f32,
+        #[serde(default)]
+        drone_id: Option<String>,
     },
+    #[serde(rename = "Bus", alias = "bus")]
     Bus {
-        from_factory: u64,
-        to_factory: u64,
-        bus_id: u64,
-        bus_name: String,
-        conveyors: Vec<ConveyorRequest>,
-        pipelines: Vec<PipelineRequest>,
+        #[serde(default)]
+        bus_name: Option<String>,
+        #[serde(default)]
+        conveyors: Vec<BusConveyorRequest>,
+        #[serde(default)]
+        pipelines: Vec<BusPipelineRequest>,
     },
+    #[serde(rename = "Train", alias = "train")]
     Train {
-        from_factory: u64,
-        to_factory: u64,
-        train_id: u64,
-        train_name: String,
-        wagons: Vec<WagonRequest>,
+        #[serde(default)]
+        train_name: Option<String>,
+        #[serde(default)]
+        wagons: Vec<TrainWagonRequest>,
     },
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct ConveyorRequest {
-    line_id: u64,
-    speed: String,
-    item: String,
-    quantity_per_min: f32,
+pub struct BusConveyorRequest {
+    pub line_id: Option<String>,
+    pub conveyor_type: String,
+    pub item: String,
+    pub quantity_per_min: f32,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct PipelineRequest {
-    pipeline_id: u64,
-    capacity: String,
-    item: String,
-    quantity_per_min: f32,
+pub struct BusPipelineRequest {
+    pub pipeline_id: Option<String>,
+    pub pipeline_type: String,
+    pub item: String,
+    pub quantity_per_min: f32,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct WagonRequest {
-    wagon_id: u64,
-    wagon_type: String,
-    item: String,
-    quantity_per_min: f32,
+pub struct TrainWagonRequest {
+    pub wagon_id: Option<String>,
+    pub wagon_type: String,
+    pub item: String,
+    pub quantity_per_min: f32,
 }
 
 #[derive(Serialize)]
@@ -254,27 +256,8 @@ pub async fn create_logistics(
 ) -> Result<(StatusCode, Json<LogisticsResponse>)> {
     let mut engine = state.engine.write().await;
 
-    // Extract from_factory and to_factory from the request
     let from_factory = request.from_factory;
     let to_factory = request.to_factory;
-
-    // Create a simple truck transport for now based on the test expectations
-    let transport_type = match request.transport_type.to_lowercase().as_str() {
-        "truck" => {
-            // For simple truck transport, create a default truck with Iron Ore
-            TransportType::Truck(TruckTransport::new(1, Item::IronOre, 60.0))
-        }
-        "drone" => {
-            // For simple drone transport, create a default drone with Iron Ore
-            TransportType::Drone(DroneTransport::new(1, Item::IronOre, 30.0))
-        }
-        _ => {
-            return Err(AppError::BadRequest(format!(
-                "Unsupported transport type: {}",
-                request.transport_type
-            )));
-        }
-    };
 
     // Validate that factories exist
     if engine.get_factory(from_factory).is_none() {
@@ -291,7 +274,13 @@ pub async fn create_logistics(
         )));
     }
 
-    let transport_details = format!("{:?}", transport_type);
+    let (transport_type, transport_details) =
+        build_transport(&engine, request.transport).map_err(|err| match err {
+            AppError::SerializationError(_) => {
+                AppError::BadRequest("Failed to serialize transport details".to_string())
+            }
+            other => other,
+        })?;
 
     let logistics_id = engine
         .create_logistics_line(from_factory, to_factory, transport_type, transport_details)
@@ -317,6 +306,254 @@ pub async fn create_logistics(
     };
 
     Ok((StatusCode::CREATED, Json(response)))
+}
+
+fn build_transport(
+    engine: &SatisflowEngine,
+    transport: CreateLogisticsTransport,
+) -> std::result::Result<(TransportType, String), AppError> {
+    match transport {
+        CreateLogisticsTransport::Truck {
+            item,
+            quantity_per_min,
+            truck_id,
+        } => {
+            let quantity = ensure_positive(quantity_per_min, "Truck quantity_per_min")?;
+            let item_enum = parse_item(&item)?;
+            let next_id = next_transport_identifier(engine);
+            let numeric_id = parse_numeric_identifier(truck_id.as_deref(), next_id);
+            let display_id = truck_id
+                .as_ref()
+                .map(|val| val.trim())
+                .filter(|val| !val.is_empty())
+                .map(|val| val.to_string())
+                .unwrap_or_else(|| format!("TRK-{numeric_id:03}"));
+
+            let transport =
+                TransportType::Truck(TruckTransport::new(numeric_id, item_enum.clone(), quantity));
+
+            let details = serde_json::to_string(&json!({
+                "truck_id": display_id,
+                "item": item_enum,
+                "quantity_per_min": quantity,
+            }))?;
+
+            Ok((transport, details))
+        }
+        CreateLogisticsTransport::Drone {
+            item,
+            quantity_per_min,
+            drone_id,
+        } => {
+            let quantity = ensure_positive(quantity_per_min, "Drone quantity_per_min")?;
+            let item_enum = parse_item(&item)?;
+            let next_id = next_transport_identifier(engine);
+            let numeric_id = parse_numeric_identifier(drone_id.as_deref(), next_id);
+            let display_id = drone_id
+                .as_ref()
+                .map(|val| val.trim())
+                .filter(|val| !val.is_empty())
+                .map(|val| val.to_string())
+                .unwrap_or_else(|| format!("DRN-{numeric_id:03}"));
+
+            let transport =
+                TransportType::Drone(DroneTransport::new(numeric_id, item_enum.clone(), quantity));
+
+            let details = serde_json::to_string(&json!({
+                "drone_id": display_id,
+                "item": item_enum,
+                "quantity_per_min": quantity,
+            }))?;
+
+            Ok((transport, details))
+        }
+        CreateLogisticsTransport::Bus {
+            bus_name,
+            conveyors,
+            pipelines,
+        } => {
+            let bus_id = next_transport_identifier(engine);
+            let name = sanitize_name(bus_name.as_deref(), "Bus", bus_id);
+            let mut bus = Bus::new(bus_id, name.clone());
+
+            let mut conveyor_details = Vec::new();
+            for (index, conveyor) in conveyors.into_iter().enumerate() {
+                let BusConveyorRequest {
+                    line_id,
+                    conveyor_type,
+                    item,
+                    quantity_per_min,
+                } = conveyor;
+
+                let quantity = ensure_positive(quantity_per_min, "Bus conveyor quantity_per_min")?;
+                let item_enum = parse_item(&item)?;
+                let speed = parse_conveyor_speed(&conveyor_type)?;
+                let numeric_line_id =
+                    parse_numeric_identifier(line_id.as_deref(), (index + 1) as u64);
+                let line_label = line_id
+                    .as_ref()
+                    .map(|val| val.trim())
+                    .filter(|val| !val.is_empty())
+                    .map(|val| val.to_string())
+                    .unwrap_or_else(|| format!("CV-{numeric_line_id:03}"));
+
+                bus.add_conveyor(Conveyor::new(
+                    numeric_line_id,
+                    speed.clone(),
+                    item_enum.clone(),
+                    quantity,
+                ));
+
+                conveyor_details.push(json!({
+                    "line_id": line_label,
+                    "conveyor_type": speed,
+                    "item": item_enum,
+                    "quantity_per_min": quantity,
+                }));
+            }
+
+            let mut pipeline_details = Vec::new();
+            for (index, pipeline) in pipelines.into_iter().enumerate() {
+                let BusPipelineRequest {
+                    pipeline_id,
+                    pipeline_type,
+                    item,
+                    quantity_per_min,
+                } = pipeline;
+
+                let quantity = ensure_positive(quantity_per_min, "Bus pipeline quantity_per_min")?;
+                let item_enum = parse_item(&item)?;
+                let capacity = parse_pipeline_capacity(&pipeline_type)?;
+                let numeric_pipeline_id =
+                    parse_numeric_identifier(pipeline_id.as_deref(), (index + 1) as u64);
+                let pipeline_label = pipeline_id
+                    .as_ref()
+                    .map(|val| val.trim())
+                    .filter(|val| !val.is_empty())
+                    .map(|val| val.to_string())
+                    .unwrap_or_else(|| format!("PL-{numeric_pipeline_id:03}"));
+
+                bus.add_pipeline(Pipeline::new(
+                    numeric_pipeline_id,
+                    capacity.clone(),
+                    item_enum.clone(),
+                    quantity,
+                ));
+
+                pipeline_details.push(json!({
+                    "pipeline_id": pipeline_label,
+                    "pipeline_type": capacity,
+                    "item": item_enum,
+                    "quantity_per_min": quantity,
+                }));
+            }
+
+            if bus.lines.is_empty() && bus.pipelines.is_empty() {
+                return Err(AppError::BadRequest(
+                    "Bus transport requires at least one conveyor or pipeline".to_string(),
+                ));
+            }
+
+            let details = serde_json::to_string(&json!({
+                "bus_id": bus_id,
+                "bus_name": name,
+                "conveyors": conveyor_details,
+                "pipelines": pipeline_details,
+            }))?;
+
+            Ok((TransportType::Bus(bus), details))
+        }
+        CreateLogisticsTransport::Train { train_name, wagons } => {
+            let train_id = next_transport_identifier(engine);
+            let name = sanitize_name(train_name.as_deref(), "Train", train_id);
+            let mut train = Train::new(train_id, name.clone());
+
+            let mut wagon_details = Vec::new();
+            for (index, wagon) in wagons.into_iter().enumerate() {
+                let TrainWagonRequest {
+                    wagon_id,
+                    wagon_type,
+                    item,
+                    quantity_per_min,
+                } = wagon;
+
+                let quantity = ensure_positive(quantity_per_min, "Train wagon quantity_per_min")?;
+                let item_enum = parse_item(&item)?;
+                let wagon_type_enum = parse_wagon_type(&wagon_type)?;
+                let numeric_wagon_id =
+                    parse_numeric_identifier(wagon_id.as_deref(), (index + 1) as u64);
+                let wagon_label = wagon_id
+                    .as_ref()
+                    .map(|val| val.trim())
+                    .filter(|val| !val.is_empty())
+                    .map(|val| val.to_string())
+                    .unwrap_or_else(|| format!("WG-{numeric_wagon_id:03}"));
+
+                train.add_wagon(Wagon::new(
+                    numeric_wagon_id,
+                    wagon_type_enum.clone(),
+                    item_enum.clone(),
+                    quantity,
+                ));
+
+                wagon_details.push(json!({
+                    "wagon_id": wagon_label,
+                    "wagon_type": wagon_type_enum,
+                    "item": item_enum,
+                    "quantity_per_min": quantity,
+                }));
+            }
+
+            if wagon_details.is_empty() {
+                return Err(AppError::BadRequest(
+                    "Train transport requires at least one wagon".to_string(),
+                ));
+            }
+
+            let details = serde_json::to_string(&json!({
+                "train_id": train_id,
+                "train_name": name,
+                "wagons": wagon_details,
+            }))?;
+
+            Ok((TransportType::Train(train), details))
+        }
+    }
+}
+
+fn next_transport_identifier(engine: &SatisflowEngine) -> u64 {
+    engine.get_all_logistics().len() as u64 + 1
+}
+
+fn parse_numeric_identifier(value: Option<&str>, fallback: u64) -> u64 {
+    value
+        .and_then(|raw| {
+            let digits: String = raw.chars().filter(|c| c.is_ascii_digit()).collect();
+            if digits.is_empty() {
+                None
+            } else {
+                digits.parse::<u64>().ok()
+            }
+        })
+        .unwrap_or(fallback)
+}
+
+fn sanitize_name(value: Option<&str>, label: &str, id: u64) -> String {
+    value
+        .map(|val| val.trim())
+        .filter(|val| !val.is_empty())
+        .map(|val| val.to_string())
+        .unwrap_or_else(|| format!("{} {}", label, id))
+}
+
+fn ensure_positive(value: f32, context: &str) -> std::result::Result<f32, AppError> {
+    if value > 0.0 {
+        Ok(value)
+    } else {
+        Err(AppError::BadRequest(format!(
+            "{context} must be greater than zero"
+        )))
+    }
 }
 
 pub async fn delete_logistics(

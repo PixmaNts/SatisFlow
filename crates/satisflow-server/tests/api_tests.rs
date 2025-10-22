@@ -39,6 +39,7 @@ async fn test_factory_crud_operations() {
     if create_response.status().as_u16() == 201 {
         let factory: Value = assert_created_response(create_response).await;
         let factory_id = factory["id"].as_u64().unwrap();
+        assert_eq!(factory["notes"], json!("Test notes"));
 
         // Test 2: Get all factories
         let list_response = client
@@ -60,6 +61,7 @@ async fn test_factory_crud_operations() {
         let retrieved_factory: Value = assert_json_response(get_response).await;
         assert_eq!(retrieved_factory["id"], factory_id);
         assert_eq!(retrieved_factory["name"], "Test Factory");
+        assert_eq!(retrieved_factory["notes"], json!("Test notes"));
 
         // Test 4: Update factory
         let update_response = client
@@ -71,6 +73,7 @@ async fn test_factory_crud_operations() {
 
         let updated_factory: Value = assert_json_response(update_response).await;
         assert_eq!(updated_factory["name"], "Updated Factory");
+        assert_eq!(updated_factory["notes"], json!("Updated notes"));
 
         // Test 5: Delete factory
         let delete_response = client
@@ -171,13 +174,17 @@ async fn test_logistics_crud_operations() {
     if factory1_response.status().as_u16() == 201 && factory2_response.status().as_u16() == 201 {
         let factory1: Value = factory1_response.json().await.unwrap();
         let factory2: Value = factory2_response.json().await.unwrap();
+        let factory1_id = factory1["id"].as_u64().unwrap();
+        let factory2_id = factory2["id"].as_u64().unwrap();
 
         // Test 1: Create logistics line
         let logistics_request = json!({
-            "from_factory": factory1["id"],
-            "to_factory": factory2["id"],
-            "transport_type": "truck",
-            "transport_details": "Test truck transport"
+            "from_factory": factory1_id,
+            "to_factory": factory2_id,
+            "transport_type": "Truck",
+            "item": "IronOre",
+            "quantity_per_min": 60.0,
+            "truck_id": "TRK-101"
         });
 
         let create_response = client
@@ -213,6 +220,11 @@ async fn test_logistics_crud_operations() {
 
             let retrieved_logistics: Value = assert_json_response(get_response).await;
             assert_eq!(retrieved_logistics["id"], logistics_id);
+            assert_eq!(retrieved_logistics["transport_type"], json!("Truck"));
+            assert!(retrieved_logistics["items"]
+                .as_array()
+                .map(|items| !items.is_empty())
+                .unwrap_or(false));
 
             // Test 4: Delete logistics line
             let delete_response = client
@@ -237,6 +249,90 @@ async fn test_logistics_crud_operations() {
                 .expect("Failed to verify deletion");
 
             assert_not_found(verify_response).await;
+
+            // Additional tests: create bus logistics
+            let bus_request = json!({
+                "from_factory": factory1_id,
+                "to_factory": factory2_id,
+                "transport_type": "Bus",
+                "bus_name": "Test Bus Route",
+                "conveyors": [
+                    {
+                        "line_id": "CV-001",
+                        "conveyor_type": "Mk3",
+                        "item": "IronPlate",
+                        "quantity_per_min": 120.0
+                    }
+                ],
+                "pipelines": [
+                    {
+                        "pipeline_id": "PL-001",
+                        "pipeline_type": "Mk1",
+                        "item": "Water",
+                        "quantity_per_min": 240.0
+                    }
+                ]
+            });
+
+            let bus_response = client
+                .post(&format!("{}/api/logistics", server.base_url))
+                .json(&bus_request)
+                .send()
+                .await
+                .expect("Failed to create bus logistics");
+
+            let bus_status = bus_response.status().as_u16();
+            let bus_body = bus_response.text().await.unwrap();
+            assert_eq!(bus_status, 201, "Bus creation failed: {}", bus_body);
+            let bus_logistics: Value = serde_json::from_str(&bus_body).unwrap();
+            assert_eq!(bus_logistics["transport_type"], json!("Bus"));
+            let bus_id = bus_logistics["id"].as_u64().unwrap();
+
+            // Additional tests: create train logistics
+            let train_request = json!({
+                "from_factory": factory1_id,
+                "to_factory": factory2_id,
+                "transport_type": "Train",
+                "train_name": "Test Train Line",
+                "wagons": [
+                    {
+                        "wagon_id": "WG-001",
+                        "wagon_type": "Cargo",
+                        "item": "IronPlate",
+                        "quantity_per_min": 120.0
+                    },
+                    {
+                        "wagon_id": "WG-002",
+                        "wagon_type": "Fluid",
+                        "item": "Water",
+                        "quantity_per_min": 300.0
+                    }
+                ]
+            });
+
+            let train_response = client
+                .post(&format!("{}/api/logistics", server.base_url))
+                .json(&train_request)
+                .send()
+                .await
+                .expect("Failed to create train logistics");
+
+            let train_status = train_response.status().as_u16();
+            let train_body = train_response.text().await.unwrap();
+            assert_eq!(train_status, 201, "Train creation failed: {}", train_body);
+            let train_logistics: Value = serde_json::from_str(&train_body).unwrap();
+            assert_eq!(train_logistics["transport_type"], json!("Train"));
+            let train_id = train_logistics["id"].as_u64().unwrap();
+
+            // Clean up created logistics lines
+            let _ = client
+                .delete(&format!("{}/api/logistics/{}", server.base_url, bus_id))
+                .send()
+                .await;
+            let _ = client
+                .delete(&format!("{}/api/logistics/{}", server.base_url, train_id))
+                .send()
+                .await;
         } else {
             // Not implemented yet
             assert_bad_request(create_response).await;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import { registerCommonShortcuts } from '@/composables/useKeyboardShortcuts'
 import { ErrorBoundary, ToastContainer } from '@/components/ui'
@@ -16,28 +16,30 @@ const closeSettings = () => {
   showSettings.value = false
 }
 
-// Set up keyboard shortcuts
-onMounted(() => {
-  const unregisterShortcuts = registerCommonShortcuts()
+// Set up keyboard shortcuts (only if in browser environment)
+if (typeof window !== 'undefined' && window.document) {
+  onMounted(() => {
+    const unregisterShortcuts = registerCommonShortcuts()
 
-  // Handle custom events from shortcuts
-  const handleOpenSettings = () => openSettings()
-  const handleEscape = () => {
-    if (showSettings.value) {
-      closeSettings()
+    // Handle custom events from shortcuts
+    const handleOpenSettings = () => openSettings()
+    const handleEscape = () => {
+      if (showSettings.value) {
+        closeSettings()
+      }
     }
-  }
 
-  document.addEventListener('app-open-settings', handleOpenSettings)
-  document.addEventListener('app-escape', handleEscape)
+    document.addEventListener('app-open-settings', handleOpenSettings)
+    document.addEventListener('app-escape', handleEscape)
 
-  // Clean up on unmount
-  return () => {
-    unregisterShortcuts()
-    document.removeEventListener('app-open-settings', handleOpenSettings)
-    document.removeEventListener('app-escape', handleEscape)
-  }
-})
+    // Clean up on unmount
+    onUnmounted(() => {
+      unregisterShortcuts()
+      document.removeEventListener('app-open-settings', handleOpenSettings)
+      document.removeEventListener('app-escape', handleEscape)
+    })
+  })
+}
 </script>
 
 <template>
