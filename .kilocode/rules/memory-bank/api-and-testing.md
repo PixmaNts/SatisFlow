@@ -7,6 +7,7 @@ This document provides the complete API contract, testing infrastructure, and de
 ## API Overview
 
 ### Base Configuration
+
 - **Base URL**: `http://localhost:3000/api`
 - **Content-Type**: `application/json`
 - **CORS**: Configurable (development: all origins, production: restricted)
@@ -14,7 +15,9 @@ This document provides the complete API contract, testing infrastructure, and de
 - **Health Check**: `GET /health`
 
 ### Error Response Format
+
 All API errors follow a consistent structure:
+
 ```json
 {
   "error": "Human-readable error message",
@@ -23,6 +26,7 @@ All API errors follow a consistent structure:
 ```
 
 ### HTTP Status Codes
+
 - `200 OK` - Successful request
 - `201 Created` - Resource successfully created
 - `204 No Content` - Successful deletion
@@ -36,6 +40,7 @@ All API errors follow a consistent structure:
 ### Item Types
 
 Items are represented as strings matching Rust enum variants:
+
 ```
 "IronOre", "CopperOre", "IronIngot", "CopperIngot", "IronPlate", "CopperSheet",
 "Wire", "Cable", "Concrete", "Coal", "Biomass", "Fuel", "Turbofuel",
@@ -112,6 +117,7 @@ Items are represented as strings matching Rust enum variants:
 Production lines use a tagged union format with `#[serde(tag)]`:
 
 **Recipe Variant**:
+
 ```json
 {
   "ProductionLineRecipe": {
@@ -131,6 +137,7 @@ Production lines use a tagged union format with `#[serde(tag)]`:
 ```
 
 **Blueprint Variant**:
+
 ```json
 {
   "ProductionLineBlueprint": {
@@ -180,6 +187,7 @@ Production lines use a tagged union format with `#[serde(tag)]`:
 ### Dashboard Responses
 
 #### Summary Response
+
 ```json
 {
   "total_factories": 3,
@@ -192,6 +200,7 @@ Production lines use a tagged union format with `#[serde(tag)]`:
 ```
 
 #### Item Balance Response
+
 ```json
 [
   {
@@ -213,6 +222,7 @@ Production lines use a tagged union format with `#[serde(tag)]`:
 ```
 
 #### Power Statistics Response
+
 ```json
 {
   "total_generation": 1200.0,
@@ -238,6 +248,7 @@ Production lines use a tagged union format with `#[serde(tag)]`:
 ### Game Data Responses
 
 #### Recipe Response
+
 ```json
 [
   {
@@ -260,6 +271,7 @@ Production lines use a tagged union format with `#[serde(tag)]`:
 ```
 
 #### Item Response
+
 ```json
 [
   "IronOre",
@@ -284,6 +296,7 @@ Production lines use a tagged union format with `#[serde(tag)]`:
 ```
 
 #### Machine Response
+
 ```json
 [
   {
@@ -315,6 +328,7 @@ Get all factories with calculated item balances and power statistics.
 **Response**: Array of `Factory` objects
 
 **Example**:
+
 ```bash
 curl http://localhost:3000/api/factories
 ```
@@ -324,16 +338,19 @@ curl http://localhost:3000/api/factories
 Get a specific factory by ID.
 
 **Parameters**:
+
 - `id` (path): Factory ID
 
 **Response**: `Factory` object
 
 **Example**:
+
 ```bash
 curl http://localhost:3000/api/factories/1
 ```
 
 **Error Response** (404):
+
 ```json
 {
   "error": "Factory with id 999 not found",
@@ -346,6 +363,7 @@ curl http://localhost:3000/api/factories/1
 Create a new factory.
 
 **Request Body**:
+
 ```json
 {
   "name": "New Factory",
@@ -357,6 +375,7 @@ Create a new factory.
 **Response**: `Factory` object with HTTP 201
 
 **Error Response** (400):
+
 ```json
 {
   "error": "Factory name cannot be empty",
@@ -369,9 +388,11 @@ Create a new factory.
 Update an existing factory.
 
 **Parameters**:
+
 - `id` (path): Factory ID
 
 **Request Body**:
+
 ```json
 {
   "name": "Updated Factory Name",
@@ -383,6 +404,7 @@ Update an existing factory.
 **Response**: `Factory` object
 
 **Error Response** (404):
+
 ```json
 {
   "error": "Factory with id 999 not found",
@@ -395,11 +417,13 @@ Update an existing factory.
 Delete a factory and all associated logistics lines.
 
 **Parameters**:
+
 - `id` (path): Factory ID
 
 **Response**: HTTP 204 with no body
 
 **Error Response** (404):
+
 ```json
 {
   "error": "Factory with id 999 not found",
@@ -416,6 +440,7 @@ Get all logistics lines.
 **Response**: Array of `LogisticsLine` objects
 
 **Example**:
+
 ```bash
 curl http://localhost:3000/api/logistics
 ```
@@ -425,11 +450,13 @@ curl http://localhost:3000/api/logistics
 Get a specific logistics line by ID.
 
 **Parameters**:
+
 - `id` (path): Logistics line ID
 
 **Response**: `LogisticsLine` object
 
 **Error Response** (404):
+
 ```json
 {
   "error": "Logistics line with id 999 not found",
@@ -442,6 +469,7 @@ Get a specific logistics line by ID.
 Create a new logistics line. Supports four transport types with different payload structures.
 
 **Truck Payload**:
+
 ```json
 {
   "from_factory": 1,
@@ -454,6 +482,7 @@ Create a new logistics line. Supports four transport types with different payloa
 ```
 
 **Drone Payload**:
+
 ```json
 {
   "from_factory": 1,
@@ -466,6 +495,7 @@ Create a new logistics line. Supports four transport types with different payloa
 ```
 
 **Bus Payload**:
+
 ```json
 {
   "from_factory": 1,
@@ -492,6 +522,7 @@ Create a new logistics line. Supports four transport types with different payloa
 ```
 
 **Train Payload**:
+
 ```json
 {
   "from_factory": 2,
@@ -520,6 +551,7 @@ Create a new logistics line. Supports four transport types with different payloa
 **Response**: `LogisticsLine` object with HTTP 201
 
 **Error Response** (400):
+
 ```json
 {
   "error": "Source factory with id 999 does not exist",
@@ -532,11 +564,13 @@ Create a new logistics line. Supports four transport types with different payloa
 Delete a logistics line.
 
 **Parameters**:
+
 - `id` (path): Logistics line ID
 
 **Response**: HTTP 204 with no body
 
 **Error Response** (404):
+
 ```json
 {
   "error": "Logistics line with id 999 not found",
@@ -553,6 +587,7 @@ Get global summary statistics.
 **Response**: `DashboardSummary` object
 
 **Example**:
+
 ```bash
 curl http://localhost:3000/api/dashboard/summary
 ```
@@ -566,6 +601,7 @@ Get global item balances across all factories.
 **States**: "overflow" (>0), "underflow" (<0), "balanced" (=0)
 
 **Example**:
+
 ```bash
 curl http://localhost:3000/api/dashboard/items
 ```
@@ -577,6 +613,7 @@ Get global power statistics with per-factory breakdown.
 **Response**: `PowerStatisticsResponse` object
 
 **Example**:
+
 ```bash
 curl http://localhost:3000/api/dashboard/power
 ```
@@ -590,6 +627,7 @@ Get all available recipes.
 **Response**: Array of `RecipeInfo` objects
 
 **Example**:
+
 ```bash
 curl http://localhost:3000/api/game-data/recipes
 ```
@@ -601,6 +639,7 @@ Get all available items.
 **Response**: Array of item names (strings)
 
 **Example**:
+
 ```bash
 curl http://localhost:3000/api/game-data/items
 ```
@@ -612,6 +651,7 @@ Get all available machine types.
 **Response**: Array of `MachineInfo` objects
 
 **Example**:
+
 ```bash
 curl http://localhost:3000/api/game-data/machines
 ```
@@ -623,6 +663,7 @@ curl http://localhost:3000/api/game-data/machines
 Health check endpoint.
 
 **Response**:
+
 ```json
 {
   "status": "healthy",
@@ -679,6 +720,7 @@ pub enum Item {
 ### Transport Capacity Constants
 
 **Conveyors**:
+
 - Mk1: 60 items/min
 - Mk2: 120 items/min
 - Mk3: 270 items/min
@@ -687,12 +729,14 @@ pub enum Item {
 - Mk6: 1200 items/min
 
 **Pipelines**:
+
 - Mk1: 300 m³/min
 - Mk2: 600 m³/min
 
 ### Transport ID Format
 
 Transport IDs follow these patterns:
+
 - Trucks: `"TRK-{id}"`
 - Drones: `"DRN-{id}"`
 - Buses: `"BUS-{id}"`
@@ -750,6 +794,7 @@ All errors follow the consistent format:
 ```
 
 Common error scenarios:
+
 - Invalid factory/logistics IDs (404)
 - Invalid request data (400)
 - Empty factory names (400)
@@ -790,6 +835,7 @@ tests/
 **Total Lines**: 484 lines of comprehensive integration tests
 
 **Coverage Areas**:
+
 - ✅ Factory CRUD operations (create, read, update, delete)
 - ✅ Logistics management (all 4 transport types)
 - ✅ Dashboard endpoint validation (summary, items, power)
@@ -801,6 +847,7 @@ tests/
 ### Test Utilities
 
 **Common Module** (`tests/common/mod.rs`):
+
 - `create_test_server()` - Isolated test server on random port
 - `create_test_client()` - Configured reqwest client
 - `assert_json_response()` - Parse and validate JSON responses
@@ -811,17 +858,20 @@ tests/
 ### Running Tests
 
 **Run All Tests**:
+
 ```bash
 cd crates/satisflow-server
 cargo test
 ```
 
 **Run Tests with Verbose Output**:
+
 ```bash
 cargo test -- --nocapture
 ```
 
 **Run Specific Test Modules**:
+
 ```bash
 # Factory tests
 cargo test --package satisflow-server -- --exact test_factory_crud_operations
@@ -845,6 +895,7 @@ cargo test --package satisflow-server -- --exact test_error_response_format
 ```
 
 **Using Test Runner**:
+
 ```bash
 # Run all tests with verbose output
 cargo run --bin test_runner verbose
@@ -889,6 +940,7 @@ async fn test_new_endpoint() {
 ### Adding New Tests
 
 When adding new endpoints:
+
 1. Add test data helpers to `tests/common/mod.rs`
 2. Create test functions following existing patterns
 3. Test both success and error paths
