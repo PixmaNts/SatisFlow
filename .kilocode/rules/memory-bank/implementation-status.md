@@ -105,16 +105,16 @@
 
 ### Medium Priority
 
-#### ID Management System ⚠️ NEEDS IMPROVEMENT
+#### ID Management System ⚙️ IN PROGRESS
 
-- [ ] Replace sequential ID generation with UUID
-- [ ] Factory ID collision prevention
-- [ ] LogisticsFlux ID management
-- [ ] ProductionLine ID uniqueness across factories
+- [x] Replace sequential ID generation with UUID
+- [x] Factory ID collision prevention
+- [x] LogisticsFlux ID management
+- [x] ProductionLine ID uniqueness across factories
 - [ ] ID persistence across save/load cycles
 
-**Current Issue**: Simple counter can cause ID conflicts  
-**Estimated Effort**: 2-3 hours
+**Current Status**: Runtime identifiers now use UUIDs end-to-end; persistence still pending.  
+**Estimated Effort (remaining)**: 1-2 hours
 
 #### Validation Layer ⚠️ PARTIAL
 

@@ -80,6 +80,7 @@ pub fn create_test_client() -> reqwest::Client {
 /// Common test data
 pub mod test_data {
     use serde_json::json;
+    use uuid::Uuid;
 
     /// Fully populated factory creation payload for metadata-based flows.
     pub fn create_factory_request() -> serde_json::Value {
@@ -127,8 +128,8 @@ pub mod test_data {
 
     /// Truck payload using generated identifiers to validate defaults.
     pub fn truck_logistics_request(
-        from_factory: u64,
-        to_factory: u64,
+        from_factory: Uuid,
+        to_factory: Uuid,
         item: &str,
         quantity_per_min: f32,
     ) -> serde_json::Value {
@@ -143,8 +144,8 @@ pub mod test_data {
 
     /// Truck payload providing an explicit identifier to validate parsing.
     pub fn truck_logistics_with_id_request(
-        from_factory: u64,
-        to_factory: u64,
+        from_factory: Uuid,
+        to_factory: Uuid,
         item: &str,
         quantity_per_min: f32,
         truck_id: &str,
@@ -160,10 +161,7 @@ pub mod test_data {
     }
 
     /// Bus payload with no segments, used for validation failure.
-    pub fn empty_bus_logistics_request(
-        from_factory: u64,
-        to_factory: u64,
-    ) -> serde_json::Value {
+    pub fn empty_bus_logistics_request(from_factory: Uuid, to_factory: Uuid) -> serde_json::Value {
         json!({
             "from_factory": from_factory,
             "to_factory": to_factory,
@@ -174,10 +172,7 @@ pub mod test_data {
     }
 
     /// Mixed conveyor/pipeline bus payload for aggregation assertions.
-    pub fn mixed_bus_logistics_request(
-        from_factory: u64,
-        to_factory: u64,
-    ) -> serde_json::Value {
+    pub fn mixed_bus_logistics_request(from_factory: Uuid, to_factory: Uuid) -> serde_json::Value {
         json!({
             "from_factory": from_factory,
             "to_factory": to_factory,
@@ -204,8 +199,8 @@ pub mod test_data {
 
     /// Bus payload containing whitespace-only name to trigger defaulting.
     pub fn bus_with_whitespace_name_request(
-        from_factory: u64,
-        to_factory: u64,
+        from_factory: Uuid,
+        to_factory: Uuid,
     ) -> serde_json::Value {
         json!({
             "from_factory": from_factory,
@@ -224,8 +219,8 @@ pub mod test_data {
 
     /// Bus payload containing zero-throughput pipeline to trigger validation.
     pub fn bus_with_zero_pipeline_request(
-        from_factory: u64,
-        to_factory: u64,
+        from_factory: Uuid,
+        to_factory: Uuid,
     ) -> serde_json::Value {
         json!({
             "from_factory": from_factory,
@@ -243,8 +238,8 @@ pub mod test_data {
 
     /// Train payload helper for type-specific wagon construction.
     pub fn train_logistics_request(
-        from_factory: u64,
-        to_factory: u64,
+        from_factory: Uuid,
+        to_factory: Uuid,
         wagon_type: &str,
         item: &str,
         quantity_per_min: f32,
@@ -266,7 +261,7 @@ pub mod test_data {
     }
 
     /// Train payload with no wagons used to assert minimum elements.
-    pub fn train_empty_wagons_request(from_factory: u64, to_factory: u64) -> serde_json::Value {
+    pub fn train_empty_wagons_request(from_factory: Uuid, to_factory: Uuid) -> serde_json::Value {
         json!({
             "from_factory": from_factory,
             "to_factory": to_factory,
@@ -279,8 +274,8 @@ pub mod test_data {
     /// Negative logistics payload pointing to unknown factories and zero flow.
     pub fn invalid_logistics_request() -> serde_json::Value {
         json!({
-            "from_factory": 999, // Non-existent factory
-            "to_factory": 1000,
+            "from_factory": Uuid::new_v4(), // Non-existent factory
+            "to_factory": Uuid::new_v4(),
             "transport_type": "Truck",
             "item": "IronOre",
             "quantity_per_min": 0.0

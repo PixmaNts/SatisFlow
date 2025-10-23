@@ -15,10 +15,11 @@ use common::{
 };
 use reqwest::Client;
 use serde_json::Value;
+use uuid::Uuid;
 
 /// Convenience helper to create a factory and return its identifier for wiring
 /// up logistics lines within integration tests.
-async fn create_factory(client: &Client, base_url: &str, name: &str) -> u64 {
+async fn create_factory(client: &Client, base_url: &str, name: &str) -> Uuid {
     client
         .post(&format!("{}/api/factories", base_url))
         .json(&minimal_factory_request(name))
@@ -28,8 +29,9 @@ async fn create_factory(client: &Client, base_url: &str, name: &str) -> u64 {
         .json::<Value>()
         .await
         .unwrap()["id"]
-        .as_u64()
-        .expect("Factory id missing")
+        .as_str()
+        .and_then(|raw| Uuid::parse_str(raw).ok())
+        .expect("Factory id missing or invalid")
 }
 
 /// Truck happy path ensuring transport identifiers auto-increment and payload
@@ -314,7 +316,12 @@ async fn logistics_rejects_unknown_item() {
 
     let response = client
         .post(&format!("{}/api/logistics", server.base_url))
-        .json(&truck_logistics_request(from_id, to_id, "AlienProtein", 30.0))
+        .json(&truck_logistics_request(
+            from_id,
+            to_id,
+            "AlienProtein",
+            30.0,
+        ))
         .send()
         .await
         .expect("Failed request for unknown item");

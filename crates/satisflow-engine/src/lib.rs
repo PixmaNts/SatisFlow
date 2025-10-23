@@ -1,11 +1,19 @@
 use std::collections::HashMap;
 
+use uuid::Uuid;
+
 pub mod examples;
 pub mod models;
 
+use models::{
+    factory::Factory,
+    logistics::{LogisticsFlux, TransportType},
+    FactoryId, Item, LogisticsId, PowerStats,
+};
+
 pub struct SatisflowEngine {
-    factories: HashMap<u64, models::factory::Factory>,
-    logistics_lines: HashMap<u64, models::logistics::LogisticsFlux>,
+    factories: HashMap<FactoryId, Factory>,
+    logistics_lines: HashMap<LogisticsId, LogisticsFlux>,
 }
 
 impl Default for SatisflowEngine {
@@ -22,30 +30,30 @@ impl SatisflowEngine {
         }
     }
 
-    pub fn create_factory(&mut self, name: String, description: Option<String>) -> u64 {
-        let id = self.factories.len() as u64 + 1;
-        let factory = models::factory::Factory::new(id as u32, name, description);
+    pub fn create_factory(&mut self, name: String, description: Option<String>) -> FactoryId {
+        let id = Uuid::new_v4();
+        let factory = Factory::new(id, name, description);
         self.factories.insert(id, factory);
         id
     }
 
-    pub fn get_factory(&self, id: u64) -> Option<&models::factory::Factory> {
+    pub fn get_factory(&self, id: FactoryId) -> Option<&Factory> {
         self.factories.get(&id)
     }
 
-    pub fn get_factory_mut(&mut self, id: u64) -> Option<&mut models::factory::Factory> {
+    pub fn get_factory_mut(&mut self, id: FactoryId) -> Option<&mut Factory> {
         self.factories.get_mut(&id)
     }
 
     pub fn create_logistics_line(
         &mut self,
-        from: u64,
-        to: u64,
-        transport_type: models::logistics::TransportType,
+        from: FactoryId,
+        to: FactoryId,
+        transport_type: TransportType,
         transport_detail: String,
-    ) -> Result<u64, Box<dyn std::error::Error>> {
-        let id = self.logistics_lines.len() as u64 + 1;
-        let line = models::logistics::LogisticsFlux {
+    ) -> Result<LogisticsId, Box<dyn std::error::Error>> {
+        let id = Uuid::new_v4();
+        let line = LogisticsFlux {
             id,
             from_factory: from,
             to_factory: to,
@@ -65,11 +73,11 @@ impl SatisflowEngine {
         Ok(id)
     }
 
-    pub fn get_logistics_line(&self, id: u64) -> Option<&models::logistics::LogisticsFlux> {
+    pub fn get_logistics_line(&self, id: LogisticsId) -> Option<&LogisticsFlux> {
         self.logistics_lines.get(&id)
     }
 
-    pub fn update(&mut self) -> HashMap<models::Item, f32> {
+    pub fn update(&mut self) -> HashMap<Item, f32> {
         let mut global_items = HashMap::new();
         self.factories.iter_mut().for_each(|(_id, factory)| {
             // Update each factory
@@ -83,7 +91,7 @@ impl SatisflowEngine {
     }
 
     /// Get global power statistics for all factories
-    pub fn global_power_stats(&self) -> models::PowerStats {
+    pub fn global_power_stats(&self) -> PowerStats {
         let mut total_generation = 0.0;
         let mut total_consumption = 0.0;
         let mut factory_stats = Vec::new();
@@ -114,21 +122,21 @@ impl SatisflowEngine {
             factory_stats.push(factory_stat);
         }
 
-        models::PowerStats::new(total_generation, total_consumption, factory_stats)
+        PowerStats::new(total_generation, total_consumption, factory_stats)
     }
 
     /// Get all factories
-    pub fn get_all_factories(&self) -> &HashMap<u64, models::factory::Factory> {
+    pub fn get_all_factories(&self) -> &HashMap<FactoryId, Factory> {
         &self.factories
     }
 
     /// Get all logistics lines
-    pub fn get_all_logistics(&self) -> &HashMap<u64, models::logistics::LogisticsFlux> {
+    pub fn get_all_logistics(&self) -> &HashMap<LogisticsId, LogisticsFlux> {
         &self.logistics_lines
     }
 
     /// Delete a factory and its connected logistics lines
-    pub fn delete_factory(&mut self, id: u64) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn delete_factory(&mut self, id: FactoryId) -> Result<(), Box<dyn std::error::Error>> {
         // Check if factory exists
         if !self.factories.contains_key(&id) {
             return Err(format!("Factory with id {} does not exist", id).into());
@@ -145,7 +153,10 @@ impl SatisflowEngine {
     }
 
     /// Delete a logistics line
-    pub fn delete_logistics_line(&mut self, id: u64) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn delete_logistics_line(
+        &mut self,
+        id: LogisticsId,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         // Check if logistics line exists
         if !self.logistics_lines.contains_key(&id) {
             return Err(format!("Logistics line with id {} does not exist", id).into());
@@ -163,12 +174,15 @@ impl SatisflowEngine {
 mod tests {
     use super::*;
     use crate::models::{
-        logistics::{LogisticsFlux, TransportType, TruckTransport},
-        production_line::{
-            MachineGroup, ProductionLine, ProductionLineBlueprint, ProductionLineRecipe,
-        },
+        logistics::{TransportType, TruckTransport},
+        production_line::{ProductionLine, ProductionLineBlueprint, ProductionLineRecipe},
         Item, Recipe,
     };
+    use uuid::Uuid;
+
+    fn uuid_from_u64(value: u64) -> Uuid {
+        Uuid::from_u128(value as u128)
+    }
 
     #[test]
     fn test_get_all_factories() {
@@ -282,14 +296,16 @@ mod tests {
         let mut engine = SatisflowEngine::new();
 
         // Try to delete non-existent factory
-        let result = engine.delete_factory(999);
+        let missing_id = uuid_from_u64(999);
+        let result = engine.delete_factory(missing_id);
 
         // Verify error
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("Factory with id 999 does not exist"));
+        let error = result.unwrap_err().to_string();
+        assert!(
+            error.contains(&missing_id.to_string()),
+            "expected error to reference missing factory id, got: {error}"
+        );
     }
 
     #[test]
@@ -330,21 +346,23 @@ mod tests {
         let mut engine = SatisflowEngine::new();
 
         // Try to delete non-existent logistics line
-        let result = engine.delete_logistics_line(999);
+        let missing_id = uuid_from_u64(9999);
+        let result = engine.delete_logistics_line(missing_id);
 
         // Verify error
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("Logistics line with id 999 does not exist"));
+        let error = result.unwrap_err().to_string();
+        assert!(
+            error.contains(&missing_id.to_string()),
+            "expected error to reference missing logistics id, got: {error}"
+        );
     }
 
     #[test]
     fn test_production_line_name_method() {
         // Test ProductionLineRecipe
         let recipe_line = ProductionLineRecipe::new(
-            1,
+            uuid_from_u64(1),
             "Test Recipe Line".to_string(),
             Some("Test description".to_string()),
             Recipe::IronIngot,
@@ -354,7 +372,7 @@ mod tests {
 
         // Test ProductionLineBlueprint
         let blueprint_line = ProductionLineBlueprint::new(
-            2,
+            uuid_from_u64(2),
             "Test Blueprint".to_string(),
             Some("Blueprint description".to_string()),
         );

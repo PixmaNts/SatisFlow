@@ -15,6 +15,7 @@ use common::{
     },
 };
 use serde_json::Value;
+use uuid::Uuid;
 
 /// Rejects blank factory names and asserts the contract `{error,status}` shape.
 #[tokio::test]
@@ -90,7 +91,8 @@ async fn factory_update_clears_notes_when_empty() {
 
     let created: Value = create_response.json().await.unwrap();
     let factory_id = created["id"]
-        .as_u64()
+        .as_str()
+        .and_then(|value| Uuid::parse_str(value).ok())
         .expect("Factory id missing from create response");
 
     let update_response = client
@@ -133,20 +135,34 @@ async fn factory_delete_cascades_logistics() {
         .await
         .unwrap();
 
-    let factory_a_id = factory_a["id"].as_u64().unwrap();
-    let factory_b_id = factory_b["id"].as_u64().unwrap();
+    let factory_a_id = factory_a["id"]
+        .as_str()
+        .and_then(|id| Uuid::parse_str(id).ok())
+        .unwrap();
+    let factory_b_id = factory_b["id"]
+        .as_str()
+        .and_then(|id| Uuid::parse_str(id).ok())
+        .unwrap();
 
     // Create a logistics line between the factories.
     let logistics_response = client
         .post(&format!("{}/api/logistics", server.base_url))
-        .json(&truck_logistics_request(factory_a_id, factory_b_id, "IronOre", 60.0))
+        .json(&truck_logistics_request(
+            factory_a_id,
+            factory_b_id,
+            "IronOre",
+            60.0,
+        ))
         .send()
         .await
         .expect("Failed to create logistics line");
 
     assert_eq!(logistics_response.status().as_u16(), 201);
     let logistics: Value = logistics_response.json().await.unwrap();
-    let logistics_id = logistics["id"].as_u64().unwrap();
+    let logistics_id = logistics["id"]
+        .as_str()
+        .and_then(|id| Uuid::parse_str(id).ok())
+        .unwrap();
 
     // Delete factory A and ensure the logistics line is removed as part of the cascade.
     let delete_response = client

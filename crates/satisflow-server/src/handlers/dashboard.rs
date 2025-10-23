@@ -1,6 +1,7 @@
 // crates/satisflow-server/src/handlers/dashboard.rs
 use axum::{extract::State, routing::get, Json, Router};
 use serde::Serialize;
+use uuid::Uuid;
 
 use crate::{error::Result, state::AppState};
 
@@ -23,7 +24,7 @@ pub struct ItemBalance {
 
 #[derive(Serialize)]
 pub struct FactoryPowerStatsResponse {
-    pub factory_id: u64,
+    pub factory_id: Uuid,
     pub factory_name: String,
     pub generation: f32,
     pub consumption: f32,

@@ -36,10 +36,10 @@
 
 ### 4. Validation & UUIDs
 
-- Sequential IDs are vulnerable to collisions once persistence arrives.
-- **Required work**
-  - Replace numeric counters with UUIDs (or at least enforce uniqueness via `uuid` crate) for factories, logistics, and nested resources.
+- Sequential IDs were vulnerable to collisions; runtime identifiers now use UUIDs across factories, logistics, and nested resources.
+- **Remaining work**
   - Extend validation: factory name uniqueness, circular logistics detection, overflow/underflow warnings.
+  - Ensure ID persistence across save/load hooks once the storage layer lands.
 
 ### 5. Blueprint Import/Export
 
@@ -74,6 +74,6 @@
 
 1. Implement factory sub-resource endpoints (CRUD + tests) since the frontend blocks on them.
 2. Add logistics update support to unlock editing UX.
-3. Introduce persistence/UUID updates to stabilise IDs before blueprints.
+3. Introduce persistence hooks so UUID assignments survive restarts before layering blueprints.
 4. Layer in blueprint endpoints and validation enhancements.
 5. Finalise with persistence integration tests and telemetry/nice-to-haves.

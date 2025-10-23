@@ -5,16 +5,15 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use satisflow_engine::models::{
-    logistics::{
-        Bus, Conveyor, ConveyorSpeed, DroneTransport, Pipeline, PipelineCapacity, Train, Transport,
-        TransportType, TruckTransport, Wagon, WagonType,
-    },
-    Item,
+use satisflow_engine::models::logistics::{
+    Bus, Conveyor, ConveyorSpeed, DroneTransport, Pipeline, PipelineCapacity, Train, Transport,
+    TransportType, TruckTransport, Wagon, WagonType,
 };
+use satisflow_engine::models::Item;
 use satisflow_engine::SatisflowEngine;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use uuid::Uuid;
 
 use crate::{
     error::{AppError, Result},
@@ -23,8 +22,8 @@ use crate::{
 
 #[derive(Serialize, Deserialize)]
 pub struct CreateLogisticsRequest {
-    pub from_factory: u64,
-    pub to_factory: u64,
+    pub from_factory: Uuid,
+    pub to_factory: Uuid,
     #[serde(flatten)]
     pub transport: CreateLogisticsTransport,
 }
@@ -96,9 +95,9 @@ pub struct ItemFlowResponse {
 
 #[derive(Serialize)]
 pub struct LogisticsResponse {
-    pub id: u64,
-    pub from_factory: u64,
-    pub to_factory: u64,
+    pub id: Uuid,
+    pub from_factory: Uuid,
+    pub to_factory: Uuid,
     pub transport_type: String,
     pub transport_id: String,
     pub transport_name: Option<String>,
@@ -194,12 +193,12 @@ pub async fn get_logistics(State(state): State<AppState>) -> Result<Json<Vec<Log
 
     let mut responses = Vec::new();
 
-    for (id, logistics) in logistics_lines {
+    for logistics in logistics_lines.values() {
         let items = convert_item_flows(logistics.get_items());
         let total_quantity = logistics.total_quantity_per_min();
 
         let response = LogisticsResponse {
-            id: *id,
+            id: logistics.id,
             from_factory: logistics.from_factory,
             to_factory: logistics.to_factory,
             transport_type: logistics
@@ -221,7 +220,7 @@ pub async fn get_logistics(State(state): State<AppState>) -> Result<Json<Vec<Log
 
 pub async fn get_logistics_line(
     State(state): State<AppState>,
-    Path(id): Path<u64>,
+    Path(id): Path<Uuid>,
 ) -> Result<Json<LogisticsResponse>> {
     let engine = state.engine.read().await;
 
@@ -233,7 +232,7 @@ pub async fn get_logistics_line(
     let total_quantity = logistics.total_quantity_per_min();
 
     let response = LogisticsResponse {
-        id,
+        id: logistics.id,
         from_factory: logistics.from_factory,
         to_factory: logistics.to_factory,
         transport_type: logistics
@@ -558,7 +557,7 @@ fn ensure_positive(value: f32, context: &str) -> std::result::Result<f32, AppErr
 
 pub async fn delete_logistics(
     State(state): State<AppState>,
-    Path(id): Path<u64>,
+    Path(id): Path<Uuid>,
 ) -> Result<StatusCode> {
     let mut engine = state.engine.write().await;
 

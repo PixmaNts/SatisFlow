@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::models::Item;
+use crate::models::{FactoryId, Item, LogisticsId};
 
 pub trait ItemPerPin {
     /// Returns the number of items that can be transported per minute (Max throughput).
@@ -101,9 +101,9 @@ impl std::fmt::Display for TransportType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct LogisticsFlux {
-    pub id: u64,
-    pub from_factory: u64,
-    pub to_factory: u64,
+    pub id: LogisticsId,
+    pub from_factory: FactoryId,
+    pub to_factory: FactoryId,
     pub transport_type: TransportType,
     pub transport_details: String,
 }
@@ -450,6 +450,11 @@ impl Transport for TransportType {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use uuid::Uuid;
+
+    fn uuid_from_u64(value: u64) -> Uuid {
+        Uuid::from_u128(value as u128)
+    }
     use crate::models::Item;
     #[test]
     fn test_conveyor_speed_constants() {
@@ -714,9 +719,9 @@ mod tests {
         };
 
         let flux = LogisticsFlux {
-            id: 1,
-            from_factory: 1,
-            to_factory: 2,
+            id: uuid_from_u64(1),
+            from_factory: uuid_from_u64(1),
+            to_factory: uuid_from_u64(2),
             transport_type: TransportType::Train(train),
             transport_details: "Main line".into(),
         };
@@ -741,9 +746,9 @@ mod tests {
         };
 
         let flux = LogisticsFlux {
-            id: 1,
-            from_factory: 1,
-            to_factory: 2,
+            id: uuid_from_u64(1),
+            from_factory: uuid_from_u64(1),
+            to_factory: uuid_from_u64(2),
             transport_type: TransportType::Train(train),
             transport_details: "".into(),
         };

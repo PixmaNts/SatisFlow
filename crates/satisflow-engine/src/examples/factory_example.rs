@@ -10,6 +10,8 @@
 //! Each factory includes production lines, raw inputs, power generators,
 //! and logistics connections between factories.
 
+use uuid::Uuid;
+
 use crate::{
     models::{
         logistics::{
@@ -19,10 +21,14 @@ use crate::{
         power_generator::{GeneratorGroup, GeneratorType, PowerGenerator},
         production_line::{MachineGroup, ProductionLine, ProductionLineRecipe},
         raw_input::{ExtractorType, Purity, RawInput},
-        Item, Recipe,
+        FactoryId, Item, Recipe,
     },
     SatisflowEngine,
 };
+
+fn uuid_from_u64(value: u64) -> Uuid {
+    Uuid::from_u128(value as u128)
+}
 
 /// Create a comprehensive factory setup for testing and demonstration
 /// Creates 5 specialized factories with diverse production chains and logistics network
@@ -76,10 +82,10 @@ pub fn create_sample_factory_setup() -> SatisflowEngine {
 }
 
 /// Set up the Northern Forest factory - Primary smelting hub for iron/copper processing
-fn setup_northern_forest_factory(engine: &mut SatisflowEngine, factory_id: u64) {
+fn setup_northern_forest_factory(engine: &mut SatisflowEngine, factory_id: FactoryId) {
     // Add raw inputs for smelting hub
     let iron_ore = RawInput::new(
-        1,
+        uuid_from_u64(1),
         ExtractorType::MinerMk2,
         Item::IronOre,
         Some(Purity::Normal),
@@ -87,7 +93,7 @@ fn setup_northern_forest_factory(engine: &mut SatisflowEngine, factory_id: u64) 
     .expect("Should create valid iron ore input");
 
     let copper_ore = RawInput::new(
-        2,
+        uuid_from_u64(2),
         ExtractorType::MinerMk2,
         Item::CopperOre,
         Some(Purity::Normal),
@@ -95,7 +101,7 @@ fn setup_northern_forest_factory(engine: &mut SatisflowEngine, factory_id: u64) 
     .expect("Should create valid copper ore input");
 
     let limestone = RawInput::new(
-        3,
+        uuid_from_u64(3),
         ExtractorType::MinerMk1,
         Item::Limestone,
         Some(Purity::Normal),
@@ -241,7 +247,7 @@ fn setup_northern_forest_factory(engine: &mut SatisflowEngine, factory_id: u64) 
 }
 
 /// Set up the Central Assembly factory - Advanced manufacturing hub
-fn setup_central_assembly_factory(engine: &mut SatisflowEngine, factory_id: u64) {
+fn setup_central_assembly_factory(engine: &mut SatisflowEngine, factory_id: FactoryId) {
     // Add production lines for advanced assembly
     add_production_line(
         engine,
@@ -369,18 +375,23 @@ fn setup_central_assembly_factory(engine: &mut SatisflowEngine, factory_id: u64)
 }
 
 /// Set up the Oil Refinery factory - Petroleum processing and plastics
-fn setup_oil_refinery_factory(engine: &mut SatisflowEngine, factory_id: u64) {
+fn setup_oil_refinery_factory(engine: &mut SatisflowEngine, factory_id: FactoryId) {
     // Add raw inputs for oil processing
     let crude_oil = RawInput::new(
-        1,
+        uuid_from_u64(1),
         ExtractorType::OilExtractor,
         Item::CrudeOil,
         Some(Purity::Normal),
     )
     .expect("Should create valid crude oil input");
 
-    let water = RawInput::new(2, ExtractorType::WaterExtractor, Item::Water, None)
-        .expect("Should create valid water input");
+    let water = RawInput::new(
+        uuid_from_u64(2),
+        ExtractorType::WaterExtractor,
+        Item::Water,
+        None,
+    )
+    .expect("Should create valid water input");
 
     if let Some(factory) = engine.get_factory_mut(factory_id) {
         factory
@@ -474,21 +485,26 @@ fn setup_oil_refinery_factory(engine: &mut SatisflowEngine, factory_id: u64) {
 }
 
 /// Set up the Steel Mill factory - Heavy industry with steel and concrete
-fn setup_steel_mill_factory(engine: &mut SatisflowEngine, factory_id: u64) {
+fn setup_steel_mill_factory(engine: &mut SatisflowEngine, factory_id: FactoryId) {
     // Add raw inputs for heavy industry
     let iron_ore = RawInput::new(
-        1,
+        uuid_from_u64(1),
         ExtractorType::MinerMk3,
         Item::IronOre,
         Some(Purity::Pure),
     )
     .expect("Should create valid iron ore input");
 
-    let coal = RawInput::new(2, ExtractorType::MinerMk2, Item::Coal, Some(Purity::Normal))
-        .expect("Should create valid coal input");
+    let coal = RawInput::new(
+        uuid_from_u64(2),
+        ExtractorType::MinerMk2,
+        Item::Coal,
+        Some(Purity::Normal),
+    )
+    .expect("Should create valid coal input");
 
     let limestone = RawInput::new(
-        3,
+        uuid_from_u64(3),
         ExtractorType::MinerMk3,
         Item::Limestone,
         Some(Purity::Pure),
@@ -496,7 +512,7 @@ fn setup_steel_mill_factory(engine: &mut SatisflowEngine, factory_id: u64) {
     .expect("Should create valid limestone input");
 
     let bauxite = RawInput::new(
-        4,
+        uuid_from_u64(4),
         ExtractorType::MinerMk2,
         Item::Bauxite,
         Some(Purity::Normal),
@@ -621,10 +637,10 @@ fn setup_steel_mill_factory(engine: &mut SatisflowEngine, factory_id: u64) {
 }
 
 /// Set up the Electronics Lab factory - High-tech components and computers
-fn setup_electronics_lab_factory(engine: &mut SatisflowEngine, factory_id: u64) {
+fn setup_electronics_lab_factory(engine: &mut SatisflowEngine, factory_id: FactoryId) {
     // Add raw inputs for high-tech manufacturing
     let caterium_ore = RawInput::new(
-        1,
+        uuid_from_u64(1),
         ExtractorType::MinerMk2,
         Item::CateriumOre,
         Some(Purity::Normal),
@@ -632,7 +648,7 @@ fn setup_electronics_lab_factory(engine: &mut SatisflowEngine, factory_id: u64) 
     .expect("Should create valid caterium ore input");
 
     let raw_quartz = RawInput::new(
-        2,
+        uuid_from_u64(2),
         ExtractorType::MinerMk2,
         Item::RawQuartz,
         Some(Purity::Normal),
@@ -640,7 +656,7 @@ fn setup_electronics_lab_factory(engine: &mut SatisflowEngine, factory_id: u64) 
     .expect("Should create valid quartz input");
 
     let sulfur = RawInput::new(
-        3,
+        uuid_from_u64(3),
         ExtractorType::MinerMk1,
         Item::Sulfur,
         Some(Purity::Impure),
@@ -788,11 +804,11 @@ fn setup_electronics_lab_factory(engine: &mut SatisflowEngine, factory_id: u64) 
 /// Set up comprehensive logistics network between all 5 factories
 fn setup_inter_factory_logistics(
     engine: &mut SatisflowEngine,
-    northern_forest_id: u64,
-    central_assembly_id: u64,
-    oil_refinery_id: u64,
-    steel_mill_id: u64,
-    electronics_lab_id: u64,
+    northern_forest_id: FactoryId,
+    central_assembly_id: FactoryId,
+    oil_refinery_id: FactoryId,
+    steel_mill_id: FactoryId,
+    electronics_lab_id: FactoryId,
 ) {
     // BUS 1: Northern Forest -> Central Assembly (Basic materials via conveyor bus)
     let bus1 = Bus::new(1, "Forest to Assembly Bus")
@@ -949,12 +965,13 @@ fn setup_inter_factory_logistics(
 /// Helper function to add a production line to a factory
 fn add_production_line(
     engine: &mut SatisflowEngine,
-    factory_id: u64,
+    factory_id: FactoryId,
     line_id: u64,
     name: &str,
     recipe: Recipe,
     machine_groups: Vec<MachineGroup>,
 ) {
+    let line_id = uuid_from_u64(line_id);
     let mut production_line = ProductionLineRecipe::new(
         line_id,
         name.to_string(),
@@ -976,13 +993,14 @@ fn add_production_line(
 /// Helper function to add coal power generators to a factory
 fn add_coal_power_generator(
     engine: &mut SatisflowEngine,
-    factory_id: u64,
+    factory_id: FactoryId,
     generator_id: u64,
     num_generators: u32,
     clock_speed: f32,
 ) {
-    let mut generator = PowerGenerator::new(generator_id, GeneratorType::Coal, Item::Coal)
-        .expect("Should create valid coal generator");
+    let mut generator =
+        PowerGenerator::new(uuid_from_u64(generator_id), GeneratorType::Coal, Item::Coal)
+            .expect("Should create valid coal generator");
 
     let group = GeneratorGroup::new(num_generators, clock_speed)
         .expect("Should create valid generator group");
@@ -1000,13 +1018,14 @@ fn add_coal_power_generator(
 /// Helper function to add fuel power generators to a factory
 fn add_fuel_power_generator(
     engine: &mut SatisflowEngine,
-    factory_id: u64,
+    factory_id: FactoryId,
     generator_id: u64,
     num_generators: u32,
     clock_speed: f32,
 ) {
-    let mut generator = PowerGenerator::new(generator_id, GeneratorType::Fuel, Item::Fuel)
-        .expect("Should create valid fuel generator");
+    let mut generator =
+        PowerGenerator::new(uuid_from_u64(generator_id), GeneratorType::Fuel, Item::Fuel)
+            .expect("Should create valid fuel generator");
 
     let group = GeneratorGroup::new(num_generators, clock_speed)
         .expect("Should create valid generator group");

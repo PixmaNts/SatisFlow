@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::models::Item;
+use crate::models::{Item, RawInputId};
 
 /// Purity levels for resource nodes in Satisfactory
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -151,7 +151,7 @@ impl ResourceWellExtractor {
 /// Represents a raw resource extraction source in a factory
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RawInput {
-    pub id: u64,
+    pub id: RawInputId,
     pub extractor_type: ExtractorType,
     pub item: Item,
     pub purity: Option<Purity>, // Some for ores/oil/gas, None for water
@@ -164,7 +164,7 @@ pub struct RawInput {
 impl RawInput {
     /// Create a new RawInput with automatic quantity calculation
     pub fn new(
-        id: u64,
+        id: RawInputId,
         extractor_type: ExtractorType,
         item: Item,
         purity: Option<Purity>,
@@ -205,7 +205,7 @@ impl RawInput {
 
     /// Create a new Resource Well system with pressurizer and extractors
     pub fn new_resource_well(
-        id: u64,
+        id: RawInputId,
         item: Item,
         pressurizer: ResourceWellPressurizer,
         extractors: Vec<ResourceWellExtractor>,
@@ -433,6 +433,11 @@ impl std::error::Error for RawInputError {}
 #[cfg(test)]
 mod tests {
     use super::*;
+    use uuid::Uuid;
+
+    fn uuid_from_u64(value: u64) -> Uuid {
+        Uuid::from_u128(value as u128)
+    }
 
     // ===== Purity Tests =====
 
@@ -508,7 +513,7 @@ mod tests {
     fn test_resource_well_with_water() {
         assert!(ExtractorType::ResourceWellExtractor.is_compatible_with(&Item::Water));
         let input = RawInput::new(
-            1,
+            uuid_from_u64(1),
             ExtractorType::ResourceWellExtractor,
             Item::Water,
             Some(Purity::Normal),
@@ -522,7 +527,7 @@ mod tests {
     fn test_resource_well_with_oil() {
         assert!(ExtractorType::ResourceWellExtractor.is_compatible_with(&Item::CrudeOil));
         let input = RawInput::new(
-            1,
+            uuid_from_u64(1),
             ExtractorType::ResourceWellExtractor,
             Item::CrudeOil,
             Some(Purity::Pure),
@@ -536,7 +541,7 @@ mod tests {
     fn test_resource_well_with_nitrogen() {
         assert!(ExtractorType::ResourceWellExtractor.is_compatible_with(&Item::NitrogenGas));
         let input = RawInput::new(
-            1,
+            uuid_from_u64(1),
             ExtractorType::ResourceWellExtractor,
             Item::NitrogenGas,
             Some(Purity::Normal),
@@ -651,14 +656,14 @@ mod tests {
     #[test]
     fn test_create_valid_iron_ore_input() {
         let input = RawInput::new(
-            1,
+            uuid_from_u64(1),
             ExtractorType::MinerMk2,
             Item::IronOre,
             Some(Purity::Normal),
         )
         .expect("Should create valid iron ore input");
 
-        assert_eq!(input.id, 1);
+        assert_eq!(input.id, uuid_from_u64(1));
         assert_eq!(input.extractor_type, ExtractorType::MinerMk2);
         assert_eq!(input.item, Item::IronOre);
         assert_eq!(input.purity, Some(Purity::Normal));
@@ -667,10 +672,15 @@ mod tests {
 
     #[test]
     fn test_create_valid_water_input() {
-        let input = RawInput::new(1, ExtractorType::WaterExtractor, Item::Water, None)
-            .expect("Should create valid water input");
+        let input = RawInput::new(
+            uuid_from_u64(1),
+            ExtractorType::WaterExtractor,
+            Item::Water,
+            None,
+        )
+        .expect("Should create valid water input");
 
-        assert_eq!(input.id, 1);
+        assert_eq!(input.id, uuid_from_u64(1));
         assert_eq!(input.extractor_type, ExtractorType::WaterExtractor);
         assert_eq!(input.item, Item::Water);
         assert_eq!(input.purity, None);
@@ -680,7 +690,7 @@ mod tests {
     #[test]
     fn test_create_valid_oil_input() {
         let input = RawInput::new(
-            1,
+            uuid_from_u64(1),
             ExtractorType::OilExtractor,
             Item::CrudeOil,
             Some(Purity::Pure),
@@ -693,7 +703,7 @@ mod tests {
     #[test]
     fn test_create_invalid_extractor_item_mismatch() {
         let result = RawInput::new(
-            1,
+            uuid_from_u64(1),
             ExtractorType::MinerMk1,
             Item::Water,
             Some(Purity::Normal),
@@ -711,7 +721,12 @@ mod tests {
 
     #[test]
     fn test_create_invalid_missing_purity() {
-        let result = RawInput::new(1, ExtractorType::MinerMk1, Item::IronOre, None);
+        let result = RawInput::new(
+            uuid_from_u64(1),
+            ExtractorType::MinerMk1,
+            Item::IronOre,
+            None,
+        );
 
         assert!(result.is_err());
         match result {
@@ -725,7 +740,7 @@ mod tests {
     #[test]
     fn test_create_invalid_unexpected_purity() {
         let result = RawInput::new(
-            1,
+            uuid_from_u64(1),
             ExtractorType::WaterExtractor,
             Item::Water,
             Some(Purity::Normal),
@@ -745,7 +760,7 @@ mod tests {
     #[test]
     fn test_validate_correct_input() {
         let input = RawInput::new(
-            1,
+            uuid_from_u64(1),
             ExtractorType::MinerMk2,
             Item::CopperOre,
             Some(Purity::Pure),
@@ -757,8 +772,13 @@ mod tests {
 
     #[test]
     fn test_validate_water_without_purity() {
-        let input = RawInput::new(1, ExtractorType::WaterExtractor, Item::Water, None)
-            .expect("Should create valid input");
+        let input = RawInput::new(
+            uuid_from_u64(1),
+            ExtractorType::WaterExtractor,
+            Item::Water,
+            None,
+        )
+        .expect("Should create valid input");
 
         assert!(input.validate().is_ok());
     }
@@ -780,7 +800,12 @@ mod tests {
         ];
 
         for ore in ores {
-            let result = RawInput::new(1, ExtractorType::MinerMk3, ore, Some(Purity::Normal));
+            let result = RawInput::new(
+                uuid_from_u64(1),
+                ExtractorType::MinerMk3,
+                ore,
+                Some(Purity::Normal),
+            );
             assert!(result.is_ok(), "Mk3 miner should work with {:?}", ore);
             assert_eq!(result.unwrap().quantity_per_min, 240.0);
         }
@@ -789,7 +814,7 @@ mod tests {
     #[test]
     fn test_pure_uranium_with_mk3() {
         let input = RawInput::new(
-            1,
+            uuid_from_u64(1),
             ExtractorType::MinerMk3,
             Item::Uranium,
             Some(Purity::Pure),
@@ -801,8 +826,13 @@ mod tests {
 
     #[test]
     fn test_impure_coal_with_mk1() {
-        let input = RawInput::new(1, ExtractorType::MinerMk1, Item::Coal, Some(Purity::Impure))
-            .expect("Should create valid coal input");
+        let input = RawInput::new(
+            uuid_from_u64(1),
+            ExtractorType::MinerMk1,
+            Item::Coal,
+            Some(Purity::Impure),
+        )
+        .expect("Should create valid coal input");
 
         assert_eq!(input.quantity_per_min, 30.0);
     }
@@ -933,10 +963,11 @@ mod tests {
             ResourceWellExtractor::new(2, Purity::Pure),
         ];
 
-        let raw_input = RawInput::new_resource_well(1, Item::CrudeOil, pressurizer, extractors)
-            .expect("Should create valid resource well system");
+        let raw_input =
+            RawInput::new_resource_well(uuid_from_u64(1), Item::CrudeOil, pressurizer, extractors)
+                .expect("Should create valid resource well system");
 
-        assert_eq!(raw_input.id, 1);
+        assert_eq!(raw_input.id, uuid_from_u64(1));
         assert_eq!(
             raw_input.extractor_type,
             ExtractorType::ResourceWellExtractor
@@ -954,7 +985,8 @@ mod tests {
             ResourceWellPressurizer::new(1, 100.0).expect("Should create pressurizer");
         let extractors = vec![ResourceWellExtractor::new(1, Purity::Normal)];
 
-        let result = RawInput::new_resource_well(1, Item::IronOre, pressurizer, extractors);
+        let result =
+            RawInput::new_resource_well(uuid_from_u64(1), Item::IronOre, pressurizer, extractors);
         assert!(result.is_err());
         match result {
             Err(RawInputError::IncompatibleExtractor { extractor, item }) => {
@@ -971,7 +1003,8 @@ mod tests {
             ResourceWellPressurizer::new(1, 100.0).expect("Should create pressurizer");
         let extractors = vec![];
 
-        let result = RawInput::new_resource_well(1, Item::CrudeOil, pressurizer, extractors);
+        let result =
+            RawInput::new_resource_well(uuid_from_u64(1), Item::CrudeOil, pressurizer, extractors);
         assert!(result.is_err());
         match result {
             Err(RawInputError::NoExtractors) => {
@@ -987,8 +1020,9 @@ mod tests {
             ResourceWellPressurizer::new(1, 100.0).expect("Should create pressurizer");
         let extractors = vec![ResourceWellExtractor::new(1, Purity::Normal)];
 
-        let mut raw_input = RawInput::new_resource_well(1, Item::CrudeOil, pressurizer, extractors)
-            .expect("Should create valid resource well system");
+        let mut raw_input =
+            RawInput::new_resource_well(uuid_from_u64(1), Item::CrudeOil, pressurizer, extractors)
+                .expect("Should create valid resource well system");
 
         assert_eq!(raw_input.quantity_per_min, 60.0);
 
@@ -1010,8 +1044,9 @@ mod tests {
             ResourceWellExtractor::new(2, Purity::Pure),
         ];
 
-        let mut raw_input = RawInput::new_resource_well(1, Item::CrudeOil, pressurizer, extractors)
-            .expect("Should create valid resource well system");
+        let mut raw_input =
+            RawInput::new_resource_well(uuid_from_u64(1), Item::CrudeOil, pressurizer, extractors)
+                .expect("Should create valid resource well system");
 
         assert_eq!(raw_input.quantity_per_min, 180.0); // 60 + 120
 
@@ -1029,8 +1064,9 @@ mod tests {
             ResourceWellPressurizer::new(1, 100.0).expect("Should create pressurizer");
         let extractors = vec![ResourceWellExtractor::new(1, Purity::Normal)];
 
-        let mut raw_input = RawInput::new_resource_well(1, Item::CrudeOil, pressurizer, extractors)
-            .expect("Should create valid resource well system");
+        let mut raw_input =
+            RawInput::new_resource_well(uuid_from_u64(1), Item::CrudeOil, pressurizer, extractors)
+                .expect("Should create valid resource well system");
 
         let result = raw_input.remove_extractor(999);
         assert!(result.is_err());
@@ -1048,8 +1084,9 @@ mod tests {
             ResourceWellPressurizer::new(1, 100.0).expect("Should create pressurizer");
         let extractors = vec![ResourceWellExtractor::new(1, Purity::Normal)];
 
-        let mut raw_input = RawInput::new_resource_well(1, Item::CrudeOil, pressurizer, extractors)
-            .expect("Should create valid resource well system");
+        let mut raw_input =
+            RawInput::new_resource_well(uuid_from_u64(1), Item::CrudeOil, pressurizer, extractors)
+                .expect("Should create valid resource well system");
 
         let result = raw_input.remove_extractor(1);
         assert!(result.is_err());
@@ -1067,8 +1104,9 @@ mod tests {
             ResourceWellPressurizer::new(1, 100.0).expect("Should create pressurizer");
         let extractors = vec![ResourceWellExtractor::new(1, Purity::Normal)];
 
-        let mut raw_input = RawInput::new_resource_well(1, Item::CrudeOil, pressurizer, extractors)
-            .expect("Should create valid resource well system");
+        let mut raw_input =
+            RawInput::new_resource_well(uuid_from_u64(1), Item::CrudeOil, pressurizer, extractors)
+                .expect("Should create valid resource well system");
 
         assert_eq!(raw_input.quantity_per_min, 60.0);
 
@@ -1096,8 +1134,9 @@ mod tests {
             ResourceWellExtractor::new(2, Purity::Pure),
         ];
 
-        let mut raw_input = RawInput::new_resource_well(1, Item::CrudeOil, pressurizer, extractors)
-            .expect("Should create valid resource well system");
+        let mut raw_input =
+            RawInput::new_resource_well(uuid_from_u64(1), Item::CrudeOil, pressurizer, extractors)
+                .expect("Should create valid resource well system");
 
         assert_eq!(raw_input.quantity_per_min, 180.0); // 60 + 120
 
@@ -1116,8 +1155,9 @@ mod tests {
             ResourceWellPressurizer::new(1, 150.0).expect("Should create pressurizer");
         let extractors = vec![ResourceWellExtractor::new(1, Purity::Normal)];
 
-        let raw_input = RawInput::new_resource_well(1, Item::CrudeOil, pressurizer, extractors)
-            .expect("Should create valid resource well system");
+        let raw_input =
+            RawInput::new_resource_well(uuid_from_u64(1), Item::CrudeOil, pressurizer, extractors)
+                .expect("Should create valid resource well system");
 
         // Power should come only from pressurizer, not extractors
         let power = raw_input.power_consumption();
@@ -1133,7 +1173,7 @@ mod tests {
     #[test]
     fn test_regular_extractor_power_consumption() {
         let input = RawInput::new(
-            1,
+            uuid_from_u64(1),
             ExtractorType::MinerMk2,
             Item::IronOre,
             Some(Purity::Normal),
@@ -1147,30 +1187,35 @@ mod tests {
     fn test_all_extractor_power_consumption() {
         // Test all extractor types have correct power consumption
         let mk1 = RawInput::new(
-            1,
+            uuid_from_u64(1),
             ExtractorType::MinerMk1,
             Item::IronOre,
             Some(Purity::Normal),
         )
         .expect("Should create valid input");
         let mk2 = RawInput::new(
-            2,
+            uuid_from_u64(2),
             ExtractorType::MinerMk2,
             Item::IronOre,
             Some(Purity::Normal),
         )
         .expect("Should create valid input");
         let mk3 = RawInput::new(
-            3,
+            uuid_from_u64(3),
             ExtractorType::MinerMk3,
             Item::IronOre,
             Some(Purity::Normal),
         )
         .expect("Should create valid input");
-        let water = RawInput::new(4, ExtractorType::WaterExtractor, Item::Water, None)
-            .expect("Should create valid input");
+        let water = RawInput::new(
+            uuid_from_u64(4),
+            ExtractorType::WaterExtractor,
+            Item::Water,
+            None,
+        )
+        .expect("Should create valid input");
         let oil = RawInput::new(
-            5,
+            uuid_from_u64(5),
             ExtractorType::OilExtractor,
             Item::CrudeOil,
             Some(Purity::Normal),
@@ -1190,8 +1235,9 @@ mod tests {
             ResourceWellPressurizer::new(1, 100.0).expect("Should create pressurizer");
         let extractors = vec![ResourceWellExtractor::new(1, Purity::Normal)];
 
-        let raw_input = RawInput::new_resource_well(1, Item::CrudeOil, pressurizer, extractors)
-            .expect("Should create valid resource well system");
+        let raw_input =
+            RawInput::new_resource_well(uuid_from_u64(1), Item::CrudeOil, pressurizer, extractors)
+                .expect("Should create valid resource well system");
 
         assert!(raw_input.validate().is_ok());
     }
@@ -1199,7 +1245,7 @@ mod tests {
     #[test]
     fn test_add_extractor_to_non_resource_well() {
         let mut input = RawInput::new(
-            1,
+            uuid_from_u64(1),
             ExtractorType::MinerMk2,
             Item::IronOre,
             Some(Purity::Normal),
@@ -1220,7 +1266,7 @@ mod tests {
     #[test]
     fn test_set_pressurizer_on_non_resource_well() {
         let mut input = RawInput::new(
-            1,
+            uuid_from_u64(1),
             ExtractorType::MinerMk2,
             Item::IronOre,
             Some(Purity::Normal),

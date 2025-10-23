@@ -7,6 +7,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use uuid::Uuid;
 
 use crate::{
     error::{AppError, Result},
@@ -55,7 +56,7 @@ pub struct PowerGeneratorResponse {
 
 #[derive(Serialize)]
 pub struct FactoryResponse {
-    pub id: u64,
+    pub id: Uuid,
     pub name: String,
     pub description: Option<String>,
     pub notes: Option<String>,
@@ -81,7 +82,7 @@ fn convert_items_to_response(items: &HashMap<Item, f32>) -> Vec<ItemBalanceRespo
 
 // Helper function to convert HashMap to Vec for nested data
 fn convert_production_lines_to_response(
-    production_lines: &HashMap<u64, ProductionLine>,
+    production_lines: &HashMap<Uuid, ProductionLine>,
 ) -> Vec<ProductionLineResponse> {
     production_lines
         .values()
@@ -92,7 +93,7 @@ fn convert_production_lines_to_response(
         .collect()
 }
 
-fn convert_raw_inputs_to_response(raw_inputs: &HashMap<u64, RawInput>) -> Vec<RawInputResponse> {
+fn convert_raw_inputs_to_response(raw_inputs: &HashMap<Uuid, RawInput>) -> Vec<RawInputResponse> {
     raw_inputs
         .values()
         .cloned()
@@ -101,7 +102,7 @@ fn convert_raw_inputs_to_response(raw_inputs: &HashMap<u64, RawInput>) -> Vec<Ra
 }
 
 fn convert_power_generators_to_response(
-    power_generators: &HashMap<u64, PowerGenerator>,
+    power_generators: &HashMap<Uuid, PowerGenerator>,
 ) -> Vec<PowerGeneratorResponse> {
     power_generators
         .values()
@@ -119,7 +120,7 @@ pub async fn get_factories(State(state): State<AppState>) -> Result<Json<Vec<Fac
 
     let mut factory_responses = Vec::new();
 
-    for (id, factory) in factories {
+    for factory in factories.values() {
         // We need to get the current state of logistics lines
         let logistics_lines = engine.get_all_logistics();
 
@@ -128,7 +129,7 @@ pub async fn get_factories(State(state): State<AppState>) -> Result<Json<Vec<Fac
         temp_factory.calculate_item(logistics_lines);
 
         let response = FactoryResponse {
-            id: *id,
+            id: factory.id,
             name: factory.name.clone(),
             description: factory.description.clone(),
             notes: factory.notes.clone(),
@@ -149,7 +150,7 @@ pub async fn get_factories(State(state): State<AppState>) -> Result<Json<Vec<Fac
 
 pub async fn get_factory(
     State(state): State<AppState>,
-    Path(id): Path<u64>,
+    Path(id): Path<Uuid>,
 ) -> Result<Json<FactoryResponse>> {
     let engine = state.engine.read().await;
 
@@ -163,7 +164,7 @@ pub async fn get_factory(
     temp_factory.calculate_item(logistics_lines);
 
     let response = FactoryResponse {
-        id,
+        id: factory.id,
         name: factory.name.clone(),
         description: factory.description.clone(),
         notes: factory.notes.clone(),
@@ -222,7 +223,7 @@ pub async fn create_factory(
 
 pub async fn update_factory(
     State(state): State<AppState>,
-    Path(id): Path<u64>,
+    Path(id): Path<Uuid>,
     Json(request): Json<UpdateFactoryRequest>,
 ) -> Result<Json<FactoryResponse>> {
     let mut engine = state.engine.write().await;
@@ -260,7 +261,7 @@ pub async fn update_factory(
     temp_factory.calculate_item(logistics_lines);
 
     let response = FactoryResponse {
-        id,
+        id: updated_factory.id,
         name: updated_factory.name.clone(),
         description: updated_factory.description.clone(),
         notes: updated_factory.notes.clone(),
@@ -278,7 +279,7 @@ pub async fn update_factory(
 
 pub async fn delete_factory(
     State(state): State<AppState>,
-    Path(id): Path<u64>,
+    Path(id): Path<Uuid>,
 ) -> Result<StatusCode> {
     let mut engine = state.engine.write().await;
 

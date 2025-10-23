@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use serde::{Deserialize, Serialize};
 
-use crate::models::{recipe_info, Item, Recipe};
+use crate::models::{recipe_info, Item, ProductionLineId, Recipe};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ProductionLine {
@@ -10,7 +10,7 @@ pub enum ProductionLine {
     ProductionLineBlueprint(ProductionLineBlueprint),
 }
 impl ProductionLine {
-    pub fn id(&self) -> u64 {
+    pub fn id(&self) -> ProductionLineId {
         match self {
             ProductionLine::ProductionLineRecipe(line) => line.id(),
             ProductionLine::ProductionLineBlueprint(blueprint) => blueprint.id(),
@@ -64,7 +64,7 @@ impl ProductionLine {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProductionLineRecipe {
-    pub id: u64,
+    pub id: ProductionLineId,
     pub name: String,
     pub description: Option<String>,
     pub recipe: Recipe,
@@ -73,7 +73,7 @@ pub struct ProductionLineRecipe {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProductionLineBlueprint {
-    pub id: u64,
+    pub id: ProductionLineId,
     pub name: String,
     pub description: Option<String>,
     pub production_lines: Vec<ProductionLineRecipe>,
@@ -88,7 +88,12 @@ pub struct MachineGroup {
 
 impl ProductionLineRecipe {
     /// Create a new production line with no machine groups
-    pub fn new(id: u64, name: String, description: Option<String>, recipe: Recipe) -> Self {
+    pub fn new(
+        id: ProductionLineId,
+        name: String,
+        description: Option<String>,
+        recipe: Recipe,
+    ) -> Self {
         Self {
             id,
             name,
@@ -114,7 +119,7 @@ impl ProductionLineRecipe {
         Ok(())
     }
 
-    fn id(&self) -> u64 {
+    fn id(&self) -> ProductionLineId {
         self.id
     }
 
@@ -190,7 +195,7 @@ impl ProductionLineRecipe {
 }
 
 impl ProductionLineBlueprint {
-    pub fn new(id: u64, name: String, description: Option<String>) -> Self {
+    pub fn new(id: ProductionLineId, name: String, description: Option<String>) -> Self {
         Self {
             id,
             name,
@@ -203,7 +208,7 @@ impl ProductionLineBlueprint {
         self.production_lines.push(line);
     }
 
-    fn id(&self) -> u64 {
+    fn id(&self) -> ProductionLineId {
         self.id
     }
 
@@ -275,12 +280,21 @@ impl MachineGroup {
 mod tests {
     use super::*;
     use crate::models::Recipe;
+    use uuid::Uuid;
+
+    fn uuid_from_u64(value: u64) -> Uuid {
+        Uuid::from_u128(value as u128)
+    }
 
     #[test]
     fn test_production_line_creation_empty() {
-        let production_line =
-            ProductionLineRecipe::new(1, "Test Line".to_string(), None, Recipe::AILimiter);
-        assert_eq!(production_line.id, 1);
+        let production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test Line".to_string(),
+            None,
+            Recipe::AILimiter,
+        );
+        assert_eq!(production_line.id, uuid_from_u64(1));
         assert_eq!(production_line.name, "Test Line");
         assert!(production_line.description.is_none());
         assert_eq!(production_line.machine_groups.len(), 0);
@@ -288,8 +302,12 @@ mod tests {
 
     #[test]
     fn test_add_machine_group() {
-        let mut production_line =
-            ProductionLineRecipe::new(1, "Test Line".to_string(), None, Recipe::AILimiter);
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test Line".to_string(),
+            None,
+            Recipe::AILimiter,
+        );
         let machine_group = MachineGroup::new(5, 150.0, 2);
         production_line
             .add_machine_group(machine_group)
@@ -302,8 +320,12 @@ mod tests {
 
     #[test]
     fn test_total_machines() {
-        let mut production_line =
-            ProductionLineRecipe::new(1, "Test Line".to_string(), None, Recipe::IronIngot);
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test Line".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
         production_line
             .add_machine_group(MachineGroup::new(4, 100.0, 0))
             .expect("Invalid group");
@@ -321,8 +343,12 @@ mod tests {
         expected = "Cannot add machine group with more sommersloop than the machine type allows"
     )]
     fn test_add_machine_group_invalid_sommersloop() {
-        let mut production_line =
-            ProductionLineRecipe::new(1, "Test Line".to_string(), None, Recipe::IronIngot);
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test Line".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
         let machine_group = MachineGroup::new(5, 100.0, 3); // Iron Ingot recipe uses Constructor which allows only 1 sommersloop
         production_line.add_machine_group(machine_group).unwrap(); // This should panic
     }
@@ -330,16 +356,24 @@ mod tests {
     #[test]
     #[should_panic(expected = "Overclock value must be between 0.000 and 250.000")]
     fn test_add_machine_group_invalid_overclock() {
-        let mut production_line =
-            ProductionLineRecipe::new(1, "Test Line".to_string(), None, Recipe::IronIngot);
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test Line".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
         let machine_group = MachineGroup::new(5, 300.0, 1); // Invalid overclock value
         production_line.add_machine_group(machine_group).unwrap(); // This should panic
     }
 
     #[test]
     fn test_half_somersloop_for_power() {
-        let mut production_line =
-            ProductionLineRecipe::new(1, "Test Line".to_string(), None, Recipe::IronIngot);
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test Line".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
         production_line
             .add_machine_group(MachineGroup::new(2, 100.0, 1))
             .expect("Invalid group");

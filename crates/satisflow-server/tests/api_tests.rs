@@ -3,6 +3,7 @@ mod common;
 
 use common::{assertions::*, create_test_client, create_test_server, test_data::*};
 use serde_json::{json, Value};
+use uuid::Uuid;
 
 #[tokio::test]
 async fn test_health_check() {
@@ -38,7 +39,7 @@ async fn test_factory_crud_operations() {
     // but the test structure is ready for when handlers are fully implemented
     if create_response.status().as_u16() == 201 {
         let factory: Value = assert_created_response(create_response).await;
-        let factory_id = factory["id"].as_u64().unwrap();
+        let factory_id = factory["id"].as_str().unwrap().to_string();
         assert_eq!(factory["notes"], json!("Test notes"));
 
         // Test 2: Get all factories
@@ -59,7 +60,7 @@ async fn test_factory_crud_operations() {
             .expect("Failed to get factory");
 
         let retrieved_factory: Value = assert_json_response(get_response).await;
-        assert_eq!(retrieved_factory["id"], factory_id);
+        assert_eq!(retrieved_factory["id"], json!(factory_id));
         assert_eq!(retrieved_factory["name"], "Test Factory");
         assert_eq!(retrieved_factory["notes"], json!("Test notes"));
 
@@ -104,8 +105,10 @@ async fn test_factory_error_cases() {
     let client = create_test_client();
 
     // Test 1: Get non-existent factory
+    let unknown = Uuid::new_v4();
+
     let response = client
-        .get(&format!("{}/api/factories/999", server.base_url))
+        .get(&format!("{}/api/factories/{}", server.base_url, unknown))
         .send()
         .await
         .expect("Failed to send request");
@@ -114,7 +117,7 @@ async fn test_factory_error_cases() {
 
     // Test 2: Update non-existent factory
     let response = client
-        .put(&format!("{}/api/factories/999", server.base_url))
+        .put(&format!("{}/api/factories/{}", server.base_url, unknown))
         .json(&update_factory_request())
         .send()
         .await
@@ -124,7 +127,7 @@ async fn test_factory_error_cases() {
 
     // Test 3: Delete non-existent factory
     let response = client
-        .delete(&format!("{}/api/factories/999", server.base_url))
+        .delete(&format!("{}/api/factories/{}", server.base_url, unknown))
         .send()
         .await
         .expect("Failed to send request");
@@ -174,8 +177,8 @@ async fn test_logistics_crud_operations() {
     if factory1_response.status().as_u16() == 201 && factory2_response.status().as_u16() == 201 {
         let factory1: Value = factory1_response.json().await.unwrap();
         let factory2: Value = factory2_response.json().await.unwrap();
-        let factory1_id = factory1["id"].as_u64().unwrap();
-        let factory2_id = factory2["id"].as_u64().unwrap();
+        let factory1_id = factory1["id"].as_str().unwrap().to_string();
+        let factory2_id = factory2["id"].as_str().unwrap().to_string();
 
         // Test 1: Create logistics line
         let logistics_request = json!({
@@ -196,7 +199,10 @@ async fn test_logistics_crud_operations() {
 
         if create_response.status().as_u16() == 201 {
             let logistics: Value = assert_created_response(create_response).await;
-            let logistics_id = logistics["id"].as_u64().unwrap();
+            let logistics_id = logistics["id"]
+                .as_str()
+                .and_then(|id| Uuid::parse_str(id).ok())
+                .unwrap();
 
             // Test 2: Get all logistics
             let list_response = client
@@ -219,7 +225,7 @@ async fn test_logistics_crud_operations() {
                 .expect("Failed to get logistics line");
 
             let retrieved_logistics: Value = assert_json_response(get_response).await;
-            assert_eq!(retrieved_logistics["id"], logistics_id);
+            assert_eq!(retrieved_logistics["id"], json!(logistics_id.to_string()));
             assert_eq!(retrieved_logistics["transport_type"], json!("Truck"));
             assert!(retrieved_logistics["items"]
                 .as_array()
@@ -286,7 +292,10 @@ async fn test_logistics_crud_operations() {
             assert_eq!(bus_status, 201, "Bus creation failed: {}", bus_body);
             let bus_logistics: Value = serde_json::from_str(&bus_body).unwrap();
             assert_eq!(bus_logistics["transport_type"], json!("Bus"));
-            let bus_id = bus_logistics["id"].as_u64().unwrap();
+            let bus_id = bus_logistics["id"]
+                .as_str()
+                .and_then(|id| Uuid::parse_str(id).ok())
+                .unwrap();
 
             // Additional tests: create train logistics
             let train_request = json!({
@@ -322,7 +331,10 @@ async fn test_logistics_crud_operations() {
             assert_eq!(train_status, 201, "Train creation failed: {}", train_body);
             let train_logistics: Value = serde_json::from_str(&train_body).unwrap();
             assert_eq!(train_logistics["transport_type"], json!("Train"));
-            let train_id = train_logistics["id"].as_u64().unwrap();
+            let train_id = train_logistics["id"]
+                .as_str()
+                .and_then(|id| Uuid::parse_str(id).ok())
+                .unwrap();
 
             // Clean up created logistics lines
             let _ = client
@@ -346,8 +358,10 @@ async fn test_logistics_error_cases() {
     let client = create_test_client();
 
     // Test 1: Get non-existent logistics line
+    let unknown = Uuid::new_v4();
+
     let response = client
-        .get(&format!("{}/api/logistics/999", server.base_url))
+        .get(&format!("{}/api/logistics/{}", server.base_url, unknown))
         .send()
         .await
         .expect("Failed to send request");
@@ -356,7 +370,7 @@ async fn test_logistics_error_cases() {
 
     // Test 2: Delete non-existent logistics line
     let response = client
-        .delete(&format!("{}/api/logistics/999", server.base_url))
+        .delete(&format!("{}/api/logistics/{}", server.base_url, unknown))
         .send()
         .await
         .expect("Failed to send request");
@@ -525,7 +539,11 @@ async fn test_error_response_format() {
 
     // Test error response format for non-existent resource
     let response = client
-        .get(&format!("{}/api/factories/999", server.base_url))
+        .get(&format!(
+            "{}/api/factories/{}",
+            server.base_url,
+            Uuid::new_v4()
+        ))
         .send()
         .await
         .expect("Failed to send request");
