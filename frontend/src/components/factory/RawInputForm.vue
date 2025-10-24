@@ -65,9 +65,12 @@
         </select>
       </div>
 
-      <!-- Purity (for solid resources) -->
+      <!-- Purity (for solid resources and oil) -->
       <div v-if="showPurity" class="form-group">
-        <label class="form-label">Purity</label>
+        <label class="form-label">
+          Purity
+          <span v-if="formData.extractor_type === 'OilExtractor'" class="purity-note">(m³/min: Impure 60, Normal 120, Pure 240)</span>
+        </label>
         <div class="radio-group">
           <label class="radio-option">
             <input
@@ -244,13 +247,22 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useGameDataStore } from '@/stores/gameData'
-import type { RawInputResponse, ExtractorType, Purity, Item, ResourceWellPressurizer, ResourceWellExtractor } from '@/api/types'
+import { useFactoryStore } from '@/stores/factory'
+import type {
+  RawInputResponse,
+  ExtractorType,
+  Purity,
+  Item,
+  ResourceWellPressurizer,
+  ResourceWellExtractor,
+  CreateRawInputRequest,
+} from '@/api/types'
 import Button from '@/components/ui/Button.vue'
 import Modal from '@/components/ui/Modal.vue'
 
 interface Props {
   show: boolean
-  factoryId: number
+  factoryId: string
   rawInput?: RawInputResponse | null
 }
 
@@ -263,6 +275,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const gameDataStore = useGameDataStore()
+const factoryStore = useFactoryStore()
 
 // State
 const saving = ref(false)
@@ -327,7 +340,11 @@ const availableExtractors = computed(() => {
 })
 
 const showPurity = computed(() => {
-  return selectedExtractor.value && selectedExtractor.value.resources === 'solid'
+  // Show purity for solid resources (Miners) and Oil Extractor
+  return selectedExtractor.value && (
+    selectedExtractor.value.resources === 'solid' ||
+    selectedExtractor.value.type === 'OilExtractor'
+  )
 })
 
 const showPressurizer = computed(() => {
@@ -394,9 +411,21 @@ const handleResourceChange = () => {
 }
 
 const handleExtractorChange = () => {
-  // Set default purity for solid resources
-  if (showPurity.value && !formData.value.purity) {
-    formData.value.purity = 'Normal'
+  // Set default purity for solid resources, oil, and water extractors
+  if (!formData.value.purity) {
+    if (selectedExtractor.value?.resources === 'solid') {
+      // Miners: default to Normal
+      formData.value.purity = 'Normal'
+    } else if (formData.value.extractor_type === 'OilExtractor') {
+      // Oil Extractor: default to Normal
+      formData.value.purity = 'Normal'
+    } else if (formData.value.extractor_type === 'WaterExtractor') {
+      // Water Extractor: internally use Normal (no purity concept in UI)
+      formData.value.purity = 'Normal'
+    } else if (formData.value.extractor_type === 'ResourceWellExtractor') {
+      // Resource Well Extractor: default to Normal
+      formData.value.purity = 'Normal'
+    }
   }
 
   // Set default rate
@@ -479,17 +508,42 @@ const handleSubmit = async () => {
   saving.value = true
 
   try {
-    // TODO: Implement API call to save raw input
-    console.log('Saving raw input:', {
-      factory_id: props.factoryId,
-      ...formData.value
-    })
+    const payload: CreateRawInputRequest = {
+      extractor_type: formData.value.extractor_type,
+      item: formData.value.item as Item,
+      purity: formData.value.purity ?? undefined,
+      quantity_per_min: formData.value.quantity_per_min,
+    }
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    if (showPressurizer.value && usePressurizer.value) {
+      payload.pressurizer = {
+        id: formData.value.pressurizer?.id ?? undefined,
+        clock_speed: formData.value.pressurizer?.clock_speed ?? 100,
+      }
+      payload.extractors = formData.value.extractors.map((extractor, index) => ({
+        id: extractor.id ?? index + 1,
+        purity: extractor.purity,
+      }))
+    } else {
+      delete payload.pressurizer
+      delete payload.extractors
+    }
 
-    emit('saved')
-    handleClose()
+    if (!payload.quantity_per_min || payload.quantity_per_min <= 0) {
+      delete payload.quantity_per_min
+    }
+
+    let response = null
+    if (isEditing.value && props.rawInput) {
+      response = await factoryStore.updateRawInput(props.factoryId, props.rawInput.id, payload)
+    } else {
+      response = await factoryStore.createRawInput(props.factoryId, payload)
+    }
+
+    if (response) {
+      emit('saved')
+      handleClose()
+    }
   } catch (error) {
     console.error('Failed to save raw input:', error)
   } finally {
@@ -652,6 +706,14 @@ onMounted(async () => {
 .rate-hint {
   font-size: var(--font-size-xs, 0.75rem);
   color: var(--color-blue-600, #2563eb);
+  margin-top: var(--spacing-xs, 0.25rem);
+}
+
+.purity-note {
+  display: block;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-normal, 400);
+  color: var(--color-gray-500, #6b7280);
   margin-top: var(--spacing-xs, 0.25rem);
 }
 
