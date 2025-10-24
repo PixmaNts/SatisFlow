@@ -58,7 +58,7 @@ pub async fn get_recipes(State(_state): State<AppState>) -> Result<Json<Vec<Reci
 pub async fn get_items(State(_state): State<AppState>) -> Result<Json<Vec<String>>> {
     let items: Vec<String> = all_items()
         .iter()
-        .map(|(_, name)| name.to_string())
+        .map(|(item, _)| format!("{:?}", item)) // Serialize enum variant name, not display name
         .collect();
 
     Ok(Json(items))

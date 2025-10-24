@@ -517,8 +517,12 @@ const handleSubmit = async () => {
     // Only include purity for extractors that support it
     // WaterExtractor does NOT support purity (backend will reject it)
     // All other extractors (Miners, OilExtractor, ResourceWellExtractor) require purity
+    console.log('Extractor type:', formData.value.extractor_type, 'Purity:', formData.value.purity)
     if (formData.value.extractor_type !== 'WaterExtractor') {
       payload.purity = formData.value.purity ?? undefined
+      console.log('Including purity in payload:', payload.purity)
+    } else {
+      console.log('Skipping purity for WaterExtractor')
     }
 
     if (showPressurizer.value && usePressurizer.value) {
