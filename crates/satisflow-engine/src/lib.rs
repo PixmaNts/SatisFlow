@@ -73,6 +73,34 @@ impl SatisflowEngine {
         Ok(id)
     }
 
+    pub fn update_logistics_line(
+        &mut self,
+        id: LogisticsId,
+        from: FactoryId,
+        to: FactoryId,
+        transport_type: TransportType,
+        transport_detail: String,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        if !self.factories.contains_key(&from) {
+            return Err(format!("Factory with id {} does not exist", from).into());
+        }
+        if !self.factories.contains_key(&to) {
+            return Err(format!("Factory with id {} does not exist", to).into());
+        }
+
+        let logistics = self
+            .logistics_lines
+            .get_mut(&id)
+            .ok_or_else(|| format!("Logistics line with id {} not found", id))?;
+
+        logistics.from_factory = from;
+        logistics.to_factory = to;
+        logistics.transport_type = transport_type;
+        logistics.transport_details = transport_detail;
+
+        Ok(())
+    }
+
     pub fn get_logistics_line(&self, id: LogisticsId) -> Option<&LogisticsFlux> {
         self.logistics_lines.get(&id)
     }
@@ -174,7 +202,7 @@ impl SatisflowEngine {
 mod tests {
     use super::*;
     use crate::models::{
-        logistics::{TransportType, TruckTransport},
+        logistics::{DroneTransport, TransportType, TruckTransport},
         production_line::{ProductionLine, ProductionLineBlueprint, ProductionLineRecipe},
         Item, Recipe,
     };
@@ -356,6 +384,46 @@ mod tests {
             error.contains(&missing_id.to_string()),
             "expected error to reference missing logistics id, got: {error}"
         );
+    }
+
+    #[test]
+    fn test_update_logistics_line() {
+        let mut engine = SatisflowEngine::new();
+
+        let factory_a = engine.create_factory("Factory A".into(), None);
+        let factory_b = engine.create_factory("Factory B".into(), None);
+        let factory_c = engine.create_factory("Factory C".into(), None);
+
+        let original_transport = TransportType::Truck(TruckTransport::new(1, Item::IronOre, 60.0));
+        let logistics_id = engine
+            .create_logistics_line(
+                factory_a,
+                factory_b,
+                original_transport,
+                "Initial truck route".into(),
+            )
+            .expect("should create logistics line");
+
+        let updated_transport =
+            TransportType::Drone(DroneTransport::new(5, Item::CircuitBoard, 45.0));
+
+        engine
+            .update_logistics_line(
+                logistics_id,
+                factory_b,
+                factory_c,
+                updated_transport.clone(),
+                "Updated drone route".into(),
+            )
+            .expect("should update logistics line");
+
+        let updated_line = engine
+            .get_logistics_line(logistics_id)
+            .expect("logistics line should exist");
+        assert_eq!(updated_line.from_factory, factory_b);
+        assert_eq!(updated_line.to_factory, factory_c);
+        assert_eq!(updated_line.transport_type, updated_transport);
+        assert_eq!(updated_line.transport_details, "Updated drone route");
     }
 
     #[test]

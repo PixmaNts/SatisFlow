@@ -135,7 +135,7 @@ import Alert from '@/components/ui/Alert.vue'
 import RawInputForm from './RawInputForm.vue'
 
 interface Props {
-  factoryId: number
+  factoryId: string
 }
 
 const props = defineProps<Props>()
@@ -267,17 +267,15 @@ const confirmDelete = async () => {
   error.value = null
 
   try {
-    // TODO: Implement delete API call when available
-    // await factoryStore.deleteRawInput(deletingInput.value.id)
+    const result = await factoryStore.deleteRawInput(props.factoryId, deletingInput.value.id)
+    if (!result) {
+      throw new Error('Delete operation failed')
+    }
 
-    // For now, just close the modal
     showDeleteModal.value = false
     deletingInput.value = null
-
-    // Refresh factory data
-    await factoryStore.fetchById(props.factoryId)
   } catch (err) {
-    error.value = 'Failed to delete raw input'
+    error.value = factoryStore.error || 'Failed to delete raw input'
     console.error('Delete raw input error:', err)
   } finally {
     deleting.value = false

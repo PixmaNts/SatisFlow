@@ -31,10 +31,10 @@ impl ProductionLine {
         }
     }
 
-    pub fn total_sommersloop(&self) -> u32 {
+    pub fn total_somersloop(&self) -> u32 {
         match self {
-            ProductionLine::ProductionLineRecipe(line) => line.total_sommersloop(),
-            ProductionLine::ProductionLineBlueprint(blueprint) => blueprint.total_sommersloop(),
+            ProductionLine::ProductionLineRecipe(line) => line.total_somersloop(),
+            ProductionLine::ProductionLineBlueprint(blueprint) => blueprint.total_somersloop(),
         }
     }
 
@@ -83,7 +83,7 @@ pub struct ProductionLineBlueprint {
 pub struct MachineGroup {
     pub number_of_machine: u32, // number of machine in the groupe
     pub oc_value: f32,          // overclock value
-    pub somersloop: u8,         // number of sommersloop per machine
+    pub somersloop: u8,         // number of somersloop per machine
 }
 
 impl ProductionLineRecipe {
@@ -109,8 +109,8 @@ impl ProductionLineRecipe {
         &mut self,
         group: MachineGroup,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        if group.somersloop > recipe_info(self.recipe).machine.max_sommersloop() {
-            return Err(format!("Cannot add machine group with more sommersloop than the machine type allows {} > {}", group.somersloop, recipe_info(self.recipe).machine.max_sommersloop()).into());
+        if group.somersloop > recipe_info(self.recipe).machine.max_somersloop() {
+            return Err(format!("Cannot add machine group with more somersloop than the machine type allows {} > {}", group.somersloop, recipe_info(self.recipe).machine.max_somersloop()).into());
         }
         if group.oc_value < 0.0 || group.oc_value > 250.0 {
             return Err("Overclock value must be between 0.000 and 250.000".into());
@@ -134,7 +134,7 @@ impl ProductionLineRecipe {
             .sum()
     }
 
-    fn total_sommersloop(&self) -> u32 {
+    fn total_somersloop(&self) -> u32 {
         self.machine_groups
             .iter()
             .map(|group| group.number_of_machine * group.somersloop as u32)
@@ -149,10 +149,10 @@ impl ProductionLineRecipe {
                 let machine_output =
                     rate * (group.oc_value / 100.0) * group.number_of_machine as f32;
                 if group.somersloop > 0 {
-                    // Sommersloop multiply the production rate depending on the number of sommersloop and the machine type
-                    let sommersloop_multiplier = 1.0
-                        + (group.somersloop as f32 / recipe_info.machine.max_sommersloop() as f32);
-                    result.push((*item, machine_output * sommersloop_multiplier));
+                    // Somersloop multiply the production rate depending on the number of somersloop and the machine type
+                    let somersloop_multiplier = 1.0
+                        + (group.somersloop as f32 / recipe_info.machine.max_somersloop() as f32);
+                    result.push((*item, machine_output * somersloop_multiplier));
                 } else {
                     result.push((*item, machine_output));
                 }
@@ -174,19 +174,19 @@ impl ProductionLineRecipe {
         result
     }
 
-    /// Power multiplier = (1 + somersloop / max_sommersloop)²
+    /// Power multiplier = (1 + somersloop / max_somersloop)²
     /// Power usage = Base power usage × Power multiplier × (Clock speed100)^1.321928
     fn total_power_consumption(&self) -> f32 {
         let recipe_info = recipe_info(self.recipe);
         let base_power = recipe_info.machine.base_power_mw();
         let mut total_power = 0.0;
         for group in &self.machine_groups {
-            let sommersloop_multiplier = if group.somersloop > 0 {
-                1.0 + (group.somersloop as f32 / recipe_info.machine.max_sommersloop() as f32)
+            let somersloop_multiplier = if group.somersloop > 0 {
+                1.0 + (group.somersloop as f32 / recipe_info.machine.max_somersloop() as f32)
             } else {
                 1.0
             };
-            let power_multiplier = sommersloop_multiplier * sommersloop_multiplier;
+            let power_multiplier = somersloop_multiplier * somersloop_multiplier;
             total_power += base_power * power_multiplier * (group.oc_value / 100.0).powf(1.321928);
             total_power *= group.number_of_machine as f32;
         }
@@ -223,10 +223,10 @@ impl ProductionLineBlueprint {
             .sum()
     }
 
-    fn total_sommersloop(&self) -> u32 {
+    fn total_somersloop(&self) -> u32 {
         self.production_lines
             .iter()
-            .map(|line| line.total_sommersloop())
+            .map(|line| line.total_somersloop())
             .sum()
     }
 
@@ -267,11 +267,11 @@ impl ProductionLineBlueprint {
 }
 
 impl MachineGroup {
-    pub fn new(number_of_machines: u32, overclock: f32, sommersloop_per_machine: u8) -> Self {
+    pub fn new(number_of_machines: u32, overclock: f32, somersloop_per_machine: u8) -> Self {
         Self {
             number_of_machine: number_of_machines,
             oc_value: overclock,
-            somersloop: sommersloop_per_machine,
+            somersloop: somersloop_per_machine,
         }
     }
 }
@@ -340,16 +340,16 @@ mod tests {
 
     #[test]
     #[should_panic(
-        expected = "Cannot add machine group with more sommersloop than the machine type allows"
+        expected = "Cannot add machine group with more somersloop than the machine type allows"
     )]
-    fn test_add_machine_group_invalid_sommersloop() {
+    fn test_add_machine_group_invalid_somersloop() {
         let mut production_line = ProductionLineRecipe::new(
             uuid_from_u64(1),
             "Test Line".to_string(),
             None,
             Recipe::IronIngot,
         );
-        let machine_group = MachineGroup::new(5, 100.0, 3); // Iron Ingot recipe uses Constructor which allows only 1 sommersloop
+        let machine_group = MachineGroup::new(5, 100.0, 3); // Iron Ingot recipe uses Constructor which allows only 1 somersloop
         production_line.add_machine_group(machine_group).unwrap(); // This should panic
     }
 
@@ -377,7 +377,7 @@ mod tests {
         production_line
             .add_machine_group(MachineGroup::new(2, 100.0, 1))
             .expect("Invalid group");
-        // Each machine has 1 sommersloop, max is 1 for Constructor, so power multiplier is (1 + 1/1)² = 4
+        // Each machine has 1 somersloop, max is 1 for Constructor, so power multiplier is (1 + 1/1)² = 4
         // Each machine consumes 4 MW at base power, so total power = 2 machines * 4 MW * 4 = 32 MW
         assert_eq!(production_line.total_power_consumption(), 32.0);
     }

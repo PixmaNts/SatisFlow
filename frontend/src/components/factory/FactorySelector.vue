@@ -137,7 +137,7 @@ const newFactory = ref<CreateFactoryRequest>({
 // Computed
 const factories = computed(() => factoryStore.factories)
 const currentFactory = computed(() => factoryStore.currentFactory)
-const selectedFactoryId = ref<number | null | string>(null)
+const selectedFactoryId = ref<string | null>(null)
 
 // Methods
 const handleFactoryChange = () => {
@@ -150,18 +150,9 @@ const handleFactoryChange = () => {
     return
   }
 
-  const parsedValue =
-    typeof rawValue === 'number' ? rawValue : Number(rawValue)
-
-  if (Number.isFinite(parsedValue)) {
-    selectedFactoryId.value = parsedValue
-    factoryStore.setCurrentFactory(parsedValue)
-    preferencesStore.setSelectedFactoryId(parsedValue)
-  } else {
-    selectedFactoryId.value = null
-    factoryStore.setCurrentFactory(null)
-    preferencesStore.setSelectedFactoryId(null)
-  }
+  selectedFactoryId.value = String(rawValue)
+  factoryStore.setCurrentFactory(selectedFactoryId.value)
+  preferencesStore.setSelectedFactoryId(selectedFactoryId.value)
 }
 
 const handleCreateFactory = async () => {

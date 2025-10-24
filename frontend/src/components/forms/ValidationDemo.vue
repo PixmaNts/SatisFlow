@@ -73,6 +73,7 @@
 import { ref } from 'vue';
 import FactoryForm from './FactoryForm.vue';
 import ProductionLineForm from './ProductionLineForm.vue';
+import type { RecipeInfo } from '@/api/types';
 
 // Demo data
 const existingFactories = ref([
@@ -81,21 +82,64 @@ const existingFactories = ref([
   { id: 3, name: 'Steel Production' }
 ]);
 
-const availableRecipes = ref([
-  { value: 'iron_ingot', label: 'Iron Ingot' },
-  { value: 'copper_ingot', label: 'Copper Ingot' },
-  { value: 'steel_ingot', label: 'Steel Ingot' },
-  { value: 'iron_plate', label: 'Iron Plate' },
-  { value: 'copper_sheet', label: 'Copper Sheet' }
+const availableRecipes = ref<RecipeInfo[]>([
+  {
+    name: 'Iron Ingot',
+    machine: 'Smelter',
+    inputs: [{ item: 'IronOre', quantity: 30 }],
+    outputs: [{ item: 'IronIngot', quantity: 30 }]
+  },
+  {
+    name: 'Copper Ingot',
+    machine: 'Smelter',
+    inputs: [{ item: 'CopperOre', quantity: 30 }],
+    outputs: [{ item: 'CopperIngot', quantity: 30 }]
+  },
+  {
+    name: 'Iron Plate',
+    machine: 'Assembler',
+    inputs: [{ item: 'IronIngot', quantity: 30 }],
+    outputs: [{ item: 'IronPlate', quantity: 20 }]
+  },
+  {
+    name: 'Copper Sheet',
+    machine: 'Assembler',
+    inputs: [{ item: 'CopperIngot', quantity: 30 }],
+    outputs: [{ item: 'CopperSheet', quantity: 20 }]
+  },
+  {
+    name: 'Iron Rod',
+    machine: 'Constructor',
+    inputs: [{ item: 'IronIngot', quantity: 15 }],
+    outputs: [{ item: 'IronRod', quantity: 15 }]
+  },
+  {
+    name: 'Screw',
+    machine: 'Constructor',
+    inputs: [{ item: 'IronRod', quantity: 12 }],
+    outputs: [{ item: 'Screw', quantity: 40 }]
+  },
+  {
+    name: 'Wire',
+    machine: 'Extractor',
+    inputs: [{ item: 'CopperIngot', quantity: 30 }],
+    outputs: [{ item: 'Wire', quantity: 30 }]
+  },
+  {
+    name: 'Cable',
+    machine: 'Assembler',
+    inputs: [{ item: 'Wire', quantity: 60 }],
+    outputs: [{ item: 'Cable', quantity: 30 }]
+  }
 ]);
 
 const machineTypes = ref({
-  Constructor: { maxSommersloops: 1 },
-  Smelter: { maxSommersloops: 0 },
-  Assembler: { maxSommersloops: 2 },
-  Manufacturer: { maxSommersloops: 4 },
-  Refinery: { maxSommersloops: 0 },
-  Blender: { maxSommersloops: 0 }
+  Constructor: { maxSomersloops: 1 },
+  Smelter: { maxSomersloops: 0 },
+  Assembler: { maxSomersloops: 2 },
+  Manufacturer: { maxSomersloops: 4 },
+  Refinery: { maxSomersloops: 0 },
+  Blender: { maxSomersloops: 0 }
 });
 
 // Validation state

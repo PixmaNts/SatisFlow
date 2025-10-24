@@ -12,6 +12,13 @@ import type {
   CreateFactoryRequest,
   UpdateFactoryRequest,
   CreateLogisticsRequest,
+  UpdateLogisticsRequest,
+  CreateProductionLineRequest,
+  UpdateProductionLineRequest,
+  CreateRawInputRequest,
+  UpdateRawInputRequest,
+  CreatePowerGeneratorRequest,
+  UpdatePowerGeneratorRequest,
 } from './types';
 
 /**
@@ -32,7 +39,7 @@ export const factories = {
    * @param id - The factory ID
    * @returns Promise resolving to the factory data
    */
-  getById: async (id: number): Promise<FactoryResponse> => {
+  getById: async (id: string): Promise<FactoryResponse> => {
     return api.get<FactoryResponse>(`/factories/${id}`);
   },
 
@@ -51,7 +58,7 @@ export const factories = {
    * @param factoryData - The factory update data
    * @returns Promise resolving to the updated factory
    */
-  update: async (id: number, factoryData: UpdateFactoryRequest): Promise<FactoryResponse> => {
+  update: async (id: string, factoryData: UpdateFactoryRequest): Promise<FactoryResponse> => {
     return api.put<FactoryResponse>(`/factories/${id}`, factoryData);
   },
 
@@ -60,8 +67,95 @@ export const factories = {
    * @param id - The factory ID
    * @returns Promise resolving when deletion is complete
    */
-  delete: async (id: number): Promise<void> => {
+  delete: async (id: string): Promise<void> => {
     return api.delete<void>(`/factories/${id}`);
+  },
+
+  /**
+   * Production line sub-resource endpoints
+   */
+  productionLines: {
+    create: async (
+      factoryId: string,
+      line: CreateProductionLineRequest
+    ): Promise<FactoryResponse> => {
+      return api.post<FactoryResponse>(`/factories/${factoryId}/production-lines`, line);
+    },
+    update: async (
+      factoryId: string,
+      lineId: string,
+      line: UpdateProductionLineRequest
+    ): Promise<FactoryResponse> => {
+      return api.put<FactoryResponse>(
+        `/factories/${factoryId}/production-lines/${lineId}`,
+        line
+      );
+    },
+    delete: async (factoryId: string, lineId: string): Promise<FactoryResponse> => {
+      return api.delete<FactoryResponse>(
+        `/factories/${factoryId}/production-lines/${lineId}`
+      );
+    },
+  },
+
+  /**
+   * Raw input sub-resource endpoints
+   */
+  rawInputs: {
+    create: async (
+      factoryId: string,
+      rawInput: CreateRawInputRequest
+    ): Promise<FactoryResponse> => {
+      return api.post<FactoryResponse>(`/factories/${factoryId}/raw-inputs`, rawInput);
+    },
+    update: async (
+      factoryId: string,
+      rawInputId: string,
+      rawInput: UpdateRawInputRequest
+    ): Promise<FactoryResponse> => {
+      return api.put<FactoryResponse>(
+        `/factories/${factoryId}/raw-inputs/${rawInputId}`,
+        rawInput
+      );
+    },
+    delete: async (factoryId: string, rawInputId: string): Promise<FactoryResponse> => {
+      return api.delete<FactoryResponse>(
+        `/factories/${factoryId}/raw-inputs/${rawInputId}`
+      );
+    },
+  },
+
+  /**
+   * Power generator sub-resource endpoints
+   */
+  powerGenerators: {
+    create: async (
+      factoryId: string,
+      generator: CreatePowerGeneratorRequest
+    ): Promise<FactoryResponse> => {
+      return api.post<FactoryResponse>(
+        `/factories/${factoryId}/power-generators`,
+        generator
+      );
+    },
+    update: async (
+      factoryId: string,
+      generatorId: string,
+      generator: UpdatePowerGeneratorRequest
+    ): Promise<FactoryResponse> => {
+      return api.put<FactoryResponse>(
+        `/factories/${factoryId}/power-generators/${generatorId}`,
+        generator
+      );
+    },
+    delete: async (
+      factoryId: string,
+      generatorId: string
+    ): Promise<FactoryResponse> => {
+      return api.delete<FactoryResponse>(
+        `/factories/${factoryId}/power-generators/${generatorId}`
+      );
+    },
   },
 };
 
@@ -83,7 +177,7 @@ export const logistics = {
    * @param id - The logistics line ID
    * @returns Promise resolving to the logistics line data
    */
-  getById: async (id: number): Promise<LogisticsResponse> => {
+  getById: async (id: string): Promise<LogisticsResponse> => {
     return api.get<LogisticsResponse>(`/logistics/${id}`);
   },
 
@@ -97,11 +191,24 @@ export const logistics = {
   },
 
   /**
+   * Update an existing logistics line
+   * @param id - The logistics line ID
+   * @param logisticsData - The logistics line update data
+   * @returns Promise resolving to the updated logistics line
+   */
+  update: async (
+    id: string,
+    logisticsData: UpdateLogisticsRequest
+  ): Promise<LogisticsResponse> => {
+    return api.put<LogisticsResponse>(`/logistics/${id}`, logisticsData);
+  },
+
+  /**
    * Delete a logistics line
    * @param id - The logistics line ID
    * @returns Promise resolving when deletion is complete
    */
-  delete: async (id: number): Promise<void> => {
+  delete: async (id: string): Promise<void> => {
     return api.delete<void>(`/logistics/${id}`);
   },
 };

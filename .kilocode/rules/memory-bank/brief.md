@@ -204,7 +204,7 @@ The system should prevent invalid configurations through UI validation and engin
 
 - When creating a logistics line, the UI must offer factory selection dropdowns (cannot create line without valid source/destination)
 - Overclock values are validated in real-time (0.0 - 250.0 range)
-- Sommersloop limits are enforced based on machine type before submission
+- Somersloop limits are enforced based on machine type before submission
 
 **Engine-Level Validation** (currently uses `Box<dyn std::error::Error>`, needs custom error types):
 
@@ -213,7 +213,7 @@ The system should prevent invalid configurations through UI validation and engin
 pub enum SatisflowError {
     FactoryNotFound(u64),
     InvalidOverclock(f32),
-    InvalidSommersloop { machine: MachineType, provided: u8, max: u8 },
+    InvalidSomersloop { machine: MachineType, provided: u8, max: u8 },
     LogisticsEndpointInvalid { from: u64, to: u64 },
     // ... other error types
 }
@@ -222,7 +222,7 @@ pub enum SatisflowError {
 **Existing Validations**:
 
 - Overclock range (0-250%) ✅
-- Sommersloop limits per machine type ✅
+- Somersloop limits per machine type ✅
 - Factory existence when creating logistics lines ✅
 
 - engine should support blueprint (like in the game) as a custome recipe type.

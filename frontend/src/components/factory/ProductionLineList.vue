@@ -46,8 +46,8 @@
       <template #cell-power="{ row }">
         <div class="power-info">
           <span class="power-value">{{ formatPower(getPowerConsumption(row as ProductionLineResponse)) }}</span>
-          <span v-if="getTotalSommersloops(row as ProductionLineResponse) > 0" class="sommersloop-count">
-            {{ getTotalSommersloops(row as ProductionLineResponse) }}×
+          <span v-if="getTotalSomersloops(row as ProductionLineResponse) > 0" class="somersloop-count">
+            {{ getTotalSomersloops(row as ProductionLineResponse) }}×
           </span>
         </div>
       </template>
@@ -135,7 +135,7 @@ import Alert from '@/components/ui/Alert.vue'
 import ProductionLineForm from './ProductionLineForm.vue'
 
 interface Props {
-  factoryId: number
+  factoryId: string
 }
 
 const props = defineProps<Props>()
@@ -196,15 +196,25 @@ const columns = [
 ]
 
 // Helper type guard functions
-const isProductionLineRecipe = (line: ProductionLineResponse): line is ProductionLineResponse & { ProductionLineRecipe: { id: number; name: string; description: string; recipe: string; machine_groups: MachineGroup[] } } => {
+const isProductionLineRecipe = (line: ProductionLineResponse): line is ProductionLineResponse & { ProductionLineRecipe: { id: string; name: string; description: string; recipe: string; machine_groups: MachineGroup[] } } => {
   return 'ProductionLineRecipe' in line
 }
 
-const isProductionLineBlueprint = (line: ProductionLineResponse): line is ProductionLineResponse & { ProductionLineBlueprint: { id: number; name: string; description: string; production_lines: ProductionLineResponse[] } } => {
+const isProductionLineBlueprint = (line: ProductionLineResponse): line is ProductionLineResponse & { ProductionLineBlueprint: { id: string; name: string; description: string; production_lines: ProductionLineResponse[] } } => {
   return 'ProductionLineBlueprint' in line
 }
 
 // Methods
+const getProductionLineId = (line: ProductionLineResponse): string | null => {
+  if (isProductionLineRecipe(line)) {
+    return line.ProductionLineRecipe.id
+  }
+  if (isProductionLineBlueprint(line)) {
+    return line.ProductionLineBlueprint.id
+  }
+  return null
+}
+
 const getProductionLineName = (line: ProductionLineResponse): string => {
   if (isProductionLineRecipe(line)) {
     return line.ProductionLineRecipe.name
@@ -261,14 +271,14 @@ const getPowerConsumption = (line: ProductionLineResponse): number => {
   return 0
 }
 
-const getTotalSommersloops = (line: ProductionLineResponse): number => {
+const getTotalSomersloops = (line: ProductionLineResponse): number => {
   if (isProductionLineRecipe(line)) {
     return line.ProductionLineRecipe.machine_groups.reduce(
       (total: number, group: MachineGroup) => total + (group.number_of_machine * group.somersloop), 0
     )
   } else if (isProductionLineBlueprint(line)) {
     return line.ProductionLineBlueprint.production_lines.reduce(
-      (total, subLine) => total + getTotalSommersloops(subLine), 0
+      (total, subLine) => total + getTotalSomersloops(subLine), 0
     )
   }
   return 0
@@ -302,17 +312,20 @@ const confirmDelete = async () => {
   error.value = null
 
   try {
-    // TODO: Implement delete API call when available
-    // await factoryStore.deleteProductionLine(deletingLine.value.id)
+    const lineId = getProductionLineId(deletingLine.value)
+    if (!lineId) {
+      throw new Error('Unable to determine production line identifier')
+    }
 
-    // For now, just close the modal
+    const result = await factoryStore.deleteProductionLine(props.factoryId, lineId)
+    if (!result) {
+      throw new Error('Delete operation failed')
+    }
+
     showDeleteModal.value = false
     deletingLine.value = null
-
-    // Refresh factory data
-    await factoryStore.fetchById(props.factoryId)
   } catch (err) {
-    error.value = 'Failed to delete production line'
+    error.value = factoryStore.error || 'Failed to delete production line'
     console.error('Delete production line error:', err)
   } finally {
     deleting.value = false
@@ -413,7 +426,7 @@ onMounted(async () => {
   color: var(--color-gray-900, #111827);
 }
 
-.sommersloop-count {
+.somersloop-count {
   font-size: var(--font-size-xs, 0.75rem);
   color: var(--color-amber-600, #d97706);
   font-weight: var(--font-weight-medium, 500);

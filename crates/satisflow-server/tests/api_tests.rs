@@ -481,7 +481,7 @@ async fn test_game_data_endpoints() {
     if let Some(first_machine) = machines.as_array().unwrap().first() {
         assert!(first_machine.get("name").is_some());
         assert!(first_machine.get("base_power").is_some());
-        assert!(first_machine.get("max_sommersloop").is_some());
+        assert!(first_machine.get("max_somersloop").is_some());
     }
 }
 

@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { logistics as logisticsApi } from '@/api/endpoints'
-import type { LogisticsResponse, CreateLogisticsRequest } from '@/api/types'
+import type { LogisticsResponse, CreateLogisticsRequest, UpdateLogisticsRequest } from '@/api/types'
 import { handleApiError } from '@/api'
 
 /**
@@ -18,7 +18,7 @@ export const useLogisticsStore = defineStore('logistics', () => {
 
   // Getters
   const logisticsById = computed(() => {
-    const result: Record<number, LogisticsResponse> = {}
+    const result: Record<string, LogisticsResponse> = {}
     logistics.value.forEach(line => {
       result[line.id] = line
     })
@@ -26,7 +26,7 @@ export const useLogisticsStore = defineStore('logistics', () => {
   })
 
   const logisticsByFactory = computed(() => {
-    const result: Record<number, LogisticsResponse[]> = {}
+    const result: Record<string, LogisticsResponse[]> = {}
 
     // Group logistics lines by factory
     logistics.value.forEach(line => {
@@ -62,13 +62,22 @@ export const useLogisticsStore = defineStore('logistics', () => {
   })
 
   const uniqueFactoryIds = computed(() => {
-    const factoryIds = new Set<number>()
+    const factoryIds = new Set<string>()
     logistics.value.forEach(line => {
       factoryIds.add(line.from_factory)
       factoryIds.add(line.to_factory)
     })
     return Array.from(factoryIds)
   })
+
+  const upsertLogistics = (line: LogisticsResponse): void => {
+    const index = logistics.value.findIndex(l => l.id === line.id)
+    if (index !== -1) {
+      logistics.value.splice(index, 1, line)
+    } else {
+      logistics.value.push(line)
+    }
+  }
 
   // Actions
 
@@ -94,20 +103,14 @@ export const useLogisticsStore = defineStore('logistics', () => {
    * Fetch a specific logistics line by ID
    * @param id - The logistics line ID to fetch
    */
-  const fetchById = async (id: number): Promise<LogisticsResponse | null> => {
+  const fetchById = async (id: string): Promise<LogisticsResponse | null> => {
     loading.value = true
     error.value = null
 
     try {
       const line = await logisticsApi.getById(id)
 
-      // Update line in the array if it exists
-      const index = logistics.value.findIndex(l => l.id === id)
-      if (index !== -1) {
-        logistics.value[index] = line
-      } else {
-        logistics.value.push(line)
-      }
+      upsertLogistics(line)
 
       return line
     } catch (err) {
@@ -130,7 +133,7 @@ export const useLogisticsStore = defineStore('logistics', () => {
 
     try {
       const newLine = await logisticsApi.create(logisticsData)
-      logistics.value.push(newLine)
+      upsertLogistics(newLine)
       return newLine
     } catch (err) {
       error.value = handleApiError(err)
@@ -142,11 +145,37 @@ export const useLogisticsStore = defineStore('logistics', () => {
   }
 
   /**
+   * Update an existing logistics line
+   * @param id - The logistics line ID
+   * @param logisticsData - The update payload
+   * @returns The updated logistics line or null if update failed
+   */
+  const update = async (
+    id: string,
+    logisticsData: UpdateLogisticsRequest
+  ): Promise<LogisticsResponse | null> => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const updatedLine = await logisticsApi.update(id, logisticsData)
+      upsertLogistics(updatedLine)
+      return updatedLine
+    } catch (err) {
+      error.value = handleApiError(err)
+      console.error(`Failed to update logistics line ${id}:`, err)
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
    * Delete a logistics line
    * @param id - The logistics line ID to delete
    * @returns True if deletion was successful, false otherwise
    */
-  const deleteLogistics = async (id: number): Promise<boolean> => {
+  const deleteLogistics = async (id: string): Promise<boolean> => {
     loading.value = true
     error.value = null
 
@@ -176,7 +205,7 @@ export const useLogisticsStore = defineStore('logistics', () => {
    * @returns Array of logistics lines
    */
   const getLogisticsForFactory = (
-    factoryId: number,
+    factoryId: string,
     direction: 'from' | 'to' | 'both' = 'both'
   ): LogisticsResponse[] => {
     return logistics.value.filter(line => {
@@ -193,8 +222,8 @@ export const useLogisticsStore = defineStore('logistics', () => {
    * @returns Array of logistics lines between the two factories
    */
   const getLogisticsBetweenFactories = (
-    fromFactoryId: number,
-    toFactoryId: number
+    fromFactoryId: string,
+    toFactoryId: string
   ): LogisticsResponse[] => {
     return logistics.value.filter(
       line => line.from_factory === fromFactoryId && line.to_factory === toFactoryId
@@ -242,6 +271,7 @@ export const useLogisticsStore = defineStore('logistics', () => {
     fetchAll,
     fetchById,
     create,
+    update,
     deleteLogistics,
     getLogisticsForFactory,
     getLogisticsBetweenFactories,

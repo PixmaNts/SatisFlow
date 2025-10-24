@@ -147,13 +147,14 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useGameDataStore } from '@/stores/gameData'
-import type { PowerGeneratorResponse, GeneratorType, Item, GeneratorGroup } from '@/api/types'
+import { useFactoryStore } from '@/stores/factory'
+import type { PowerGeneratorResponse, GeneratorType, Item, GeneratorGroup, CreatePowerGeneratorRequest } from '@/api/types'
 import Button from '@/components/ui/Button.vue'
 import Modal from '@/components/ui/Modal.vue'
 
 interface Props {
   show: boolean
-  factoryId: number
+  factoryId: string
   powerGenerator?: PowerGeneratorResponse | null
 }
 
@@ -166,6 +167,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const gameDataStore = useGameDataStore()
+const factoryStore = useFactoryStore()
 
 // State
 const saving = ref(false)
@@ -379,17 +381,34 @@ const handleSubmit = async () => {
   saving.value = true
 
   try {
-    // TODO: Implement API call to save power generator
-    console.log('Saving power generator:', {
-      factory_id: props.factoryId,
-      ...formData.value
-    })
+    const payload: CreatePowerGeneratorRequest = {
+      generator_type: formData.value.generator_type,
+      fuel_type: formData.value.fuel_type ?? undefined,
+      groups: formData.value.groups.map(group => ({
+        number_of_generators: group.number_of_generators,
+        clock_speed: group.clock_speed
+      }))
+    }
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    if (!showFuelType.value) {
+      delete payload.fuel_type
+    }
 
-    emit('saved')
-    handleClose()
+    let response = null
+    if (isEditing.value && props.powerGenerator) {
+      response = await factoryStore.updatePowerGenerator(
+        props.factoryId,
+        props.powerGenerator.id,
+        payload
+      )
+    } else {
+      response = await factoryStore.createPowerGenerator(props.factoryId, payload)
+    }
+
+    if (response) {
+      emit('saved')
+      handleClose()
+    }
   } catch (error) {
     console.error('Failed to save power generator:', error)
   } finally {

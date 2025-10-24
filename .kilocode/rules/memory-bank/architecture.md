@@ -96,7 +96,7 @@ pub struct Factory {
 pub trait ProductionLine {
     fn id(&self) -> u64;
     fn total_machines(&self) -> u32;
-    fn total_sommersloop(&self) -> u32;
+    fn total_somersloop(&self) -> u32;
     fn output_rate(&self) -> Vec<(Item, f32)>;
     fn input_rate(&self) -> Vec<(Item, f32)>;
     fn total_power_consumption(&self) -> f32;
@@ -107,8 +107,8 @@ pub trait ProductionLine {
 
 1. **ProductionLineRecipe**: Standard recipe-based production
    - Contains: `id, name, description, recipe, machine_groups: Vec<MachineGroup>`
-   - MachineGroup: `(num_machines: u32, overclock: f32, sommersloop: u8)`
-   - Validates: Overclock (0-250%), Sommersloop limits per machine type
+   - MachineGroup: `(num_machines: u32, overclock: f32, somersloop: u8)`
+   - Validates: Overclock (0-250%), Somersloop limits per machine type
    - Power formula: `base_power × (1 + s/max_s)² × (clock/100)^1.321928`
 
 2. **ProductionLineBlueprint**: Composite of multiple recipes
@@ -164,7 +164,7 @@ pub trait Transport {
 
 **MachineType**: Defines production machine characteristics
 
-- Sommersloop limits: Constructor(1), Assembler(2), Manufacturer(4), etc.
+- Somersloop limits: Constructor(1), Assembler(2), Manufacturer(4), etc.
 - Base power consumption: Constructor(4MW), Assembler(16MW), etc.
 
 **Recipes**: Auto-generated from `recipes_data.inc`
@@ -425,13 +425,15 @@ Vue.js UI (Update)
 3. ✅ **Backend REST API** with complete CRUD operations
 4. ✅ **Testing infrastructure** with 484 lines of integration tests
 5. ✅ **Deployment setup** with Docker and Docker Compose
+6. ✅ **Frontend UI implementation** with Vue 3 + TypeScript + Vite
+7. ✅ **Complete component architecture** with 88 files and ~14,100 lines
+8. ✅ **Comprehensive factory example** demonstrating all engine features
 
 ## Missing Components (To Be Implemented)
 
 1. **Persistence layer** (JSON file save/load - only serialization exists)
-2. **Frontend UI implementation** (scaffolding complete, components needed)
-3. **Blueprint import/export UI** (ProductionLineBlueprint exists but needs UI)
-4. **Enhanced validation layer** for user inputs
+2. **Blueprint import/export UI** (ProductionLineBlueprint exists but needs UI)
+3. **Enhanced validation layer** for user inputs
 
 ## Performance Considerations
 

@@ -54,23 +54,16 @@
 
       <!-- Recipe Selection -->
       <div v-if="formData.type === 'recipe'" class="form-group">
-        <label for="recipe-select" class="form-label">Recipe *</label>
-        <select
-          id="recipe-select"
+        <label for="recipe-autocomplete" class="form-label">Recipe *</label>
+        <RecipeAutocomplete
+          id="recipe-autocomplete"
           v-model="formData.recipe"
-          class="form-select"
-          required
-          @change="handleRecipeChange"
-        >
-          <option value="">Select a recipe...</option>
-          <option
-            v-for="recipe in recipes"
-            :key="recipe.name"
-            :value="recipe.name"
-          >
-            {{ recipe.name }} ({{ recipe.machine }})
-          </option>
-        </select>
+          :recipes="sortedRecipes"
+          placeholder="Start typing to search recipes..."
+          :disabled="!sortedRecipes.length"
+          @selected="handleRecipeSelected"
+          @cleared="handleRecipeCleared"
+        />
       </div>
 
       <!-- Machine Groups -->
@@ -124,14 +117,14 @@
 
                 <div v-if="selectedMachineInfo" class="field">
                   <label :for="`somersloop-${index}`" class="field-label">
-                    Somersloops (max: {{ selectedMachineInfo.max_sommersloop }})
+                    Somersloops (max: {{ selectedMachineInfo.max_somersloop }})
                   </label>
                   <input
                     :id="`somersloop-${index}`"
                     v-model.number="group.somersloop"
                     type="number"
                     min="0"
-                    :max="selectedMachineInfo.max_sommersloop"
+                    :max="selectedMachineInfo.max_somersloop"
                     class="form-input"
                   />
                 </div>
@@ -192,14 +185,22 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useGameDataStore } from '@/stores/gameData'
-import type { ProductionLineResponse, MachineGroup } from '@/api/types'
+import { useFactoryStore } from '@/stores/factory'
+import type {
+  ProductionLineResponse,
+  MachineGroup,
+  CreateProductionLineRequest,
+  RecipeInfo
+} from '@/api/types'
 import Button from '@/components/ui/Button.vue'
 import Modal from '@/components/ui/Modal.vue'
+import RecipeAutocomplete from './RecipeAutocomplete.vue'
 
 interface Props {
   show: boolean
-  factoryId: number
+  factoryId: string
   productionLine?: ProductionLineResponse | null
 }
 
@@ -212,6 +213,8 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const gameDataStore = useGameDataStore()
+const factoryStore = useFactoryStore()
+const { recipes } = storeToRefs(gameDataStore)
 
 // State
 const saving = ref(false)
@@ -225,7 +228,10 @@ const formData = ref({
 
 // Computed
 const isEditing = computed(() => !!props.productionLine)
-const recipes = computed(() => gameDataStore.recipes)
+const sortedRecipes = computed((): RecipeInfo[] => {
+  if (!recipes.value.length) return []
+  return [...recipes.value].sort((a, b) => a.name.localeCompare(b.name))
+})
 const selectedRecipe = computed(() => {
   if (!formData.value.recipe) return null
   return gameDataStore.getRecipeByName(formData.value.recipe)
@@ -244,7 +250,7 @@ const calculatedPower = computed(() => {
     const basePower = selectedMachineInfo.value!.base_power
     const clockSpeed = group.oc_value / 100
     const powerMultiplier = Math.pow(clockSpeed, 1.321928)
-    const somersloopMultiplier = Math.pow(1 + group.somersloop / selectedMachineInfo.value!.max_sommersloop, 2)
+    const somersloopMultiplier = Math.pow(1 + group.somersloop / selectedMachineInfo.value!.max_somersloop, 2)
 
     return total + (group.number_of_machine * basePower * powerMultiplier * somersloopMultiplier)
   }, 0)
@@ -268,23 +274,48 @@ const canSubmit = computed(() => {
   )
 })
 
+const getProductionLineId = (line?: ProductionLineResponse | null): string | null => {
+  if (!line) return null
+  if ('ProductionLineRecipe' in line) {
+    return line.ProductionLineRecipe.id
+  }
+  if ('ProductionLineBlueprint' in line) {
+    return line.ProductionLineBlueprint.id
+  }
+  return null
+}
+
 // Methods
 const handleClose = () => {
   emit('update:show', false)
   resetForm()
 }
 
+const lastSelectedRecipe = ref<string | null>(null)
+
 const handleTypeChange = () => {
   if (formData.value.type === 'blueprint') {
     // Reset recipe-related fields
     formData.value.recipe = ''
     formData.value.machine_groups = []
+    lastSelectedRecipe.value = null
   }
 }
 
-const handleRecipeChange = () => {
-  // Reset machine groups when recipe changes
+const handleRecipeSelected = (recipe: RecipeInfo) => {
+  if (lastSelectedRecipe.value === recipe.name && formData.value.machine_groups.length) {
+    return
+  }
+
   formData.value.machine_groups = [createDefaultMachineGroup()]
+  lastSelectedRecipe.value = recipe.name
+}
+
+const handleRecipeCleared = () => {
+  lastSelectedRecipe.value = null
+  if (formData.value.machine_groups.length) {
+    formData.value.machine_groups = []
+  }
 }
 
 const createDefaultMachineGroup = (): MachineGroup => {
@@ -318,6 +349,7 @@ const resetForm = () => {
     recipe: '',
     machine_groups: []
   }
+  lastSelectedRecipe.value = null
 }
 
 const loadProductionLine = () => {
@@ -333,6 +365,7 @@ const loadProductionLine = () => {
       recipe: recipe.recipe,
       machine_groups: [...recipe.machine_groups]
     }
+    lastSelectedRecipe.value = recipe.recipe
   } else if ('ProductionLineBlueprint' in props.productionLine) {
     const blueprint = props.productionLine.ProductionLineBlueprint
     formData.value = {
@@ -342,6 +375,7 @@ const loadProductionLine = () => {
       recipe: '',
       machine_groups: []
     }
+    lastSelectedRecipe.value = null
   }
 }
 
@@ -351,17 +385,33 @@ const handleSubmit = async () => {
   saving.value = true
 
   try {
-    // TODO: Implement API call to save production line
-    console.log('Saving production line:', {
-      factory_id: props.factoryId,
-      ...formData.value
-    })
+    const payload: CreateProductionLineRequest = {
+      name: formData.value.name.trim(),
+      description: formData.value.description?.trim() || undefined,
+      type: formData.value.type,
+      recipe: formData.value.recipe,
+      machine_groups: formData.value.machine_groups.map(group => ({
+        number_of_machine: group.number_of_machine,
+        oc_value: group.oc_value,
+        somersloop: group.somersloop
+      }))
+    }
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    let response = null
+    if (isEditing.value && props.productionLine) {
+      const lineId = getProductionLineId(props.productionLine)
+      if (!lineId) {
+        throw new Error('Unable to determine production line identifier')
+      }
+      response = await factoryStore.updateProductionLine(props.factoryId, lineId, payload)
+    } else {
+      response = await factoryStore.createProductionLine(props.factoryId, payload)
+    }
 
-    emit('saved')
-    handleClose()
+    if (response) {
+      emit('saved')
+      handleClose()
+    }
   } catch (error) {
     console.error('Failed to save production line:', error)
   } finally {

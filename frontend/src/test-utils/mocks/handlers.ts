@@ -12,7 +12,7 @@ import type {
 // Mock data
 const mockFactories: FactoryResponse[] = [
   {
-    id: 1,
+    id: 'factory-1',
     name: 'Iron Processing',
     description: 'Processes iron ore into plates',
     notes: null,
@@ -25,7 +25,7 @@ const mockFactories: FactoryResponse[] = [
     power_balance: 20.0,
   },
   {
-    id: 2,
+    id: 'factory-2',
     name: 'Copper Processing',
     description: 'Processes copper ore into wires',
     notes: null,
@@ -41,9 +41,9 @@ const mockFactories: FactoryResponse[] = [
 
 const mockLogistics: LogisticsResponse[] = [
   {
-    id: 1,
-    from_factory: 1,
-    to_factory: 2,
+    id: 'logistics-1',
+    from_factory: 'factory-1',
+    to_factory: 'factory-2',
     transport_type: 'Truck',
     transport_id: 'TRUCK-001',
     transport_name: 'Iron Transport',
@@ -84,7 +84,7 @@ const mockPowerStats: PowerStats = {
   is_balanced: false,
   factory_stats: [
     {
-      factory_id: 1,
+      factory_id: 'factory-1',
       factory_name: 'Iron Processing',
       generation: 100.0,
       consumption: 80.0,
@@ -93,7 +93,7 @@ const mockPowerStats: PowerStats = {
       generator_types: ['Coal', 'Biomass'],
     },
     {
-      factory_id: 2,
+      factory_id: 'factory-2',
       factory_name: 'Copper Processing',
       generation: 100.0,
       consumption: 70.5,
@@ -113,7 +113,7 @@ export const handlers = [
 
   http.get('/api/factories/:id', ({ params }: { params: { id: string } }) => {
     const { id } = params
-    const factory = mockFactories.find(f => f.id === Number(id))
+    const factory = mockFactories.find(f => f.id === id)
     if (!factory) {
       return HttpResponse.json({ error: 'Factory not found' }, { status: 404 })
     }
@@ -126,8 +126,9 @@ export const handlers = [
       typeof newFactory.notes === 'string' && newFactory.notes.trim().length === 0
         ? null
         : newFactory.notes ?? null
+    const factoryId = `factory-${mockFactories.length + 1}`
     const factory: FactoryResponse = {
-      id: mockFactories.length + 1,
+      id: factoryId,
       name: newFactory.name || 'New Factory',
       description: newFactory.description || null,
       notes: sanitizedNotes,
@@ -148,10 +149,7 @@ export const handlers = [
     if (!idParam) {
       return HttpResponse.json({ error: 'Factory id is required' }, { status: 400 })
     }
-    const factoryId = Number(idParam)
-    if (!Number.isFinite(factoryId)) {
-      return HttpResponse.json({ error: 'Factory id is invalid' }, { status: 400 })
-    }
+    const factoryId = idParam
     const updates = await request.json() as Partial<FactoryResponse>
     const index = mockFactories.findIndex(f => f.id === factoryId)
     if (index === -1) {
@@ -188,10 +186,7 @@ export const handlers = [
     if (!idParam) {
       return HttpResponse.json({ error: 'Factory id is required' }, { status: 400 })
     }
-    const factoryId = Number(idParam)
-    if (!Number.isFinite(factoryId)) {
-      return HttpResponse.json({ error: 'Factory id is invalid' }, { status: 400 })
-    }
+    const factoryId = idParam
     const index = mockFactories.findIndex(f => f.id === factoryId)
     if (index === -1) {
       return HttpResponse.json({ error: 'Factory not found' }, { status: 404 })
@@ -210,11 +205,7 @@ export const handlers = [
     if (!idParam) {
       return HttpResponse.json({ error: 'Logistics id is required' }, { status: 400 })
     }
-    const logisticsId = Number(idParam)
-    if (!Number.isFinite(logisticsId)) {
-      return HttpResponse.json({ error: 'Logistics id is invalid' }, { status: 400 })
-    }
-    const logistics = mockLogistics.find(l => l.id === logisticsId)
+    const logistics = mockLogistics.find(l => l.id === idParam)
     if (!logistics) {
       return HttpResponse.json({ error: 'Logistics line not found' }, { status: 404 })
     }
@@ -223,7 +214,8 @@ export const handlers = [
 
   http.post('/api/logistics', async ({ request }) => {
     const payload = await request.json() as CreateLogisticsRequest
-    const newId = mockLogistics.length + 1
+    const newIndex = mockLogistics.length + 1
+    const newId = `logistics-${newIndex}`
 
     const buildResponse = (response: Omit<LogisticsResponse, 'id'>): LogisticsResponse => ({
       id: newId,
@@ -243,7 +235,7 @@ export const handlers = [
         response = buildResponse({
           ...base,
           transport_type: 'Truck',
-          transport_id: payload.truck_id || `Truck-${newId}`,
+          transport_id: payload.truck_id || `Truck-${newIndex}`,
           transport_name: null,
           transport_details: JSON.stringify({
             item: payload.item,
@@ -262,7 +254,7 @@ export const handlers = [
         response = buildResponse({
           ...base,
           transport_type: 'Drone',
-          transport_id: payload.drone_id || `Drone-${newId}`,
+          transport_id: payload.drone_id || `Drone-${newIndex}`,
           transport_name: null,
           transport_details: JSON.stringify({
             item: payload.item,
@@ -295,7 +287,7 @@ export const handlers = [
         response = buildResponse({
           ...base,
           transport_type: 'Bus',
-          transport_id: `Bus-${newId}`,
+          transport_id: `Bus-${newIndex}`,
           transport_name: payload.bus_name || null,
           transport_details: JSON.stringify({
             bus_name: payload.bus_name,
@@ -321,7 +313,7 @@ export const handlers = [
         response = buildResponse({
           ...base,
           transport_type: 'Train',
-          transport_id: `Train-${newId}`,
+          transport_id: `Train-${newIndex}`,
           transport_name: payload.train_name || null,
           transport_details: JSON.stringify({
             train_name: payload.train_name,
@@ -343,7 +335,7 @@ export const handlers = [
 
   http.delete('/api/logistics/:id', ({ params }: { params: { id: string } }) => {
     const { id } = params
-    const index = mockLogistics.findIndex(l => l.id === Number(id))
+    const index = mockLogistics.findIndex(l => l.id === id)
     if (index === -1) {
       return HttpResponse.json({ error: 'Logistics line not found' }, { status: 404 })
     }
@@ -398,19 +390,19 @@ export const handlers = [
       {
         name: 'Constructor',
         display_name: 'Constructor',
-        max_sommersloops: 1,
+        max_somersloops: 1,
         base_power: 4.0,
       },
       {
         name: 'Smelter',
         display_name: 'Smelter',
-        max_sommersloops: 1,
+        max_somersloops: 1,
         base_power: 4.0,
       },
       {
         name: 'Assembler',
         display_name: 'Assembler',
-        max_sommersloops: 2,
+        max_somersloops: 2,
         base_power: 16.0,
       },
     ])

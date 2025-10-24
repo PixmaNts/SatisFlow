@@ -511,8 +511,14 @@ const handleSubmit = async () => {
     const payload: CreateRawInputRequest = {
       extractor_type: formData.value.extractor_type,
       item: formData.value.item as Item,
-      purity: formData.value.purity ?? undefined,
       quantity_per_min: formData.value.quantity_per_min,
+    }
+
+    // Only include purity for extractors that support it
+    // WaterExtractor does NOT support purity (backend will reject it)
+    // All other extractors (Miners, OilExtractor, ResourceWellExtractor) require purity
+    if (formData.value.extractor_type !== 'WaterExtractor') {
+      payload.purity = formData.value.purity ?? undefined
     }
 
     if (showPressurizer.value && usePressurizer.value) {

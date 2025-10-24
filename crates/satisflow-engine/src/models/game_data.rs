@@ -17,7 +17,7 @@ pub enum MachineType {
 }
 
 impl MachineType {
-    pub fn max_sommersloop(&self) -> u8 {
+    pub fn max_somersloop(&self) -> u8 {
         match self {
             MachineType::Constructor => 1,
             MachineType::Assembler => 2,

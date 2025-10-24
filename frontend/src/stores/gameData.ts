@@ -236,21 +236,21 @@ export const useGameDataStore = defineStore('gameData', () => {
   }
 
   /**
-   * Get machines that can use Sommersloops
-   * @returns Array of machines with max_sommersloop > 0
+   * Get machines that can use Somersloops
+   * @returns Array of machines with max_somersloop > 0
    */
-  const getSommersloopMachines = (): MachineInfo[] => {
-    return machines.value.filter(machine => machine.max_sommersloop > 0)
+  const getSomersloopMachines = (): MachineInfo[] => {
+    return machines.value.filter(machine => machine.max_somersloop > 0)
   }
 
   /**
-   * Get max Sommersloop count for a machine
+   * Get max Somersloop count for a machine
    * @param machineName - The machine name
-   * @returns Maximum number of Sommersloops for the machine
+   * @returns Maximum number of Somersloops for the machine
    */
-  const getMaxSommersloops = (machineName: string): number => {
+  const getMaxSomersloops = (machineName: string): number => {
     const machine = getMachineByName(machineName)
-    return machine?.max_sommersloop || 0
+    return machine?.max_somersloop || 0
   }
 
   /**
@@ -337,8 +337,8 @@ export const useGameDataStore = defineStore('gameData', () => {
     getMachineByName,
     searchRecipesByItem,
     searchRecipesByName,
-    getSommersloopMachines,
-    getMaxSommersloops,
+    getSomersloopMachines,
+    getMaxSomersloops,
     getBasePower,
     isValidItem,
     isValidMachine,

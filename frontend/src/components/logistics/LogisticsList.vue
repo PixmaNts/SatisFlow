@@ -296,8 +296,8 @@ const loading = ref(false)
 // Filters
 const filters = ref({
   transportType: '',
-  fromFactory: 0,
-  toFactory: 0,
+  fromFactory: '',
+  toFactory: '',
   item: '',
   search: ''
 })
@@ -318,8 +318,8 @@ const uniqueItems = computed(() => {
 
 const hasActiveFilters = computed(() => {
   return filters.value.transportType !== '' ||
-         filters.value.fromFactory !== 0 ||
-         filters.value.toFactory !== 0 ||
+         filters.value.fromFactory !== '' ||
+         filters.value.toFactory !== '' ||
          filters.value.item !== '' ||
          filters.value.search !== ''
 })
@@ -388,7 +388,7 @@ const formatItemName = (item: Item): string => {
   return item.replace(/([A-Z])/g, ' $1').trim()
 }
 
-const getFactoryName = (factoryId: number): string => {
+const getFactoryName = (factoryId: string): string => {
   const factory = factories.value.find(f => f.id === factoryId)
   return factory ? factory.name : `Factory ${factoryId}`
 }
@@ -416,8 +416,8 @@ const applyFilters = () => {
 const clearFilters = () => {
   filters.value = {
     transportType: '',
-    fromFactory: 0,
-    toFactory: 0,
+    fromFactory: '',
+    toFactory: '',
     item: '',
     search: ''
   }

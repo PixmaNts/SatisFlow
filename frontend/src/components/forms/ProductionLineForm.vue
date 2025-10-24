@@ -28,18 +28,26 @@
               @blur="handleFieldBlur('name', ($event.target as HTMLInputElement).value)"
             />
 
-            <BaseSelect
-              :model-value="formData.recipe as string"
-              @update:model-value="setFieldValue('recipe', $event)"
-              label="Recipe"
-              :options="recipeOptions"
-              placeholder="Select a recipe"
-              :error="errors.recipe"
-              :required="true"
-              hint="The recipe to produce"
-              @validate="setFieldValue('recipe', $event)"
-              @blur="handleFieldBlur('recipe', $event)"
-            />
+            <div class="form-group">
+              <label for="recipe-autocomplete" class="form-label">
+                Recipe
+                <span class="text-red-500">*</span>
+              </label>
+              <RecipeAutocomplete
+                id="recipe-autocomplete"
+                :model-value="formData.recipe as string"
+                :recipes="availableRecipes"
+                placeholder="Start typing to search recipes..."
+                clearable
+                @update:model-value="setFieldValue('recipe', $event)"
+                @selected="onRecipeSelected"
+                @focus="handleFieldBlur('recipe', formData.recipe as string)"
+              />
+              <p v-if="errors.recipe" class="text-red-500 text-sm mt-1">
+                {{ errors.recipe?.[0] }}
+              </p>
+              <p class="text-gray-500 text-sm mt-1">The recipe to produce</p>
+            </div>
           </div>
 
           <BaseInput
@@ -99,15 +107,15 @@
               />
 
               <BaseInput
-                :model-value="group.sommersloops"
-                @update:model-value="updateMachineGroup(index, 'sommersloops', $event)"
-                label="Sommersloops"
+                :model-value="group.somersloops"
+                @update:model-value="updateMachineGroup(index, 'somersloops', $event)"
+                label="Somersloops"
                 type="number"
                 placeholder="0"
-                :error="errors[`machineGroups.${index}.sommersloops`]"
-                hint="Number of sommersloops per machine"
-                @validate="setFieldValue(`machineGroups.${index}.sommersloops`, $event)"
-                @blur="handleFieldBlur(`machineGroups.${index}.sommersloops`, ($event.target as HTMLInputElement).value)"
+                :error="errors[`machineGroups.${index}.somersloops`]"
+                hint="Number of somersloops per machine"
+                @validate="setFieldValue(`machineGroups.${index}.somersloops`, $event)"
+                @blur="handleFieldBlur(`machineGroups.${index}.somersloops`, ($event.target as HTMLInputElement).value)"
               />
             </div>
           </div>
@@ -129,24 +137,25 @@
 import { computed, ref } from 'vue';
 import ValidatedForm from './ValidatedForm.vue';
 import BaseInput from './BaseInput.vue';
-import BaseSelect from './BaseSelect.vue';
+import RecipeAutocomplete from '../factory/RecipeAutocomplete.vue';
 import {
   required,
   maxLength,
   validateMachineCount,
   validateOverclock,
-  validateSommersloop,
+  validateSomersloop,
   custom,
   number,
   integer,
   min
 } from '@/composables/useValidation';
 import type { FieldValidationConfig, ValidationContext } from '@/types/validation';
+import type { RecipeInfo } from '@/api/types';
 
 interface MachineGroup {
   machineCount: number | null;
   overclock: number | null;
-  sommersloops: number | null;
+  somersloops: number | null;
 }
 
 interface Props {
@@ -156,8 +165,8 @@ interface Props {
     recipe?: string;
     machineGroups?: MachineGroup[];
   };
-  availableRecipes?: Array<{ value: string; label: string }>;
-  machineTypes?: Record<string, { maxSommersloops: number }>;
+  availableRecipes?: RecipeInfo[];
+  machineTypes?: Record<string, { maxSomersloops: number }>;
 }
 
 interface Emits {
@@ -182,15 +191,16 @@ const emit = defineEmits<Emits>();
 // Machine groups state
 const machineGroups = ref<MachineGroup[]>(
   props.initialData.machineGroups || [
-    { machineCount: null, overclock: null, sommersloops: null }
+    { machineCount: null, overclock: null, somersloops: null }
   ]
 );
 
-// Recipe options for select
-const recipeOptions = computed(() => [
-  { value: '', label: 'Select a recipe', disabled: true },
-  ...props.availableRecipes
-]);
+// Recipe selected handler
+const onRecipeSelected = (recipe: RecipeInfo) => {
+  // Optionally update other fields based on selected recipe
+  // For example, you could auto-populate machine type based on recipe
+  emit('field-change', 'recipe', recipe.name);
+};
 
 // Get machine type for current recipe
 const currentMachineType = computed(() => {
@@ -228,14 +238,14 @@ machineGroups.value.forEach((_, index) => {
     custom(validateOverclock())
   ];
 
-  fieldConfigs[`machineGroups.${index}.sommersloops`] = [
+  fieldConfigs[`machineGroups.${index}.somersloops`] = [
     number(),
     integer(),
-    min(0, 'Cannot have negative sommersloops'),
-    custom(validateSommersloop({
+    min(0, 'Cannot have negative somersloops'),
+    custom(validateSomersloop({
       machineType: currentMachineType.value,
-      maxSommersloops: Object.fromEntries(
-        Object.entries(props.machineTypes).map(([key, value]) => [key, value.maxSommersloops])
+      maxSomersloops: Object.fromEntries(
+        Object.entries(props.machineTypes).map(([key, value]) => [key, value.maxSomersloops])
       )
     }))
   ];
@@ -260,7 +270,7 @@ const addMachineGroup = () => {
   machineGroups.value.push({
     machineCount: null,
     overclock: null,
-    sommersloops: null
+    somersloops: null
   });
 
   // Add validation for the new group
@@ -278,14 +288,14 @@ const addMachineGroup = () => {
     custom(validateOverclock())
   ];
 
-  fieldConfigs[`machineGroups.${index}.sommersloops`] = [
+  fieldConfigs[`machineGroups.${index}.somersloops`] = [
     number(),
     integer(),
-    min(0, 'Cannot have negative sommersloops'),
-    custom(validateSommersloop({
+    min(0, 'Cannot have negative somersloops'),
+    custom(validateSomersloop({
       machineType: currentMachineType.value,
-      maxSommersloops: Object.fromEntries(
-        Object.entries(props.machineTypes).map(([key, value]) => [key, value.maxSommersloops])
+      maxSomersloops: Object.fromEntries(
+        Object.entries(props.machineTypes).map(([key, value]) => [key, value.maxSomersloops])
       )
     }))
   ];
@@ -297,7 +307,7 @@ const removeMachineGroup = (index: number) => {
   // Remove validation for the removed group
   delete fieldConfigs[`machineGroups.${index}.machineCount`];
   delete fieldConfigs[`machineGroups.${index}.overclock`];
-  delete fieldConfigs[`machineGroups.${index}.sommersloops`];
+  delete fieldConfigs[`machineGroups.${index}.somersloops`];
 };
 
 const updateMachineGroup = (index: number, field: keyof MachineGroup, value: unknown) => {

@@ -5,7 +5,7 @@ import { defineStore } from 'pinia'
  * User preferences interface
  */
 interface UserPreferences {
-  selectedFactoryId: number | null
+  selectedFactoryId: string | null
   dashboardFilters: {
     state: 'all' | 'overflow' | 'underflow' | 'balanced'
     searchText: string
@@ -15,8 +15,8 @@ interface UserPreferences {
   factoryViewTab: 'production' | 'raw-inputs' | 'power-generation'
   logisticsFilters: {
     transportType: 'all' | string
-    sourceFactory: 'all' | number
-    destinationFactory: 'all' | number
+    sourceFactory: 'all' | string
+    destinationFactory: 'all' | string
     searchText: string
   }
   uiPreferences: {
@@ -142,7 +142,7 @@ export const usePreferencesStore = defineStore('preferences', () => {
    * Update selected factory ID
    * @param factoryId - The factory ID to set as selected, or null to clear
    */
-  const setSelectedFactoryId = (factoryId: number | null): void => {
+  const setSelectedFactoryId = (factoryId: string | null): void => {
     preferences.value.selectedFactoryId = factoryId
   }
 

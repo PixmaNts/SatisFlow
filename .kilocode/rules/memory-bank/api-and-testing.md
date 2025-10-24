@@ -302,17 +302,17 @@ Production lines use a tagged union format with `#[serde(tag)]`:
   {
     "name": "Constructor",
     "base_power": 4.0,
-    "max_sommersloop": 1
+    "max_somersloop": 1
   },
   {
     "name": "Smelter",
     "base_power": 4.0,
-    "max_sommersloop": 1
+    "max_somersloop": 1
   },
   {
     "name": "Assembler",
     "base_power": 16.0,
-    "max_sommersloop": 2
+    "max_somersloop": 2
   }
 ]
 ```
@@ -751,7 +751,7 @@ The `transport_details` field contains a JSON snapshot of the submitted transpor
 ### Production Line Power
 
 ```
-Power = Base Power × (1 + sommersloop/max_sommersloop)² × (clock_speed/100)^1.321928 × number_of_machines
+Power = Base Power × (1 + somersloop/max_somersloop)² × (clock_speed/100)^1.321928 × number_of_machines
 ```
 
 ### Generator Power

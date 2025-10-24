@@ -206,7 +206,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
    * @param factoryId - The factory ID to get power stats for
    * @returns The factory power stats or null if not found
    */
-  const getFactoryPowerStats = (factoryId: number) => {
+  const getFactoryPowerStats = (factoryId: string) => {
     return powerStats.value?.factory_stats.find(stats => stats.factory_id === factoryId) || null
   }
 

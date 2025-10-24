@@ -6,8 +6,8 @@ use axum::{
     Json, Router,
 };
 use satisflow_engine::models::logistics::{
-    Bus, Conveyor, ConveyorSpeed, DroneTransport, Pipeline, PipelineCapacity, Train, Transport,
-    TransportType, TruckTransport, Wagon, WagonType,
+    Bus, Conveyor, ConveyorSpeed, DroneTransport, LogisticsFlux, Pipeline, PipelineCapacity, Train,
+    Transport, TransportType, TruckTransport, Wagon, WagonType,
 };
 use satisflow_engine::models::Item;
 use satisflow_engine::SatisflowEngine;
@@ -106,9 +106,29 @@ pub struct LogisticsResponse {
     pub total_quantity_per_min: f32,
 }
 
+fn logistics_to_response(logistics: &LogisticsFlux) -> LogisticsResponse {
+    let items = convert_item_flows(logistics.get_items());
+    let total_quantity = logistics.total_quantity_per_min();
+
+    LogisticsResponse {
+        id: logistics.id,
+        from_factory: logistics.from_factory,
+        to_factory: logistics.to_factory,
+        transport_type: logistics
+            .transport_type
+            .get_transport_type_name()
+            .to_string(),
+        transport_id: logistics.transport_type.get_transport_id(),
+        transport_name: logistics.transport_type.get_transport_name(),
+        transport_details: logistics.transport_details.clone(),
+        items,
+        total_quantity_per_min: total_quantity,
+    }
+}
+
 // Helper function to parse item string to Item enum
 fn parse_item(item_str: &str) -> Result<Item> {
-    match item_str.to_uppercase().as_str() {
+    match item_str.trim().to_uppercase().as_str() {
         "IRONORE" => Ok(Item::IronOre),
         "COPPERORE" => Ok(Item::CopperOre),
         "IRONINGOT" => Ok(Item::IronIngot),
@@ -191,29 +211,10 @@ pub async fn get_logistics(State(state): State<AppState>) -> Result<Json<Vec<Log
     let engine = state.engine.read().await;
     let logistics_lines = engine.get_all_logistics();
 
-    let mut responses = Vec::new();
-
-    for logistics in logistics_lines.values() {
-        let items = convert_item_flows(logistics.get_items());
-        let total_quantity = logistics.total_quantity_per_min();
-
-        let response = LogisticsResponse {
-            id: logistics.id,
-            from_factory: logistics.from_factory,
-            to_factory: logistics.to_factory,
-            transport_type: logistics
-                .transport_type
-                .get_transport_type_name()
-                .to_string(),
-            transport_id: logistics.transport_type.get_transport_id(),
-            transport_name: logistics.transport_type.get_transport_name(),
-            transport_details: logistics.transport_details.clone(),
-            items,
-            total_quantity_per_min: total_quantity,
-        };
-
-        responses.push(response);
-    }
+    let responses = logistics_lines
+        .values()
+        .map(|logistics| logistics_to_response(logistics))
+        .collect();
 
     Ok(Json(responses))
 }
@@ -228,25 +229,7 @@ pub async fn get_logistics_line(
         .get_logistics_line(id)
         .ok_or_else(|| AppError::NotFound(format!("Logistics line with id {} not found", id)))?;
 
-    let items = convert_item_flows(logistics.get_items());
-    let total_quantity = logistics.total_quantity_per_min();
-
-    let response = LogisticsResponse {
-        id: logistics.id,
-        from_factory: logistics.from_factory,
-        to_factory: logistics.to_factory,
-        transport_type: logistics
-            .transport_type
-            .get_transport_type_name()
-            .to_string(),
-        transport_id: logistics.transport_type.get_transport_id(),
-        transport_name: logistics.transport_type.get_transport_name(),
-        transport_details: logistics.transport_details.clone(),
-        items,
-        total_quantity_per_min: total_quantity,
-    };
-
-    Ok(Json(response))
+    Ok(Json(logistics_to_response(logistics)))
 }
 
 pub async fn create_logistics(
@@ -273,8 +256,8 @@ pub async fn create_logistics(
         )));
     }
 
-    let (transport_type, transport_details) =
-        build_transport(&engine, request.transport).map_err(|err| match err {
+    let (transport_type, transport_details) = build_transport(&engine, request.transport, None)
+        .map_err(|err| match err {
             AppError::SerializationError(_) => {
                 AppError::BadRequest("Failed to serialize transport details".to_string())
             }
@@ -286,30 +269,52 @@ pub async fn create_logistics(
         .map_err(|e| AppError::BadRequest(format!("Failed to create logistics line: {}", e)))?;
 
     let logistics = engine.get_logistics_line(logistics_id).unwrap();
-    let items = convert_item_flows(logistics.get_items());
-    let total_quantity = logistics.total_quantity_per_min();
-
-    let response = LogisticsResponse {
-        id: logistics_id,
-        from_factory: logistics.from_factory,
-        to_factory: logistics.to_factory,
-        transport_type: logistics
-            .transport_type
-            .get_transport_type_name()
-            .to_string(),
-        transport_id: logistics.transport_type.get_transport_id(),
-        transport_name: logistics.transport_type.get_transport_name(),
-        transport_details: logistics.transport_details.clone(),
-        items,
-        total_quantity_per_min: total_quantity,
-    };
+    let response = logistics_to_response(logistics);
 
     Ok((StatusCode::CREATED, Json(response)))
+}
+
+pub async fn update_logistics(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(request): Json<CreateLogisticsRequest>,
+) -> Result<Json<LogisticsResponse>> {
+    let mut engine = state.engine.write().await;
+
+    let existing = engine
+        .get_logistics_line(id)
+        .cloned()
+        .ok_or_else(|| AppError::NotFound(format!("Logistics line with id {} not found", id)))?;
+
+    let (transport_type, transport_details) =
+        build_transport(&engine, request.transport, Some(&existing)).map_err(|err| match err {
+            AppError::SerializationError(_) => {
+                AppError::BadRequest("Failed to serialize transport details".to_string())
+            }
+            other => other,
+        })?;
+
+    engine
+        .update_logistics_line(
+            id,
+            request.from_factory,
+            request.to_factory,
+            transport_type,
+            transport_details,
+        )
+        .map_err(|e| AppError::BadRequest(format!("Failed to update logistics line: {}", e)))?;
+
+    let updated = engine
+        .get_logistics_line(id)
+        .ok_or_else(|| AppError::NotFound(format!("Logistics line with id {} not found", id)))?;
+
+    Ok(Json(logistics_to_response(updated)))
 }
 
 fn build_transport(
     engine: &SatisflowEngine,
     transport: CreateLogisticsTransport,
+    existing: Option<&LogisticsFlux>,
 ) -> std::result::Result<(TransportType, String), AppError> {
     match transport {
         CreateLogisticsTransport::Truck {
@@ -319,8 +324,13 @@ fn build_transport(
         } => {
             let quantity = ensure_positive(quantity_per_min, "Truck quantity_per_min")?;
             let item_enum = parse_item(&item)?;
-            let next_id = next_transport_identifier(engine);
-            let numeric_id = parse_numeric_identifier(truck_id.as_deref(), next_id);
+            let fallback_id = existing
+                .and_then(|flux| match &flux.transport_type {
+                    TransportType::Truck(truck) => Some(truck.truck_id),
+                    _ => None,
+                })
+                .unwrap_or_else(|| next_transport_identifier(engine));
+            let numeric_id = parse_numeric_identifier(truck_id.as_deref(), fallback_id);
             let display_id = truck_id
                 .as_ref()
                 .map(|val| val.trim())
@@ -346,8 +356,13 @@ fn build_transport(
         } => {
             let quantity = ensure_positive(quantity_per_min, "Drone quantity_per_min")?;
             let item_enum = parse_item(&item)?;
-            let next_id = next_transport_identifier(engine);
-            let numeric_id = parse_numeric_identifier(drone_id.as_deref(), next_id);
+            let fallback_id = existing
+                .and_then(|flux| match &flux.transport_type {
+                    TransportType::Drone(drone) => Some(drone.drone_id),
+                    _ => None,
+                })
+                .unwrap_or_else(|| next_transport_identifier(engine));
+            let numeric_id = parse_numeric_identifier(drone_id.as_deref(), fallback_id);
             let display_id = drone_id
                 .as_ref()
                 .map(|val| val.trim())
@@ -371,8 +386,21 @@ fn build_transport(
             conveyors,
             pipelines,
         } => {
-            let bus_id = next_transport_identifier(engine);
-            let name = sanitize_name(bus_name.as_deref(), "Bus", bus_id);
+            let existing_bus = existing.and_then(|flux| match &flux.transport_type {
+                TransportType::Bus(bus) => Some(bus),
+                _ => None,
+            });
+            let bus_id = existing_bus
+                .map(|bus| bus.bus_id)
+                .unwrap_or_else(|| next_transport_identifier(engine));
+            let provided_name = bus_name
+                .as_ref()
+                .map(|val| val.trim())
+                .filter(|val| !val.is_empty())
+                .map(|val| val.to_string());
+            let name = provided_name
+                .or_else(|| existing_bus.map(|bus| bus.bus_name.clone()))
+                .unwrap_or_else(|| sanitize_name(None, "Bus", bus_id));
             let mut bus = Bus::new(bus_id, name.clone());
 
             let mut conveyor_details = Vec::new();
@@ -463,8 +491,21 @@ fn build_transport(
             Ok((TransportType::Bus(bus), details))
         }
         CreateLogisticsTransport::Train { train_name, wagons } => {
-            let train_id = next_transport_identifier(engine);
-            let name = sanitize_name(train_name.as_deref(), "Train", train_id);
+            let existing_train = existing.and_then(|flux| match &flux.transport_type {
+                TransportType::Train(train) => Some(train),
+                _ => None,
+            });
+            let train_id = existing_train
+                .map(|train| train.train_id)
+                .unwrap_or_else(|| next_transport_identifier(engine));
+            let provided_name = train_name
+                .as_ref()
+                .map(|val| val.trim())
+                .filter(|val| !val.is_empty())
+                .map(|val| val.to_string());
+            let name = provided_name
+                .or_else(|| existing_train.map(|train| train.train_name.clone()))
+                .unwrap_or_else(|| sanitize_name(None, "Train", train_id));
             let mut train = Train::new(train_id, name.clone());
 
             let mut wagon_details = Vec::new();
@@ -571,5 +612,10 @@ pub async fn delete_logistics(
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/", get(get_logistics).post(create_logistics))
-        .route("/:id", get(get_logistics_line).delete(delete_logistics))
+        .route(
+            "/:id",
+            get(get_logistics_line)
+                .put(update_logistics)
+                .delete(delete_logistics),
+        )
 }

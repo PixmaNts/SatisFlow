@@ -24,7 +24,7 @@ pub struct ItemQuantity {
 pub struct MachineInfo {
     pub name: String,
     pub base_power: f32,
-    pub max_sommersloop: u8,
+    pub max_somersloop: u8,
 }
 
 pub async fn get_recipes(State(_state): State<AppState>) -> Result<Json<Vec<RecipeInfo>>> {
@@ -80,7 +80,7 @@ pub async fn get_machines(State(_state): State<AppState>) -> Result<Json<Vec<Mac
     .map(|machine| MachineInfo {
         name: format!("{:?}", machine),
         base_power: machine.base_power_mw(),
-        max_sommersloop: machine.max_sommersloop(),
+        max_somersloop: machine.max_somersloop(),
     })
     .collect();
 

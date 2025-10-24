@@ -40,9 +40,9 @@ export interface OverclockValidationOptions {
   precision?: number;
 }
 
-export interface SommersloopValidationOptions {
+export interface SomersloopValidationOptions {
   machineType: string;
-  maxSommersloops: Record<string, number>;
+  maxSomersloops: Record<string, number>;
 }
 
 export interface MachineCountValidationOptions {
@@ -73,7 +73,7 @@ export interface ValidationMessages {
   positive: string;
   overclockRange: string;
   overclockPrecision: string;
-  sommersloopLimit: string;
+  somersloopLimit: string;
   machineCountPositive: string;
   factoryNameUnique: string;
   logisticsSameEndpoint: string;
@@ -93,7 +93,7 @@ export const defaultValidationMessages: ValidationMessages = {
   positive: 'Must be a positive number',
   overclockRange: 'Overclock must be between 0.000 and 250.000',
   overclockPrecision: 'Overclock must have at most 3 decimal places',
-  sommersloopLimit: 'Maximum {max} sommersloops allowed for {machineType}',
+  somersloopLimit: 'Maximum {max} somersloops allowed for {machineType}',
   machineCountPositive: 'Machine count must be a positive number',
   factoryNameUnique: 'Factory name must be unique',
   logisticsSameEndpoint: 'Source and destination factories must be different',

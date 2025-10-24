@@ -7,7 +7,7 @@ import type {
   FormValidationOptions,
   ValidationContext,
   OverclockValidationOptions,
-  SommersloopValidationOptions,
+  SomersloopValidationOptions,
   MachineCountValidationOptions,
   FactoryNameValidationOptions,
   LogisticsEndpointsValidationOptions
@@ -286,8 +286,8 @@ export const validateOverclock = (options: OverclockValidationOptions = {}) => {
   };
 };
 
-export const validateSommersloop = (options: SommersloopValidationOptions) => {
-  const { machineType, maxSommersloops } = options;
+export const validateSomersloop = (options: SomersloopValidationOptions) => {
+  const { machineType, maxSomersloops } = options;
 
   return (value: unknown): ValidationResult => {
     if (value === null || value === undefined || value === '') {
@@ -303,11 +303,11 @@ export const validateSommersloop = (options: SommersloopValidationOptions) => {
       };
     }
 
-    const maxAllowed = maxSommersloops[machineType] || 0;
+    const maxAllowed = maxSomersloops[machineType] || 0;
     if (numValue > maxAllowed) {
       return {
         isValid: false,
-        message: defaultValidationMessages.sommersloopLimit
+        message: defaultValidationMessages.somersloopLimit
           .replace('{max}', maxAllowed.toString())
           .replace('{machineType}', machineType)
       };

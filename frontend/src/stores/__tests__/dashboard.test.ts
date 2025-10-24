@@ -39,7 +39,7 @@ describe('Dashboard Store', () => {
     is_balanced: false,
     factory_stats: [
       {
-        factory_id: 1,
+        factory_id: 'factory-1',
         factory_name: 'Iron Processing',
         generation: 150.0,
         consumption: 120.0,

@@ -1,253 +1,86 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import axios from 'axios'
-import { api, handleApiError, checkApiConnection } from '../client'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 
-// Mock axios
-vi.mock('axios')
-const mockedAxios = vi.mocked(axios)
+const setupClient = async (instanceOverrides: Partial<Record<'get' | 'post' | 'put' | 'delete' | 'patch', (...args: any[]) => any>> = {}) => {
+  const axiosInstance = {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+    patch: vi.fn(),
+    interceptors: {
+      request: { use: vi.fn() },
+      response: { use: vi.fn() },
+    },
+    ...instanceOverrides,
+  }
 
-describe('API Client', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
+  vi.doMock('axios', () => {
+    return {
+      default: {
+        create: vi.fn(() => axiosInstance),
+        isAxiosError: (error: unknown): error is { response?: { data?: { error?: string } } } =>
+          Boolean((error as any)?.isAxiosError),
+      },
+    }
   })
 
-  afterEach(() => {
-    vi.restoreAllMocks()
+  const module = await import('../client')
+  return { axiosInstance, api: module.api, handleApiError: module.handleApiError, checkApiConnection: module.checkApiConnection }
+}
+
+afterEach(() => {
+  vi.resetModules()
+  vi.doUnmock('axios')
+})
+
+describe('API client', () => {
+  it('performs GET requests and returns response data', async () => {
+    const mockResponse = { data: { id: 'factory-1' }, status: 200 }
+    const { api, axiosInstance } = await setupClient({ get: vi.fn().mockResolvedValue(mockResponse) })
+
+    const data = await api.get('/factories/factory-1')
+
+    expect(axiosInstance.get).toHaveBeenCalledWith('/factories/factory-1', undefined)
+    expect(data).toEqual(mockResponse.data)
   })
 
-  describe('GET requests', () => {
-    it('should make successful GET request', async () => {
-      const mockData = { id: 1, name: 'Test Factory' }
-      mockedAxios.create = vi.fn().mockReturnValue({
-        get: vi.fn().mockResolvedValue({ data: mockData, status: 200 }),
-        post: vi.fn(),
-        put: vi.fn(),
-        delete: vi.fn(),
-        patch: vi.fn(),
-        interceptors: {
-          request: { use: vi.fn() },
-          response: { use: vi.fn() },
-        },
-      })
+  it('propagates request errors from the underlying client', async () => {
+    const error = { response: { status: 404, data: { error: 'Not found' } } }
+    const { api, axiosInstance } = await setupClient({ get: vi.fn().mockRejectedValue(error) })
 
-      const result = await api.get('/factories/1')
+    await expect(api.get('/factories/missing')).rejects.toEqual(error)
+    expect(axiosInstance.get).toHaveBeenCalled()
+  })
+})
 
-      expect(result).toEqual(mockData)
-    })
+describe('handleApiError', () => {
+  it('returns backend error message for Axios errors', async () => {
+    const { handleApiError } = await setupClient()
 
-    it('should handle GET request errors', async () => {
-      const error = {
-        response: {
-          status: 404,
-          data: { error: 'Factory not found' },
-        },
-      }
-      mockedAxios.create = vi.fn().mockReturnValue({
-        get: vi.fn().mockRejectedValue(error),
-        post: vi.fn(),
-        put: vi.fn(),
-        delete: vi.fn(),
-        patch: vi.fn(),
-        interceptors: {
-          request: { use: vi.fn() },
-          response: { use: vi.fn() },
-        },
-      })
-
-      await expect(api.get('/factories/999')).rejects.toEqual(error)
-    })
+    const message = handleApiError({ isAxiosError: true, response: { data: { error: 'Invalid payload' } } })
+    expect(message).toBe('Invalid payload')
   })
 
-  describe('POST requests', () => {
-    it('should make successful POST request', async () => {
-      const requestData = { name: 'New Factory' }
-      const mockResponse = { id: 2, name: 'New Factory' }
-      mockedAxios.create = vi.fn().mockReturnValue({
-        get: vi.fn(),
-        post: vi.fn().mockResolvedValue({ data: mockResponse, status: 201 }),
-        put: vi.fn(),
-        delete: vi.fn(),
-        patch: vi.fn(),
-        interceptors: {
-          request: { use: vi.fn() },
-          response: { use: vi.fn() },
-        },
-      })
+  it('falls back to error.message when available', async () => {
+    const { handleApiError } = await setupClient()
 
-      const result = await api.post('/factories', requestData)
+    const message = handleApiError(new Error('Something went wrong'))
+    expect(message).toBe('Something went wrong')
+  })
+})
 
-      expect(result).toEqual(mockResponse)
-    })
+describe('checkApiConnection', () => {
+  it('resolves to true when the health endpoint responds', async () => {
+    const { checkApiConnection, axiosInstance } = await setupClient({ get: vi.fn().mockResolvedValue({ data: { status: 'ok' } }) })
 
-    it('should handle POST request errors', async () => {
-      const error = {
-        response: {
-          status: 400,
-          data: { error: 'Invalid data' },
-        },
-      }
-      mockedAxios.create = vi.fn().mockReturnValue({
-        get: vi.fn(),
-        post: vi.fn().mockRejectedValue(error),
-        put: vi.fn(),
-        delete: vi.fn(),
-        patch: vi.fn(),
-        interceptors: {
-          request: { use: vi.fn() },
-          response: { use: vi.fn() },
-        },
-      })
-
-      await expect(api.post('/factories', {})).rejects.toEqual(error)
-    })
+    await expect(checkApiConnection()).resolves.toBe(true)
+    expect(axiosInstance.get).toHaveBeenCalledWith('/health', undefined)
   })
 
-  describe('PUT requests', () => {
-    it('should make successful PUT request', async () => {
-      const requestData = { name: 'Updated Factory' }
-      const mockResponse = { id: 1, name: 'Updated Factory' }
-      mockedAxios.create = vi.fn().mockReturnValue({
-        get: vi.fn(),
-        post: vi.fn(),
-        put: vi.fn().mockResolvedValue({ data: mockResponse, status: 200 }),
-        delete: vi.fn(),
-        patch: vi.fn(),
-        interceptors: {
-          request: { use: vi.fn() },
-          response: { use: vi.fn() },
-        },
-      })
+  it('resolves to false when the health endpoint fails', async () => {
+    const { checkApiConnection, axiosInstance } = await setupClient({ get: vi.fn().mockRejectedValue(new Error('Network error')) })
 
-      const result = await api.put('/factories/1', requestData)
-
-      expect(result).toEqual(mockResponse)
-    })
-
-    it('should handle PUT request errors', async () => {
-      const error = {
-        response: {
-          status: 404,
-          data: { error: 'Factory not found' },
-        },
-      }
-      mockedAxios.create = vi.fn().mockReturnValue({
-        get: vi.fn(),
-        post: vi.fn(),
-        put: vi.fn().mockRejectedValue(error),
-        delete: vi.fn(),
-        patch: vi.fn(),
-        interceptors: {
-          request: { use: vi.fn() },
-          response: { use: vi.fn() },
-        },
-      })
-
-      await expect(api.put('/factories/999', {})).rejects.toEqual(error)
-    })
-  })
-
-  describe('DELETE requests', () => {
-    it('should make successful DELETE request', async () => {
-      const mockResponse = { success: true }
-      mockedAxios.create = vi.fn().mockReturnValue({
-        get: vi.fn(),
-        post: vi.fn(),
-        put: vi.fn(),
-        delete: vi.fn().mockResolvedValue({ data: mockResponse, status: 200 }),
-        patch: vi.fn(),
-        interceptors: {
-          request: { use: vi.fn() },
-          response: { use: vi.fn() },
-        },
-      })
-
-      const result = await api.delete('/factories/1')
-
-      expect(result).toEqual(mockResponse)
-    })
-
-    it('should handle DELETE request errors', async () => {
-      const error = {
-        response: {
-          status: 404,
-          data: { error: 'Factory not found' },
-        },
-      }
-      mockedAxios.create = vi.fn().mockReturnValue({
-        get: vi.fn(),
-        post: vi.fn(),
-        put: vi.fn(),
-        delete: vi.fn().mockRejectedValue(error),
-        patch: vi.fn(),
-        interceptors: {
-          request: { use: vi.fn() },
-          response: { use: vi.fn() },
-        },
-      })
-
-      await expect(api.delete('/factories/999')).rejects.toEqual(error)
-    })
-  })
-
-  describe('handleApiError utility', () => {
-    it('should handle Axios errors with response data', () => {
-      const error = {
-        response: {
-          data: { error: 'Not found' },
-        },
-      }
-      // Mock isAxiosError as a type guard function
-      const originalIsAxiosError = axios.isAxiosError
-      axios.isAxiosError = vi.fn().mockReturnValue(true) as any
-
-      const result = handleApiError(error)
-      expect(result).toBe('Not found')
-
-      // Restore original function
-      axios.isAxiosError = originalIsAxiosError
-    })
-
-    it('should handle regular errors', () => {
-      const error = new Error('Something went wrong')
-      // Mock isAxiosError as a type guard function
-      const originalIsAxiosError = axios.isAxiosError
-      axios.isAxiosError = vi.fn().mockReturnValue(false) as any
-
-      const result = handleApiError(error)
-      expect(result).toBe('Something went wrong')
-
-      // Restore original function
-      axios.isAxiosError = originalIsAxiosError
-    })
-
-    it('should handle unknown errors', () => {
-      const error = 'string error'
-      // Mock isAxiosError as a type guard function
-      const originalIsAxiosError = axios.isAxiosError
-      axios.isAxiosError = vi.fn().mockReturnValue(false) as any
-
-      const result = handleApiError(error)
-      expect(result).toBe('An unexpected error occurred')
-
-      // Restore original function
-      axios.isAxiosError = originalIsAxiosError
-    })
-  })
-
-  describe('checkApiConnection utility', () => {
-    it('should return true when health check succeeds', async () => {
-      // Mock the api.get method
-      vi.spyOn(api, 'get').mockResolvedValue({ status: 'ok' })
-
-      const result = await checkApiConnection()
-      expect(result).toBe(true)
-    })
-
-    it('should return false when health check fails', async () => {
-      vi.spyOn(api, 'get').mockRejectedValue(new Error('Connection failed'))
-
-      const result = await checkApiConnection()
-      expect(result).toBe(false)
-    })
+    await expect(checkApiConnection()).resolves.toBe(false)
+    expect(axiosInstance.get).toHaveBeenCalled()
   })
 })

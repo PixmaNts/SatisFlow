@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useValidation, validateOverclock, validateSommersloop, validateMachineCount, validateFactoryName } from '../useValidation';
+import { useValidation, validateOverclock, validateSomersloop, validateMachineCount, validateFactoryName } from '../useValidation';
 import type { FieldValidationConfig } from '@/types/validation';
 
 describe('useValidation', () => {
@@ -65,21 +65,21 @@ describe('useValidation', () => {
     expect(validator('invalid').isValid).toBe(false);
   });
 
-  it('should validate sommersloop counts', () => {
+  it('should validate somersloop counts', () => {
     const machineTypes = {
       Constructor: 1,
       Assembler: 2,
       Manufacturer: 4
     };
 
-    const constructorValidator = validateSommersloop({
+    const constructorValidator = validateSomersloop({
       machineType: 'Constructor',
-      maxSommersloops: machineTypes
+      maxSomersloops: machineTypes
     });
 
-    const assemblerValidator = validateSommersloop({
+    const assemblerValidator = validateSomersloop({
       machineType: 'Assembler',
-      maxSommersloops: machineTypes
+      maxSomersloops: machineTypes
     });
 
     // Constructor validations

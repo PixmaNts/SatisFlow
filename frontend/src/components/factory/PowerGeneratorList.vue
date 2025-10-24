@@ -129,7 +129,7 @@ import Alert from '@/components/ui/Alert.vue'
 import PowerGeneratorForm from './PowerGeneratorForm.vue'
 
 interface Props {
-  factoryId: number
+  factoryId: string
 }
 
 const props = defineProps<Props>()
@@ -279,17 +279,19 @@ const confirmDelete = async () => {
   error.value = null
 
   try {
-    // TODO: Implement delete API call when available
-    // await factoryStore.deletePowerGenerator(deletingGenerator.value.id)
+    const result = await factoryStore.deletePowerGenerator(
+      props.factoryId,
+      deletingGenerator.value.id
+    )
 
-    // For now, just close the modal
+    if (!result) {
+      throw new Error('Delete operation failed')
+    }
+
     showDeleteModal.value = false
     deletingGenerator.value = null
-
-    // Refresh factory data
-    await factoryStore.fetchById(props.factoryId)
   } catch (err) {
-    error.value = 'Failed to delete power generator'
+    error.value = factoryStore.error || 'Failed to delete power generator'
     console.error('Delete power generator error:', err)
   } finally {
     deleting.value = false

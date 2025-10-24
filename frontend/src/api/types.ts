@@ -317,7 +317,7 @@ export interface GeneratorGroup {
 
 // Factory response
 export interface FactoryResponse {
-  id: number;
+  id: string;
   name: string;
   description: string | null;
   notes: string | null;
@@ -334,7 +334,7 @@ export interface FactoryResponse {
 export type ProductionLineResponse =
   | {
       ProductionLineRecipe: {
-        id: number;
+        id: string;
         name: string;
         description: string;
         recipe: string;
@@ -343,7 +343,7 @@ export type ProductionLineResponse =
     }
   | {
       ProductionLineBlueprint: {
-        id: number;
+        id: string;
         name: string;
         description: string;
         production_lines: ProductionLineResponse[];
@@ -352,7 +352,7 @@ export type ProductionLineResponse =
 
 // Raw input response
 export interface RawInputResponse {
-  id: number;
+  id: string;
   extractor_type: ExtractorType;
   item: Item;
   purity: Purity | null;
@@ -378,7 +378,7 @@ export interface ResourceWellExtractor {
 
 // Power generator response
 export interface PowerGeneratorResponse {
-  id: number;
+  id: string;
   generator_type: GeneratorType;
   fuel_type: Item | null;
   groups: GeneratorGroup[];
@@ -386,9 +386,9 @@ export interface PowerGeneratorResponse {
 
 // Logistics response
 export interface LogisticsResponse {
-  id: number;
-  from_factory: number;
-  to_factory: number;
+  id: string;
+  from_factory: string;
+  to_factory: string;
   transport_type: TransportType;
   transport_id: string;
   transport_name: string | null;
@@ -427,7 +427,7 @@ export interface PowerStats {
 
 // Factory power statistics
 export interface FactoryPowerStats {
-  factory_id: number;
+  factory_id: string;
   factory_name: string;
   generation: number;
   consumption: number;
@@ -448,7 +448,7 @@ export interface RecipeInfo {
 export interface MachineInfo {
   name: string;
   base_power: number;
-  max_sommersloop: number;
+  max_somersloop: number;
 }
 
 // Item info response
@@ -482,72 +482,91 @@ export interface UpdateFactoryRequest {
 // Create logistics request
 export type CreateLogisticsRequest =
   | {
-      from_factory: number;
-      to_factory: number;
+      from_factory: string;
+      to_factory: string;
       transport_type: "Truck";
       item: Item;
       quantity_per_min: number;
       truck_id?: string;
     }
   | {
-      from_factory: number;
-      to_factory: number;
+      from_factory: string;
+      to_factory: string;
       transport_type: "Drone";
       item: Item;
       quantity_per_min: number;
       drone_id?: string;
     }
   | {
-      from_factory: number;
-      to_factory: number;
+      from_factory: string;
+      to_factory: string;
       transport_type: "Bus";
       bus_name?: string;
       conveyors: BusConveyorPayload[];
       pipelines: BusPipelinePayload[];
     }
   | {
-      from_factory: number;
-      to_factory: number;
+      from_factory: string;
+      to_factory: string;
       transport_type: "Train";
       train_name?: string;
       wagons: TrainWagonPayload[];
     };
 
+// Blueprint recipe payload for production line requests
+export interface BlueprintRecipeRequest {
+  name: string;
+  description?: string;
+  recipe: string;
+  machine_groups: MachineGroup[];
+}
+
 // Create production line request
 export interface CreateProductionLineRequest {
-  factory_id: number;
   name: string;
   description?: string;
   type: "recipe" | "blueprint";
   recipe?: string;
   machine_groups?: MachineGroup[];
-  production_lines?: ProductionLineResponse[];
+  production_lines?: BlueprintRecipeRequest[];
 }
+
+// Update production line request (same shape as create)
+export type UpdateProductionLineRequest = CreateProductionLineRequest;
 
 // Create raw input request
 export interface CreateRawInputRequest {
-  factory_id: number;
   extractor_type: ExtractorType;
   item: Item;
   purity?: Purity;
-  quantity_per_min: number;
+  quantity_per_min?: number;
   pressurizer?: {
+    id?: number;
     clock_speed: number;
   };
   extractors?: Array<{
-    item: Item;
+    id?: number;
     purity: Purity;
-    quantity_per_min: number;
+    item?: Item;
+    quantity_per_min?: number;
   }>;
 }
 
+// Update raw input request (same shape as create)
+export type UpdateRawInputRequest = CreateRawInputRequest;
+
 // Create power generator request
 export interface CreatePowerGeneratorRequest {
-  factory_id: number;
   generator_type: GeneratorType;
   fuel_type?: Item;
   groups: GeneratorGroup[];
 }
+
+// Update power generator request (same shape as create)
+export type UpdatePowerGeneratorRequest = CreatePowerGeneratorRequest;
+
+// Update logistics request (same shape as create)
+export type UpdateLogisticsRequest = CreateLogisticsRequest;
 
 // ============================================================================
 // Error Response Type
