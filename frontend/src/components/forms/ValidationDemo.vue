@@ -121,7 +121,7 @@ const availableRecipes = ref<RecipeInfo[]>([
   },
   {
     name: 'Wire',
-    machine: 'Extractor',
+    machine: 'Constructor',
     inputs: [{ item: 'CopperIngot', quantity: 30 }],
     outputs: [{ item: 'Wire', quantity: 30 }]
   },

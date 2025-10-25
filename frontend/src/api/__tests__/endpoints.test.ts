@@ -521,7 +521,7 @@ describe('Endpoint Integration Tests', () => {
       api: {
         post: mockPost,
       },
-    }), { virtual: true })
+    }))
 
     const { factories } = await import('../endpoints')
     const factoryId = '123e4567-e89b-12d3-a456-426614174000'

@@ -4,7 +4,11 @@
       "Bash(pnpm run test:unit:*)",
       "Read(//d/**)",
       "Bash(pnpm run type-check:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(curl:*)",
+      "Bash(cargo test:*)",
+      "Bash(cargo check:*)",
+      "Bash(npm run type-check:*)"
     ],
     "deny": [],
     "ask": []

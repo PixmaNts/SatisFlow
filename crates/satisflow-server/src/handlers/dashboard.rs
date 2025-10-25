@@ -1,5 +1,6 @@
 // crates/satisflow-server/src/handlers/dashboard.rs
 use axum::{extract::State, routing::get, Json, Router};
+use satisflow_engine::models::{power_generator::GeneratorType, Item};
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -17,7 +18,7 @@ pub struct DashboardSummary {
 
 #[derive(Serialize)]
 pub struct ItemBalance {
-    pub item: String,
+    pub item: Item,
     pub balance: f32,
     pub state: String,
 }
@@ -30,7 +31,7 @@ pub struct FactoryPowerStatsResponse {
     pub consumption: f32,
     pub balance: f32,
     pub generator_count: u32,
-    pub generator_types: Vec<String>,
+    pub generator_types: Vec<GeneratorType>,
 }
 
 #[derive(Serialize)]
@@ -97,14 +98,16 @@ pub async fn get_item_balances(State(state): State<AppState>) -> Result<Json<Vec
         };
 
         item_balances.push(ItemBalance {
-            item: format!("{:?}", item),
+            item,
             balance,
             state,
         });
     }
 
     // Sort by item name for consistent ordering
-    item_balances.sort_by(|a, b| a.item.cmp(&b.item));
+    item_balances.sort_by(|a, b| {
+        format!("{:?}", a.item).cmp(&format!("{:?}", b.item))
+    });
 
     Ok(Json(item_balances))
 }
@@ -128,11 +131,7 @@ pub async fn get_power_statistics(
             consumption: stat.consumption,
             balance: stat.balance,
             generator_count: stat.generator_count,
-            generator_types: stat
-                .generator_types
-                .iter()
-                .map(|gt| format!("{:?}", gt))
-                .collect(),
+            generator_types: stat.generator_types.clone(),
         })
         .collect();
 

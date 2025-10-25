@@ -124,7 +124,7 @@ pub struct PowerGeneratorPayload {
 
 #[derive(Serialize)]
 pub struct ItemBalanceResponse {
-    pub item: String,
+    pub item: Item,
     pub quantity: f32,
 }
 
@@ -166,7 +166,7 @@ fn convert_items_to_response(items: &HashMap<Item, f32>) -> Vec<ItemBalanceRespo
     items
         .iter()
         .map(|(item, quantity)| ItemBalanceResponse {
-            item: format!("{:?}", item),
+            item: *item,
             quantity: *quantity,
         })
         .collect()

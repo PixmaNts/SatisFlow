@@ -6,7 +6,7 @@ import type {
   BusConveyorPayload,
   BusPipelinePayload,
   TrainWagonPayload,
-  ConveyorTier,
+  ConveyorSpeed,
   PipelineTier,
   WagonCarType,
 } from './types'
@@ -26,7 +26,7 @@ export interface BusConfig extends BaseTransportConfig {
 
 export interface ConveyorConfig extends BusConveyorPayload {
   line_id: string
-  conveyor_type: ConveyorTier
+  conveyor_type: ConveyorSpeed
   item: Item
   quantity_per_min: number
 }
@@ -73,8 +73,8 @@ export type TransportConfig = BusConfig | TrainConfig | TruckConfig | DroneConfi
 
 // Form data for creating logistics lines
 export interface LogisticsFormData {
-  from_factory: number
-  to_factory: number
+  from_factory: string
+  to_factory: string
   transport_config: TransportConfig
 }
 

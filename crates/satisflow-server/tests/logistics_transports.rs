@@ -319,21 +319,19 @@ async fn logistics_rejects_unknown_item() {
         .json(&truck_logistics_request(
             from_id,
             to_id,
-            "AlienProtein",
+            "InvalidItemName",
             30.0,
         ))
         .send()
         .await
         .expect("Failed request for unknown item");
 
-    assert_eq!(response.status().as_u16(), 400);
-    let error_body: Value = response.json().await.unwrap();
-    assert_eq!(error_body["status"], 400);
+    assert_eq!(response.status().as_u16(), 422);
+    // Axum's default JSON rejection returns plain text, not JSON
+    let error_text = response.text().await.expect("Failed to read error text");
     assert!(
-        error_body["error"]
-            .as_str()
-            .unwrap_or_default()
-            .contains("Unknown item type"),
-        "Expected error describing unknown item"
+        error_text.contains("InvalidItemName") || error_text.contains("unknown variant") || error_text.contains("Failed to deserialize"),
+        "Expected error describing invalid item variant, got: {}",
+        error_text
     );
 }

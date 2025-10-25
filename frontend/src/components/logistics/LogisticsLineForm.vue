@@ -16,7 +16,7 @@
             <label for="from-factory">Source Factory</label>
             <select
               id="from-factory"
-              v-model.number="formData.from_factory"
+              v-model="formData.from_factory"
               class="form-select"
               required
               @change="validateFactories"
@@ -37,7 +37,7 @@
             <label for="to-factory">Destination Factory</label>
             <select
               id="to-factory"
-              v-model.number="formData.to_factory"
+              v-model="formData.to_factory"
               class="form-select"
               required
               @change="validateFactories"
@@ -174,8 +174,8 @@ const transportConfig = ref<TransportConfig | null>(null)
 
 // Form data
 const formData = ref<LogisticsFormData>({
-  from_factory: 0,
-  to_factory: 0,
+  from_factory: '',
+  to_factory: '',
   transport_config: {
     transport_type: 'Truck',
     item: '' as Item,
@@ -190,8 +190,8 @@ const factories = computed(() => factoryStore.factories)
 
 const isFormValid = computed(() => {
   return (
-    formData.value.from_factory > 0 &&
-    formData.value.to_factory > 0 &&
+    formData.value.from_factory !== '' &&
+    formData.value.to_factory !== '' &&
     formData.value.from_factory !== formData.value.to_factory &&
     selectedTransportType.value !== null &&
     transportConfig.value !== null &&
@@ -231,7 +231,7 @@ const isTransportConfigValid = (): boolean => {
 }
 
 const validateFactories = () => {
-  if (formData.value.from_factory === formData.value.to_factory && formData.value.from_factory > 0) {
+  if (formData.value.from_factory === formData.value.to_factory && formData.value.from_factory !== '') {
     factoryError.value = 'Source and destination factories must be different'
   } else {
     factoryError.value = ''
@@ -285,6 +285,55 @@ const handleTransportTypeChange = (transportType: TransportType) => {
 const handleTransportConfigChange = (config: TransportConfig) => {
   transportConfig.value = config
   formData.value.transport_config = config
+}
+
+const handleCancel = () => {
+  emit('close')
+}
+
+const convertToApiRequest = (formData: LogisticsFormData): CreateLogisticsRequest => {
+  const config = formData.transport_config
+
+  switch (config.transport_type) {
+    case 'Bus':
+      return {
+        from_factory: formData.from_factory,
+        to_factory: formData.to_factory,
+        transport_type: 'Bus',
+        bus_name: config.bus_name,
+        conveyors: config.conveyors,
+        pipelines: config.pipelines
+      }
+
+    case 'Train':
+      return {
+        from_factory: formData.from_factory,
+        to_factory: formData.to_factory,
+        transport_type: 'Train',
+        train_name: config.train_name,
+        wagons: config.wagons
+      }
+
+    case 'Truck':
+      return {
+        from_factory: formData.from_factory,
+        to_factory: formData.to_factory,
+        transport_type: 'Truck',
+        item: config.item,
+        quantity_per_min: config.quantity_per_min,
+        truck_id: config.truck_id
+      }
+
+    case 'Drone':
+      return {
+        from_factory: formData.from_factory,
+        to_factory: formData.to_factory,
+        transport_type: 'Drone',
+        item: config.item,
+        quantity_per_min: config.quantity_per_min,
+        drone_id: config.drone_id
+      }
+  }
 }
 
 const handleSubmit = async () => {

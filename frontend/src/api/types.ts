@@ -37,14 +37,11 @@ export type Item =
   | "Silica"
   | "Plastic"
   | "Rubber"
-  | "Fuel"
-  | "Turbofuel"
   | "NuclearWaste"
   | "PlutoniumPellet"
   | "PlutoniumFuelRod"
   | "NonFissileUranium"
   | "Uranium"
-  | "UraniumFuelRod"
   | "EncasedUraniumCell"
   | "EncasedPlutoniumCell"
   | "Ficsonium"
@@ -67,7 +64,6 @@ export type Item =
   | "FicsiteIngot"
   | "FicsiteTrigon"
   | "DarkMatterCrystal"
-  | "Biomass"
   | "Leaves"
   | "Mycelia"
   | "Wood"
@@ -112,7 +108,6 @@ export type Item =
   | "BallisticWarpDrive"
   | "SpaceElevatorModular"
   | "ProjectAssembly"
-  | "Turbofuel"
   | "RocketFuel"
   | "NuclearFuelRod"
   | "IonizedFuel"
@@ -145,7 +140,6 @@ export type Item =
   | "SolidBiofuel"
   | "LiquidBiofuel"
   | "PackagedLiquidBiofuel"
-  | "CateriumIngot"
   | "Quickwire"
   | "FICSCoupon"
   | "TimeCrystal"
@@ -227,40 +221,31 @@ export type GeneratorType =
   | "Geothermal";
 
 // Machine types
+// Machine types for production lines - matches backend engine exactly
 export type MachineType =
   | "Constructor"
-  | "Smelter"
   | "Assembler"
   | "Manufacturer"
+  | "Smelter"
+  | "Foundry"
   | "Refinery"
   | "Blender"
-  | "Foundry"
   | "Packager"
-  | "Converter"
-  | "OilRefinery"
-  | "WaterPump"
-  | "PowerShard"
-  | "ResourceWellPressurizer"
-  | "OilPump"
-  | "FrackingExtractor"
-  | "FrackingActivator"
-  | "QuantumEncoder"
-  | "HadronCollider"
-  | "AccomplishmentShredder"
-  | "AWESOME Sink";
+  | "ParticleAccelerator"
+  | "Manual";
 
 // Transport types
 export type TransportType = "Bus" | "Train" | "Truck" | "Drone";
 
 // Logistics transport tiers
-export type ConveyorTier = "Mk1" | "Mk2" | "Mk3" | "Mk4" | "Mk5" | "Mk6";
+export type ConveyorSpeed = "Mk1" | "Mk2" | "Mk3" | "Mk4" | "Mk5" | "Mk6";
 export type PipelineTier = "Mk1" | "Mk2";
 export type WagonCarType = "Cargo" | "Fluid";
 
 // Logistics transport payloads
 export interface BusConveyorPayload {
   line_id?: string;
-  conveyor_type: ConveyorTier;
+  conveyor_type: ConveyorSpeed;
   item: Item;
   quantity_per_min: number;
 }
@@ -336,7 +321,7 @@ export type ProductionLineResponse =
       ProductionLineRecipe: {
         id: string;
         name: string;
-        description: string;
+        description: string | null;
         recipe: string;
         machine_groups: MachineGroup[];
       };
@@ -345,7 +330,7 @@ export type ProductionLineResponse =
       ProductionLineBlueprint: {
         id: string;
         name: string;
-        description: string;
+        description: string | null;
         production_lines: ProductionLineResponse[];
       };
     };
@@ -433,20 +418,20 @@ export interface FactoryPowerStats {
   consumption: number;
   balance: number;
   generator_count: number;
-  generator_types: string[];
+  generator_types: GeneratorType[];
 }
 
 // Recipe info response
 export interface RecipeInfo {
   name: string;
-  machine: string;
+  machine: MachineType;
   inputs: ItemQuantity[];
   outputs: ItemQuantity[];
 }
 
 // Machine info response
 export interface MachineInfo {
-  name: string;
+  name: MachineType;
   base_power: number;
   max_somersloop: number;
 }
@@ -598,9 +583,6 @@ export interface PaginatedResponse<T> {
 // ============================================================================
 // Utility Types
 // ============================================================================
-
-// ID type for better type safety
-export type ID = number;
 
 // Timestamp type
 export type Timestamp = string;

@@ -33,14 +33,14 @@ pub struct CreateLogisticsRequest {
 pub enum CreateLogisticsTransport {
     #[serde(rename = "Truck", alias = "truck")]
     Truck {
-        item: String,
+        item: Item,
         quantity_per_min: f32,
         #[serde(default)]
         truck_id: Option<String>,
     },
     #[serde(rename = "Drone", alias = "drone")]
     Drone {
-        item: String,
+        item: Item,
         quantity_per_min: f32,
         #[serde(default)]
         drone_id: Option<String>,
@@ -67,7 +67,7 @@ pub enum CreateLogisticsTransport {
 pub struct BusConveyorRequest {
     pub line_id: Option<String>,
     pub conveyor_type: String,
-    pub item: String,
+    pub item: Item,
     pub quantity_per_min: f32,
 }
 
@@ -75,7 +75,7 @@ pub struct BusConveyorRequest {
 pub struct BusPipelineRequest {
     pub pipeline_id: Option<String>,
     pub pipeline_type: String,
-    pub item: String,
+    pub item: Item,
     pub quantity_per_min: f32,
 }
 
@@ -83,13 +83,13 @@ pub struct BusPipelineRequest {
 pub struct TrainWagonRequest {
     pub wagon_id: Option<String>,
     pub wagon_type: String,
-    pub item: String,
+    pub item: Item,
     pub quantity_per_min: f32,
 }
 
 #[derive(Serialize)]
 pub struct ItemFlowResponse {
-    pub item: String,
+    pub item: Item,
     pub quantity_per_min: f32,
 }
 
@@ -123,34 +123,6 @@ fn logistics_to_response(logistics: &LogisticsFlux) -> LogisticsResponse {
         transport_details: logistics.transport_details.clone(),
         items,
         total_quantity_per_min: total_quantity,
-    }
-}
-
-// Helper function to parse item string to Item enum
-fn parse_item(item_str: &str) -> Result<Item> {
-    match item_str.trim().to_uppercase().as_str() {
-        "IRONORE" => Ok(Item::IronOre),
-        "COPPERORE" => Ok(Item::CopperOre),
-        "IRONINGOT" => Ok(Item::IronIngot),
-        "COPPERINGOT" => Ok(Item::CopperIngot),
-        "IRONPLATE" => Ok(Item::IronPlate),
-        "COPPERSHEET" => Ok(Item::CopperSheet),
-        "WIRE" => Ok(Item::Wire),
-        "CABLE" => Ok(Item::Cable),
-        "CONCRETE" => Ok(Item::Concrete),
-        "COAL" => Ok(Item::Coal),
-        "BIOMASS" => Ok(Item::Biomass),
-        "FUEL" => Ok(Item::Fuel),
-        "TURBOFUEL" => Ok(Item::Turbofuel),
-        "CRUDEOIL" => Ok(Item::CrudeOil),
-        "WATER" => Ok(Item::Water),
-        "NITROGENGAS" => Ok(Item::NitrogenGas),
-        "URANIUMFUELROD" => Ok(Item::UraniumFuelRod),
-        "URANIUMWASTE" => Ok(Item::UraniumWaste),
-        _ => Err(AppError::BadRequest(format!(
-            "Unknown item type: {}",
-            item_str
-        ))),
     }
 }
 
@@ -201,7 +173,7 @@ fn convert_item_flows(
     item_flows
         .into_iter()
         .map(|flow| ItemFlowResponse {
-            item: format!("{:?}", flow.item),
+            item: flow.item,
             quantity_per_min: flow.quantity_per_min,
         })
         .collect()
@@ -323,7 +295,7 @@ fn build_transport(
             truck_id,
         } => {
             let quantity = ensure_positive(quantity_per_min, "Truck quantity_per_min")?;
-            let item_enum = parse_item(&item)?;
+            let item_enum = item;
             let fallback_id = existing
                 .and_then(|flux| match &flux.transport_type {
                     TransportType::Truck(truck) => Some(truck.truck_id),
@@ -355,7 +327,7 @@ fn build_transport(
             drone_id,
         } => {
             let quantity = ensure_positive(quantity_per_min, "Drone quantity_per_min")?;
-            let item_enum = parse_item(&item)?;
+            let item_enum = item;
             let fallback_id = existing
                 .and_then(|flux| match &flux.transport_type {
                     TransportType::Drone(drone) => Some(drone.drone_id),
@@ -413,7 +385,7 @@ fn build_transport(
                 } = conveyor;
 
                 let quantity = ensure_positive(quantity_per_min, "Bus conveyor quantity_per_min")?;
-                let item_enum = parse_item(&item)?;
+                let item_enum = item;
                 let speed = parse_conveyor_speed(&conveyor_type)?;
                 let numeric_line_id =
                     parse_numeric_identifier(line_id.as_deref(), (index + 1) as u64);
@@ -449,7 +421,7 @@ fn build_transport(
                 } = pipeline;
 
                 let quantity = ensure_positive(quantity_per_min, "Bus pipeline quantity_per_min")?;
-                let item_enum = parse_item(&item)?;
+                let item_enum = item;
                 let capacity = parse_pipeline_capacity(&pipeline_type)?;
                 let numeric_pipeline_id =
                     parse_numeric_identifier(pipeline_id.as_deref(), (index + 1) as u64);
@@ -518,7 +490,7 @@ fn build_transport(
                 } = wagon;
 
                 let quantity = ensure_positive(quantity_per_min, "Train wagon quantity_per_min")?;
-                let item_enum = parse_item(&item)?;
+                let item_enum = item;
                 let wagon_type_enum = parse_wagon_type(&wagon_type)?;
                 let numeric_wagon_id =
                     parse_numeric_identifier(wagon_id.as_deref(), (index + 1) as u64);

@@ -360,7 +360,7 @@ const loadProductionLine = () => {
     const recipe = props.productionLine.ProductionLineRecipe
     formData.value = {
       name: recipe.name,
-      description: recipe.description,
+      description: recipe.description || '',
       type: 'recipe',
       recipe: recipe.recipe,
       machine_groups: [...recipe.machine_groups]
@@ -370,7 +370,7 @@ const loadProductionLine = () => {
     const blueprint = props.productionLine.ProductionLineBlueprint
     formData.value = {
       name: blueprint.name,
-      description: blueprint.description,
+      description: blueprint.description || '',
       type: 'blueprint',
       recipe: '',
       machine_groups: []
