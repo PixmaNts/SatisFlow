@@ -2,13 +2,24 @@
   <div class="production-line-list">
     <div class="list-header">
       <h3 class="list-title">Production Lines</h3>
-      <Button
-        variant="primary"
-        size="sm"
-        @click="showCreateModal = true"
-      >
-        Add Production Line
-      </Button>
+      <div class="header-actions">
+        <Button
+          variant="secondary"
+          size="sm"
+          @click="handleImportButtonClick"
+          title="Import a blueprint from JSON file"
+        >
+          <span class="button-icon">📥</span>
+          Import Blueprint
+        </Button>
+        <Button
+          variant="primary"
+          size="sm"
+          @click="showCreateModal = true"
+        >
+          Add Production Line
+        </Button>
+      </div>
     </div>
 
     <DataTable
@@ -54,6 +65,17 @@
 
       <template #cell-actions="{ row }">
         <div class="action-buttons">
+          <!-- Export button for blueprints only -->
+          <Button
+            v-if="isProductionLineBlueprint(row as ProductionLineResponse)"
+            variant="secondary"
+            size="sm"
+            @click.stop="handleExportBlueprint(getProductionLineId(row as ProductionLineResponse) || '', getProductionLineName(row as ProductionLineResponse))"
+            title="Export this blueprint to JSON file"
+          >
+            <span class="button-icon">💾</span>
+            Export
+          </Button>
           <Button
             variant="secondary"
             size="sm"
@@ -113,6 +135,14 @@
       </template>
     </Modal>
 
+    <!-- Blueprint Preview Modal -->
+    <BlueprintPreviewModal
+      :show="showBlueprintPreview"
+      :metadata="blueprintMetadata"
+      @close="handleCloseBlueprintPreview"
+      @import="handleConfirmImport"
+    />
+
     <!-- Error Alert -->
     <Alert
       v-if="error"
@@ -127,12 +157,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useFactoryStore } from '@/stores/factory'
-import type { ProductionLineResponse, MachineGroup } from '@/api/types'
+import type { ProductionLineResponse, MachineGroup, BlueprintMetadata } from '@/api/types'
+import { blueprints } from '@/api/endpoints'
 import Button from '@/components/ui/Button.vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import Modal from '@/components/ui/Modal.vue'
 import Alert from '@/components/ui/Alert.vue'
 import ProductionLineForm from './ProductionLineForm.vue'
+import BlueprintPreviewModal from './BlueprintPreviewModal.vue'
 
 interface Props {
   factoryId: string
@@ -148,6 +180,11 @@ const editingLine = ref<ProductionLineResponse | null>(null)
 const deletingLine = ref<ProductionLineResponse | null>(null)
 const deleting = ref(false)
 const error = ref<string | null>(null)
+
+// Blueprint import/export state
+const showBlueprintPreview = ref(false)
+const blueprintMetadata = ref<BlueprintMetadata | null>(null)
+const blueprintJsonToImport = ref<string>('')
 
 // Computed
 const currentFactory = computed(() => factoryStore.currentFactory)
@@ -345,6 +382,116 @@ const clearError = () => {
   factoryStore.clearError()
 }
 
+/**
+ * Export a blueprint to JSON file
+ */
+const handleExportBlueprint = async (lineId: string, lineName: string) => {
+  try {
+    if (!props.factoryId) return
+
+    const response = await blueprints.export(props.factoryId, lineId)
+
+    // Download JSON file
+    const blob = new Blob([response.blueprint_json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `blueprint-${lineName.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+
+    console.log('Blueprint exported successfully')
+  } catch (err) {
+    error.value = 'Failed to export blueprint'
+    console.error('Failed to export blueprint:', err)
+  }
+}
+
+/**
+ * Handle import button click - open file picker
+ */
+const handleImportButtonClick = () => {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.json'
+  input.onchange = async (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0]
+    if (!file) return
+
+    try {
+      const text = await file.text()
+      const parsed = JSON.parse(text)
+
+      // Basic validation before sending to backend
+      if (!parsed.id || !parsed.name || !Array.isArray(parsed.production_lines)) {
+        throw new Error('Invalid blueprint file format - must have id, name, and production_lines array')
+      }
+
+      // Validate UUID format for blueprint ID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      if (!uuidRegex.test(parsed.id)) {
+        throw new Error('Invalid blueprint ID - must be a valid UUID')
+      }
+
+      // Validate production lines structure
+      if (parsed.production_lines.length === 0) {
+        throw new Error('Blueprint must contain at least one production line')
+      }
+
+      for (const line of parsed.production_lines) {
+        if (!line.id || !line.recipe || !Array.isArray(line.machine_groups)) {
+          throw new Error('Invalid production line structure')
+        }
+      }
+
+      // Get metadata from backend preview endpoint
+      // This calculates power, items, etc. using the engine
+      blueprintJsonToImport.value = text
+      blueprintMetadata.value = await blueprints.preview(text)
+      showBlueprintPreview.value = true
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Invalid blueprint file'
+      console.error('Failed to read blueprint file:', err)
+    }
+  }
+  input.click()
+}
+
+/**
+ * Confirm and perform blueprint import
+ */
+const handleConfirmImport = async (customName?: string) => {
+  try {
+    if (!props.factoryId) return
+
+    await blueprints.import(props.factoryId, {
+      blueprint_json: blueprintJsonToImport.value,
+      name: customName
+    })
+
+    // Refresh factory data
+    await factoryStore.fetchById(props.factoryId)
+
+    // Close modal
+    showBlueprintPreview.value = false
+    blueprintMetadata.value = null
+    blueprintJsonToImport.value = ''
+
+    console.log('Blueprint imported successfully')
+  } catch (err) {
+    error.value = 'Failed to import blueprint'
+    console.error('Failed to import blueprint:', err)
+  }
+}
+
+const handleCloseBlueprintPreview = () => {
+  showBlueprintPreview.value = false
+  blueprintMetadata.value = null
+  blueprintJsonToImport.value = ''
+}
+
 // Load data on mount
 onMounted(async () => {
   if (props.factoryId) {
@@ -374,6 +521,15 @@ onMounted(async () => {
   font-weight: var(--font-weight-semibold, 600);
   color: var(--color-gray-900, #111827);
   margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: var(--spacing-sm, 0.5rem);
+}
+
+.button-icon {
+  margin-right: var(--spacing-xs, 0.25rem);
 }
 
 .production-line-name {
@@ -465,6 +621,11 @@ onMounted(async () => {
     flex-direction: column;
     align-items: stretch;
     gap: var(--spacing-sm, 0.5rem);
+  }
+
+  .header-actions {
+    flex-direction: column;
+    width: 100%;
   }
 
   .action-buttons {

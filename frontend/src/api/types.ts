@@ -464,6 +464,40 @@ export interface UpdateFactoryRequest {
   notes?: string;
 }
 
+// ============================================================================
+// Blueprint Types
+// ============================================================================
+
+// Blueprint metadata for export
+export interface BlueprintMetadata {
+  name: string;
+  description: string | null;
+  total_machines: number;
+  total_power: number;
+  input_items: [Item, number][];
+  output_items: [Item, number][];
+  exported_at: string;
+}
+
+// Blueprint export response
+export interface BlueprintExportResponse {
+  blueprint_json: string;
+  metadata: BlueprintMetadata;
+}
+
+// Blueprint import request
+export interface BlueprintImportRequest {
+  blueprint_json: string;
+  name?: string;
+}
+
+// Blueprint import response
+export interface BlueprintImportResponse {
+  message: string;
+  blueprint_id: string;
+  factory_id: string;
+}
+
 // Create logistics request
 export type CreateLogisticsRequest =
   | {

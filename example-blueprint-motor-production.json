@@ -1,0 +1,129 @@
+{
+  "id": "a3b3c3d4-3333-4444-5555-000000000003",
+  "name": "Motor Production Complex",
+  "description": "Complete motor production facility including all prerequisites: iron, copper, steel components. Demonstrates multi-stage blueprint with diverse machine groups.",
+  "production_lines": [
+    {
+      "id": "b3b3c3d4-3333-4444-5555-000000000031",
+      "name": "Iron Ingot Base",
+      "description": "Base iron ingot production",
+      "recipe": "IronIngot",
+      "machine_groups": [
+        {
+          "number_of_machine": 8,
+          "oc_value": 100.0,
+          "somersloop": 0
+        }
+      ]
+    },
+    {
+      "id": "b3b3c3d4-3333-4444-5555-000000000032",
+      "name": "Copper Ingot Base",
+      "description": "Base copper ingot production",
+      "recipe": "CopperIngot",
+      "machine_groups": [
+        {
+          "number_of_machine": 6,
+          "oc_value": 100.0,
+          "somersloop": 0
+        }
+      ]
+    },
+    {
+      "id": "b3b3c3d4-3333-4444-5555-000000000033",
+      "name": "Iron Rod Production",
+      "description": "Iron rods for screws and rotors",
+      "recipe": "IronRod",
+      "machine_groups": [
+        {
+          "number_of_machine": 4,
+          "oc_value": 100.0,
+          "somersloop": 0
+        }
+      ]
+    },
+    {
+      "id": "b3b3c3d4-3333-4444-5555-000000000034",
+      "name": "Screw Manufacturing",
+      "description": "High-volume screw production",
+      "recipe": "Screw",
+      "machine_groups": [
+        {
+          "number_of_machine": 6,
+          "oc_value": 150.0,
+          "somersloop": 2
+        }
+      ]
+    },
+    {
+      "id": "b3b3c3d4-3333-4444-5555-000000000035",
+      "name": "Copper Wire Production",
+      "description": "Copper wire for stators",
+      "recipe": "Wire",
+      "machine_groups": [
+        {
+          "number_of_machine": 3,
+          "oc_value": 100.0,
+          "somersloop": 0
+        }
+      ]
+    },
+    {
+      "id": "b3b3c3d4-3333-4444-5555-000000000036",
+      "name": "Rotor Assembly Line 1",
+      "description": "First rotor assembly line",
+      "recipe": "Rotor",
+      "machine_groups": [
+        {
+          "number_of_machine": 3,
+          "oc_value": 100.0,
+          "somersloop": 0
+        }
+      ]
+    },
+    {
+      "id": "b3b3c3d4-3333-4444-5555-000000000037",
+      "name": "Rotor Assembly Line 2",
+      "description": "Second rotor assembly line for redundancy",
+      "recipe": "Rotor",
+      "machine_groups": [
+        {
+          "number_of_machine": 3,
+          "oc_value": 100.0,
+          "somersloop": 0
+        }
+      ]
+    },
+    {
+      "id": "b3b3c3d4-3333-4444-5555-000000000038",
+      "name": "Stator Production",
+      "description": "Stator production from steel pipes and wire",
+      "recipe": "Stator",
+      "machine_groups": [
+        {
+          "number_of_machine": 4,
+          "oc_value": 110.0,
+          "somersloop": 0
+        }
+      ]
+    },
+    {
+      "id": "b3b3c3d4-3333-4444-5555-000000000039",
+      "name": "Motor Final Assembly",
+      "description": "Final motor assembly - combines rotors and stators",
+      "recipe": "Motor",
+      "machine_groups": [
+        {
+          "number_of_machine": 5,
+          "oc_value": 100.0,
+          "somersloop": 0
+        },
+        {
+          "number_of_machine": 3,
+          "oc_value": 150.0,
+          "somersloop": 1
+        }
+      ]
+    }
+  ]
+}

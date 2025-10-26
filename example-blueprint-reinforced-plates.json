@@ -1,0 +1,59 @@
+{
+  "id": "a2b2c3d4-2222-3333-4444-000000000002",
+  "name": "Reinforced Iron Plates Factory",
+  "description": "Advanced production line for reinforced iron plates using overclocked assemblers and power shards. Produces reinforced plates for heavy construction.",
+  "production_lines": [
+    {
+      "id": "b2b2c3d4-2222-3333-4444-000000000021",
+      "name": "Iron Ingot Production (OC)",
+      "description": "Overclocked iron ingot smelting at 150%",
+      "recipe": "IronIngot",
+      "machine_groups": [
+        {
+          "number_of_machine": 4,
+          "oc_value": 150.0,
+          "somersloop": 0
+        }
+      ]
+    },
+    {
+      "id": "b2b2c3d4-2222-3333-4444-000000000022",
+      "name": "Iron Plate Production",
+      "description": "Standard iron plate construction",
+      "recipe": "IronPlate",
+      "machine_groups": [
+        {
+          "number_of_machine": 6,
+          "oc_value": 100.0,
+          "somersloop": 0
+        }
+      ]
+    },
+    {
+      "id": "b2b2c3d4-2222-3333-4444-000000000023",
+      "name": "Screw Production (High Speed)",
+      "description": "High-speed screw production with power shards",
+      "recipe": "Screw",
+      "machine_groups": [
+        {
+          "number_of_machine": 3,
+          "oc_value": 200.0,
+          "somersloop": 1
+        }
+      ]
+    },
+    {
+      "id": "b2b2c3d4-2222-3333-4444-000000000024",
+      "name": "Reinforced Iron Plate Assembly",
+      "description": "Final assembly of reinforced plates",
+      "recipe": "ReinforcedIronPlate",
+      "machine_groups": [
+        {
+          "number_of_machine": 4,
+          "oc_value": 125.0,
+          "somersloop": 0
+        }
+      ]
+    }
+  ]
+}

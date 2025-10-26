@@ -294,6 +294,65 @@ pub enum Purity {
 - Clock speed range validation
 - Pressurizer requirement enforcement
 
+#### Blueprint Library System (`models/blueprint_templates.rs`)
+
+**Purpose**: Centralized storage and management of reusable production line blueprints
+
+**Architecture Pattern**: Template vs Instance
+
+```rust
+// Engine structure
+pub struct SatisflowEngine {
+    factories: HashMap<Uuid, Factory>,
+    logistics: Vec<Logistics>,
+    blueprint_templates: HashMap<Uuid, ProductionLineBlueprint>,  // NEW
+}
+```
+
+**Key Concepts**:
+
+1. **Template**: Blueprint stored in library (reusable, editable)
+2. **Instance**: Blueprint copy in factory (independent, factory-specific)
+3. **Instantiation**: Deep copy with UUID regeneration
+
+**Workflows**:
+
+- **Create**: User builds blueprint from scratch → Saved to library
+- **Import**: JSON file → Validated → Added to library (not factory)
+- **Use**: Template → Deep clone → Regenerate UUIDs → Add to factory
+- **Edit**: Template → Modify → Creates NEW template (versioning)
+- **Export**: Template → Serialize → JSON file (for sharing)
+
+**Storage**:
+
+- In-memory: `HashMap<Uuid, ProductionLineBlueprint>` in engine
+- Persistence: Included in save file as `blueprint_templates` field
+- No database required (matches engine philosophy)
+
+**UUID Management**:
+
+- Templates have their own UUIDs
+- Instantiation regenerates ALL UUIDs (blueprint + sub-lines)
+- Ensures instances are independent from templates
+- Factory modifications don't affect templates
+
+**API Endpoints**:
+
+- `GET /api/blueprints/templates` - List all templates
+- `POST /api/blueprints/templates` - Create new template
+- `PUT /api/blueprints/templates/:id` - Edit (creates new version)
+- `DELETE /api/blueprints/templates/:id` - Remove from library
+- `POST /api/blueprints/templates/import` - Import JSON to library
+- `GET /api/blueprints/templates/:id/export` - Export as JSON
+- `POST /api/factories/:id/production-lines/from-template/:tid` - Create instance
+
+**Design Philosophy**:
+
+- Matches Satisfactory in-game blueprint behavior
+- Templates are reusable across factories
+- Editing doesn't break existing factory setups
+- Clear separation: Library (templates) vs Factory (instances)
+
 ## Key Design Decisions
 
 ### 1. Type Safety Over Flexibility
@@ -430,12 +489,28 @@ Vue.js UI (Update)
 8. ✅ **Comprehensive factory example** demonstrating all engine features
 9. ✅ **Persistence layer** with full save/load functionality (2025-10-25)
 10. ✅ **Type synchronization** between frontend/backend (2025-10-24)
+11. ✅ **Blueprint import/export** Phase 1 (2025-10-26)
+    - Backend: Export, import, preview endpoints with validation
+    - Frontend: Import/export UI with BlueprintPreviewModal
+    - 14 passing backend tests
+    - 3 example blueprint files with documentation
+
+## In Progress Components
+
+1. 🚧 **Blueprint Library System** Phase 2 (2025-10-26)
+   - Template storage in engine with save/load integration
+   - Blueprint management UI (create, edit, delete, reuse)
+   - Template vs instance pattern (like Satisfactory in-game)
+   - See: [BLUEPRINT_LIBRARY_IMPLEMENTATION.md](../../../BLUEPRINT_LIBRARY_IMPLEMENTATION.md)
 
 ## Missing Components (To Be Implemented)
 
-1. **Blueprint import/export UI** (ProductionLineBlueprint exists but needs UI)
-2. **Enhanced validation layer** for user inputs
-3. **Migration system** (architecture designed, full implementation deferred - YAGNI)
+1. **Enhanced validation layer** for user inputs
+2. **Migration system** (architecture designed, full implementation deferred - YAGNI)
+3. **Frontend calculation refactoring** - Move all game calculations to backend
+   - See: [FRONTEND_CALCULATION_REVIEW.md](../../../FRONTEND_CALCULATION_REVIEW.md)
+   - 6+ components have hardcoded power/fuel values
+   - Need preview APIs for forms (real-time calculation)
 
 ## Best Practices & Lessons Learned
 

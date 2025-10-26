@@ -1,0 +1,33 @@
+{
+  "id": "a1b2c3d4-1111-2222-3333-000000000001",
+  "name": "Iron Plate Production",
+  "description": "Basic iron plate production line with smelters - produces 60 iron plates per minute from iron ore",
+  "production_lines": [
+    {
+      "id": "b1b2c3d4-1111-2222-3333-000000000011",
+      "name": "Iron Ingot Smelting",
+      "description": null,
+      "recipe": "IronIngot",
+      "machine_groups": [
+        {
+          "number_of_machine": 2,
+          "oc_value": 100.0,
+          "somersloop": 0
+        }
+      ]
+    },
+    {
+      "id": "b1b2c3d4-1111-2222-3333-000000000012",
+      "name": "Iron Plate Construction",
+      "description": null,
+      "recipe": "IronPlate",
+      "machine_groups": [
+        {
+          "number_of_machine": 3,
+          "oc_value": 100.0,
+          "somersloop": 0
+        }
+      ]
+    }
+  ]
+}

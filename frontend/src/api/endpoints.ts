@@ -23,6 +23,10 @@ import type {
   LoadRequest,
   LoadResponse,
   ResetResponse,
+  BlueprintExportResponse,
+  BlueprintImportRequest,
+  BlueprintImportResponse,
+  BlueprintMetadata,
 } from './types';
 
 /**
@@ -292,6 +296,56 @@ export const system = {
 };
 
 /**
+ * Blueprint API endpoints
+ * Provides import/export functionality for production line blueprints
+ */
+export const blueprints = {
+  /**
+   * Export a production line blueprint as JSON
+   * @param factoryId - The factory ID
+   * @param lineId - The production line ID
+   * @returns Promise resolving to blueprint JSON and metadata
+   */
+  export: async (
+    factoryId: string,
+    lineId: string
+  ): Promise<BlueprintExportResponse> => {
+    return api.get<BlueprintExportResponse>(
+      `/factories/${factoryId}/production-lines/${lineId}/export`
+    );
+  },
+
+  /**
+   * Import a blueprint JSON into a factory
+   * @param factoryId - The factory ID to import into
+   * @param blueprint - The blueprint import request data
+   * @returns Promise resolving to import response
+   */
+  import: async (
+    factoryId: string,
+    blueprint: BlueprintImportRequest
+  ): Promise<BlueprintImportResponse> => {
+    return api.post<BlueprintImportResponse>(
+      `/factories/${factoryId}/production-lines/import`,
+      blueprint
+    );
+  },
+
+  /**
+   * Preview a blueprint JSON without importing it
+   * Returns calculated metadata (power, machines, items) from the backend
+   * @param blueprintJson - The blueprint JSON string to preview
+   * @returns Promise resolving to blueprint metadata
+   */
+  preview: async (blueprintJson: string): Promise<BlueprintMetadata> => {
+    const request: BlueprintImportRequest = {
+      blueprint_json: blueprintJson,
+    };
+    return api.post<BlueprintMetadata>('/blueprints/preview', request);
+  },
+};
+
+/**
  * Save/Load API endpoints
  * Provides save and load functionality for engine state
  */
@@ -332,6 +386,7 @@ export const endpoints = {
   dashboard,
   gameData,
   system,
+  blueprints,
   saveLoad,
 };
 
