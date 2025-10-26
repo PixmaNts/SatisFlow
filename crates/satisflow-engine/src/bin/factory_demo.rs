@@ -1,5 +1,5 @@
 //! Factory Demo Binary
-//! 
+//!
 //! This is a standalone binary program that demonstrates the Satisflow engine
 //! using the comprehensive factory example. It shows how to use the engine
 //! in a real application.
@@ -9,7 +9,7 @@ use std::env;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    
+
     if args.len() > 1 {
         match args[1].as_str() {
             "demo" => {

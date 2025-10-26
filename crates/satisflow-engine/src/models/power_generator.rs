@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use crate::models::Item;
+use crate::models::{FactoryId, Item, PowerGeneratorId};
 
 /// Types of power generators available in Satisfactory
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Eq, Hash)]
@@ -176,7 +176,7 @@ impl GeneratorGroup {
 /// Represents a power generator system in a factory
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PowerGenerator {
-    pub id: u64,
+    pub id: PowerGeneratorId,
     pub generator_type: GeneratorType,
     pub fuel_type: Item,
     pub groups: Vec<GeneratorGroup>,
@@ -185,7 +185,7 @@ pub struct PowerGenerator {
 impl PowerGenerator {
     /// Create a new power generator with validation
     pub fn new(
-        id: u64,
+        id: PowerGeneratorId,
         generator_type: GeneratorType,
         fuel_type: Item,
     ) -> Result<Self, PowerGeneratorError> {
@@ -211,7 +211,7 @@ impl PowerGenerator {
     }
 
     /// Create a new geothermal generator (special case that doesn't use fuel)
-    pub fn new_geothermal(id: u64) -> Self {
+    pub fn new_geothermal(id: PowerGeneratorId) -> Self {
         Self {
             id,
             generator_type: GeneratorType::Geothermal,
@@ -389,7 +389,7 @@ pub struct PowerStats {
 /// Power statistics for a single factory
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct FactoryPowerStats {
-    pub factory_id: u64,
+    pub factory_id: FactoryId,
     pub factory_name: String,
     pub generation: f32,
     pub consumption: f32,
@@ -433,7 +433,7 @@ impl PowerStats {
 impl FactoryPowerStats {
     /// Create new factory power statistics
     pub fn new(
-        factory_id: u64,
+        factory_id: FactoryId,
         factory_name: String,
         generation: f32,
         consumption: f32,
@@ -471,6 +471,11 @@ impl FactoryPowerStats {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use uuid::Uuid;
+
+    fn uuid_from_u64(value: u64) -> Uuid {
+        Uuid::from_u128(value as u128)
+    }
 
     // ===== GeneratorType Tests =====
 
@@ -720,10 +725,10 @@ mod tests {
 
     #[test]
     fn test_create_valid_coal_generator() {
-        let generator = PowerGenerator::new(1, GeneratorType::Coal, Item::Coal)
+        let generator = PowerGenerator::new(uuid_from_u64(1), GeneratorType::Coal, Item::Coal)
             .expect("Should create valid coal generator");
 
-        assert_eq!(generator.id, 1);
+        assert_eq!(generator.id, uuid_from_u64(1));
         assert_eq!(generator.generator_type, GeneratorType::Coal);
         assert_eq!(generator.fuel_type, Item::Coal);
         assert_eq!(generator.groups.len(), 0);
@@ -731,7 +736,7 @@ mod tests {
 
     #[test]
     fn test_create_valid_fuel_generator_with_turbofuel() {
-        let generator = PowerGenerator::new(2, GeneratorType::Fuel, Item::Turbofuel)
+        let generator = PowerGenerator::new(uuid_from_u64(2), GeneratorType::Fuel, Item::Turbofuel)
             .expect("Should create valid fuel generator");
 
         assert_eq!(generator.generator_type, GeneratorType::Fuel);
@@ -740,7 +745,7 @@ mod tests {
 
     #[test]
     fn test_create_invalid_fuel_combination() {
-        let result = PowerGenerator::new(1, GeneratorType::Coal, Item::Fuel);
+        let result = PowerGenerator::new(uuid_from_u64(1), GeneratorType::Coal, Item::Fuel);
         assert!(result.is_err());
         match result {
             Err(PowerGeneratorError::IncompatibleFuel { generator, fuel }) => {
@@ -753,16 +758,17 @@ mod tests {
 
     #[test]
     fn test_create_geothermal_generator() {
-        let generator = PowerGenerator::new_geothermal(3);
-        assert_eq!(generator.id, 3);
+        let generator = PowerGenerator::new_geothermal(uuid_from_u64(3));
+        assert_eq!(generator.id, uuid_from_u64(3));
         assert_eq!(generator.generator_type, GeneratorType::Geothermal);
         assert_eq!(generator.groups.len(), 0);
     }
 
     #[test]
     fn test_add_generator_group() {
-        let mut generator = PowerGenerator::new(1, GeneratorType::Biomass, Item::Biomass)
-            .expect("Should create valid generator");
+        let mut generator =
+            PowerGenerator::new(uuid_from_u64(1), GeneratorType::Biomass, Item::Biomass)
+                .expect("Should create valid generator");
 
         let group = GeneratorGroup::new(3, 150.0).expect("Should create valid group");
         generator.add_group(group).expect("Should add group");
@@ -774,7 +780,7 @@ mod tests {
 
     #[test]
     fn test_remove_generator_group() {
-        let mut generator = PowerGenerator::new(1, GeneratorType::Coal, Item::Coal)
+        let mut generator = PowerGenerator::new(uuid_from_u64(1), GeneratorType::Coal, Item::Coal)
             .expect("Should create valid generator");
 
         let group1 = GeneratorGroup::new(2, 100.0).expect("Should create valid group");
@@ -792,7 +798,7 @@ mod tests {
 
     #[test]
     fn test_remove_nonexistent_generator_group() {
-        let mut generator = PowerGenerator::new(1, GeneratorType::Fuel, Item::Fuel)
+        let mut generator = PowerGenerator::new(uuid_from_u64(1), GeneratorType::Fuel, Item::Fuel)
             .expect("Should create valid generator");
 
         let result = generator.remove_group(0);
@@ -807,8 +813,12 @@ mod tests {
 
     #[test]
     fn test_get_generator_group() {
-        let mut generator = PowerGenerator::new(1, GeneratorType::Nuclear, Item::UraniumFuelRod)
-            .expect("Should create valid generator");
+        let mut generator = PowerGenerator::new(
+            uuid_from_u64(1),
+            GeneratorType::Nuclear,
+            Item::UraniumFuelRod,
+        )
+        .expect("Should create valid generator");
 
         let group = GeneratorGroup::new(1, 100.0).expect("Should create valid group");
         generator.add_group(group).expect("Should add group");
@@ -820,8 +830,9 @@ mod tests {
 
     #[test]
     fn test_get_generator_group_mut() {
-        let mut generator = PowerGenerator::new(1, GeneratorType::Biomass, Item::Biomass)
-            .expect("Should create valid generator");
+        let mut generator =
+            PowerGenerator::new(uuid_from_u64(1), GeneratorType::Biomass, Item::Biomass)
+                .expect("Should create valid generator");
 
         let group = GeneratorGroup::new(2, 100.0).expect("Should create valid group");
         generator.add_group(group).expect("Should add group");
@@ -839,7 +850,7 @@ mod tests {
 
     #[test]
     fn test_total_power_generation_single_group() {
-        let mut generator = PowerGenerator::new(1, GeneratorType::Coal, Item::Coal)
+        let mut generator = PowerGenerator::new(uuid_from_u64(1), GeneratorType::Coal, Item::Coal)
             .expect("Should create valid generator");
 
         let group = GeneratorGroup::new(4, 100.0).expect("Should create valid group");
@@ -851,7 +862,7 @@ mod tests {
 
     #[test]
     fn test_total_power_generation_multiple_groups() {
-        let mut generator = PowerGenerator::new(1, GeneratorType::Fuel, Item::Fuel)
+        let mut generator = PowerGenerator::new(uuid_from_u64(1), GeneratorType::Fuel, Item::Fuel)
             .expect("Should create valid generator");
 
         let group1 = GeneratorGroup::new(2, 100.0).expect("Should create valid group");
@@ -867,7 +878,7 @@ mod tests {
 
     #[test]
     fn test_total_fuel_consumption_coal() {
-        let mut generator = PowerGenerator::new(1, GeneratorType::Coal, Item::Coal)
+        let mut generator = PowerGenerator::new(uuid_from_u64(1), GeneratorType::Coal, Item::Coal)
             .expect("Should create valid generator");
 
         let group = GeneratorGroup::new(2, 150.0).expect("Should create valid group");
@@ -879,8 +890,9 @@ mod tests {
 
     #[test]
     fn test_total_fuel_consumption_turbofuel() {
-        let mut generator = PowerGenerator::new(1, GeneratorType::Fuel, Item::Turbofuel)
-            .expect("Should create valid generator");
+        let mut generator =
+            PowerGenerator::new(uuid_from_u64(1), GeneratorType::Fuel, Item::Turbofuel)
+                .expect("Should create valid generator");
 
         let group = GeneratorGroup::new(1, 100.0).expect("Should create valid group");
         generator.add_group(group).expect("Should add group");
@@ -891,8 +903,9 @@ mod tests {
 
     #[test]
     fn test_total_fuel_consumption_compacted_coal() {
-        let mut generator = PowerGenerator::new(1, GeneratorType::Coal, Item::CompactedCoal)
-            .expect("Should create valid generator");
+        let mut generator =
+            PowerGenerator::new(uuid_from_u64(1), GeneratorType::Coal, Item::CompactedCoal)
+                .expect("Should create valid generator");
 
         let group = GeneratorGroup::new(3, 100.0).expect("Should create valid group");
         generator.add_group(group).expect("Should add group");
@@ -903,7 +916,7 @@ mod tests {
 
     #[test]
     fn test_geothermal_no_fuel_consumption() {
-        let mut generator = PowerGenerator::new_geothermal(1);
+        let mut generator = PowerGenerator::new_geothermal(uuid_from_u64(1));
         let group = GeneratorGroup::new(5, 200.0).expect("Should create valid group");
         generator.add_group(group).expect("Should add group");
 
@@ -914,8 +927,12 @@ mod tests {
 
     #[test]
     fn test_nuclear_waste_production() {
-        let mut generator = PowerGenerator::new(1, GeneratorType::Nuclear, Item::UraniumFuelRod)
-            .expect("Should create valid generator");
+        let mut generator = PowerGenerator::new(
+            uuid_from_u64(1),
+            GeneratorType::Nuclear,
+            Item::UraniumFuelRod,
+        )
+        .expect("Should create valid generator");
 
         let group = GeneratorGroup::new(1, 100.0).expect("Should create valid group");
         generator.add_group(group).expect("Should add group");
@@ -926,8 +943,12 @@ mod tests {
 
     #[test]
     fn test_nuclear_waste_production_with_overclock() {
-        let mut generator = PowerGenerator::new(1, GeneratorType::Nuclear, Item::UraniumFuelRod)
-            .expect("Should create valid generator");
+        let mut generator = PowerGenerator::new(
+            uuid_from_u64(1),
+            GeneratorType::Nuclear,
+            Item::UraniumFuelRod,
+        )
+        .expect("Should create valid generator");
 
         let group = GeneratorGroup::new(2, 200.0).expect("Should create valid group");
         generator.add_group(group).expect("Should add group");
@@ -938,7 +959,7 @@ mod tests {
 
     #[test]
     fn test_non_nuclear_no_waste_production() {
-        let mut generator = PowerGenerator::new(1, GeneratorType::Coal, Item::Coal)
+        let mut generator = PowerGenerator::new(uuid_from_u64(1), GeneratorType::Coal, Item::Coal)
             .expect("Should create valid generator");
 
         let group = GeneratorGroup::new(5, 200.0).expect("Should create valid group");
@@ -952,8 +973,9 @@ mod tests {
 
     #[test]
     fn test_validate_valid_generator() {
-        let mut generator = PowerGenerator::new(1, GeneratorType::Biomass, Item::Biomass)
-            .expect("Should create valid generator");
+        let mut generator =
+            PowerGenerator::new(uuid_from_u64(1), GeneratorType::Biomass, Item::Biomass)
+                .expect("Should create valid generator");
 
         let group = GeneratorGroup::new(3, 150.0).expect("Should create valid group");
         generator.add_group(group).expect("Should add group");
@@ -963,7 +985,7 @@ mod tests {
 
     #[test]
     fn test_validate_generator_no_groups() {
-        let generator = PowerGenerator::new(1, GeneratorType::Coal, Item::Coal)
+        let generator = PowerGenerator::new(uuid_from_u64(1), GeneratorType::Coal, Item::Coal)
             .expect("Should create valid generator");
 
         let result = generator.validate();
@@ -978,7 +1000,7 @@ mod tests {
 
     #[test]
     fn test_validate_invalid_fuel_combination() {
-        let generator = PowerGenerator::new(1, GeneratorType::Fuel, Item::Coal)
+        let generator = PowerGenerator::new(uuid_from_u64(1), GeneratorType::Fuel, Item::Coal)
             .expect_err("Should fail to create generator");
 
         match generator {
@@ -1002,7 +1024,7 @@ mod tests {
         ];
 
         for (gen_type, fuel) in test_cases {
-            let generator = PowerGenerator::new(1, gen_type, fuel).expect(&format!(
+            let generator = PowerGenerator::new(uuid_from_u64(1), gen_type, fuel).expect(&format!(
                 "Should create valid {:?} generator with {:?}",
                 gen_type, fuel
             ));
@@ -1024,20 +1046,21 @@ mod tests {
         ];
 
         for fuel in biomass_fuels {
-            let generator = PowerGenerator::new(1, GeneratorType::Biomass, fuel).expect(&format!(
-                "Should create valid biomass generator with {:?}",
-                fuel
-            ));
+            let generator =
+                PowerGenerator::new(uuid_from_u64(1), GeneratorType::Biomass, fuel).expect(
+                    &format!("Should create valid biomass generator with {:?}", fuel),
+                );
             assert_eq!(generator.fuel_type, fuel);
         }
     }
 
     #[test]
     fn test_fuel_efficiency_comparison() {
-        let mut coal_gen = PowerGenerator::new(1, GeneratorType::Coal, Item::Coal)
+        let mut coal_gen = PowerGenerator::new(uuid_from_u64(1), GeneratorType::Coal, Item::Coal)
             .expect("Should create valid coal generator");
-        let mut compacted_gen = PowerGenerator::new(2, GeneratorType::Coal, Item::CompactedCoal)
-            .expect("Should create valid compacted coal generator");
+        let mut compacted_gen =
+            PowerGenerator::new(uuid_from_u64(2), GeneratorType::Coal, Item::CompactedCoal)
+                .expect("Should create valid compacted coal generator");
 
         let group = GeneratorGroup::new(1, 100.0).expect("Should create valid group");
         coal_gen.add_group(group.clone()).expect("Should add group");
@@ -1055,10 +1078,11 @@ mod tests {
 
     #[test]
     fn test_turbofuel_efficiency() {
-        let mut fuel_gen = PowerGenerator::new(1, GeneratorType::Fuel, Item::Fuel)
+        let mut fuel_gen = PowerGenerator::new(uuid_from_u64(1), GeneratorType::Fuel, Item::Fuel)
             .expect("Should create valid fuel generator");
-        let mut turbo_gen = PowerGenerator::new(2, GeneratorType::Fuel, Item::Turbofuel)
-            .expect("Should create valid turbofuel generator");
+        let mut turbo_gen =
+            PowerGenerator::new(uuid_from_u64(2), GeneratorType::Fuel, Item::Turbofuel)
+                .expect("Should create valid turbofuel generator");
 
         let group = GeneratorGroup::new(1, 100.0).expect("Should create valid group");
         fuel_gen.add_group(group.clone()).expect("Should add group");
@@ -1076,7 +1100,7 @@ mod tests {
 
     #[test]
     fn test_overclock_scaling_linearity() {
-        let mut generator = PowerGenerator::new(1, GeneratorType::Coal, Item::Coal)
+        let mut generator = PowerGenerator::new(uuid_from_u64(1), GeneratorType::Coal, Item::Coal)
             .expect("Should create valid generator");
 
         let group = GeneratorGroup::new(1, 100.0).expect("Should create valid group");

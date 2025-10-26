@@ -2,20 +2,32 @@
 
 ## System Overview
 
-Satisflow is built with a **layered architecture** separating concerns between the core engine (Rust) and future UI implementations (Vue.js/WASM).
+Satisfflow is built with a **three-tier architecture** separating concerns between the frontend UI, backend REST API, and core engine.
 
 ```text
 ┌─────────────────────────────────────────┐
-│         UI Layer (Future)               │
-│    Vue.js + TypeScript + WASM           │
+│      Frontend UI (Vue.js)               │
+│    Vue 3 + TypeScript + Vite            │
+│    - Dashboard View                     │
+│    - Factory View                       │
+│    - Logistics View                     │
 └─────────────────────────────────────────┘
-                    ↓
+                    ↓ HTTP/REST
 ┌─────────────────────────────────────────┐
-│      Satisflow Engine (Rust)            │
-│  - Core Business Logic                  │
-│  - Data Models                          │
-│  - Calculations                         │
-│  - Persistence (JSON)                   │
+│      Backend Server (Axum)              │
+│    Rust Web Server                      │
+│    - REST API Endpoints                 │
+│    - State Management                   │
+│    - Error Handling                     │
+│    - CORS & Logging                     │
+└─────────────────────────────────────────┘
+                    ↓ Direct calls
+┌─────────────────────────────────────────┐
+│      Satisfflow Engine (Rust)           │
+│    Core Business Logic                  │
+│    - Data Models                        │
+│    - Calculations                       │
+│    - Game Data                          │
 └─────────────────────────────────────────┘
 ```
 
@@ -84,7 +96,7 @@ pub struct Factory {
 pub trait ProductionLine {
     fn id(&self) -> u64;
     fn total_machines(&self) -> u32;
-    fn total_sommersloop(&self) -> u32;
+    fn total_somersloop(&self) -> u32;
     fn output_rate(&self) -> Vec<(Item, f32)>;
     fn input_rate(&self) -> Vec<(Item, f32)>;
     fn total_power_consumption(&self) -> f32;
@@ -95,8 +107,8 @@ pub trait ProductionLine {
 
 1. **ProductionLineRecipe**: Standard recipe-based production
    - Contains: `id, name, description, recipe, machine_groups: Vec<MachineGroup>`
-   - MachineGroup: `(num_machines: u32, overclock: f32, sommersloop: u8)`
-   - Validates: Overclock (0-250%), Sommersloop limits per machine type
+   - MachineGroup: `(num_machines: u32, overclock: f32, somersloop: u8)`
+   - Validates: Overclock (0-250%), Somersloop limits per machine type
    - Power formula: `base_power × (1 + s/max_s)² × (clock/100)^1.321928`
 
 2. **ProductionLineBlueprint**: Composite of multiple recipes
@@ -152,7 +164,7 @@ pub trait Transport {
 
 **MachineType**: Defines production machine characteristics
 
-- Sommersloop limits: Constructor(1), Assembler(2), Manufacturer(4), etc.
+- Somersloop limits: Constructor(1), Assembler(2), Manufacturer(4), etc.
 - Base power consumption: Constructor(4MW), Assembler(16MW), etc.
 
 **Recipes**: Auto-generated from `recipes_data.inc`
@@ -165,6 +177,55 @@ pub trait Transport {
 
 - Lazy-loaded item database
 - ItemParseError for validation
+
+#### PowerGenerator (`models/power_generator.rs`)
+
+**Structure**:
+
+```rust
+pub struct PowerGenerator {
+    pub id: u64,
+    pub generator_type: GeneratorType,
+    pub fuel: Option<Item>,
+    pub num_generators: u32,
+    pub overclock: f32,
+}
+
+pub enum GeneratorType {
+    BiomassBurner,
+    CoalGenerator,
+    FuelGenerator,
+    NuclearPowerPlant,
+    GeothermalGenerator,
+}
+```
+
+**Purpose**: Power generation system separate from production lines
+
+**Power Generation Mechanics**:
+
+- **Biomass Burner**: 30 MW base, uses solid biofuel (Biomass, Solid Biofuel, etc.)
+- **Coal Generator**: 75 MW base, uses Coal or Compacted Coal
+- **Fuel Generator**: 150 MW base, uses Fuel, Turbofuel, or Liquid Biofuel
+- **Nuclear Power Plant**: 2500 MW base, uses Uranium/Plutonium/Ficsonium Fuel Rods (produces waste)
+- **Geothermal Generator**: 200 MW fixed (no fuel, no overclocking)
+
+**Important Notes**:
+
+- Power generators have different overclocking behavior than consumers
+- Fuel consumption rate scales proportionally with power production
+- Overclocking doesn't increase fuel efficiency (burns fuel faster/slower)
+- Nuclear generators produce waste items (Uranium/Plutonium Waste)
+
+**Power Calculation**:
+```
+Power = Base Power × (overclock/100) × num_generators
+```
+
+**Fuel Consumption**:
+```
+Fuel Rate = Base Fuel Rate × fuel_multiplier × (overclock/100) × num_generators
+```
 
 #### Raw Input (`models/raw_input.rs`)
 
@@ -266,8 +327,10 @@ pub enum Purity {
 ## Data Flow
 
 ```text
-User Action (Future UI)
-    ↓
+User Action (Vue.js UI)
+    ↓ HTTP Request
+Backend Server (Axum)
+    ↓ Function call
 SatisflowEngine API
     ↓
 Factory/Logistics Updates
@@ -275,16 +338,148 @@ Factory/Logistics Updates
 calculate_item() per Factory
     ↓
 Aggregate Global State
-    ↓
-Return to UI (JSON via WASM)
+    ↓ JSON Response
+Backend Server
+    ↓ HTTP Response
+Vue.js UI (Update)
 ```
+
+## Backend Server Components
+
+### Axum Web Server (`crates/satisflow-server/`)
+
+**Purpose**: Production-ready REST API server providing HTTP access to the engine
+
+**Key Components**:
+
+- **State Management** (`state.rs`): Thread-safe engine wrapper using `Arc<RwLock<SatisflowEngine>>`
+- **Error Handling** (`error.rs`): Custom error types with proper HTTP status codes
+- **API Handlers** (`handlers/`):
+  - `factory.rs`: Factory CRUD operations
+  - `logistics.rs`: Logistics line management
+  - `dashboard.rs`: Global statistics and aggregations
+  - `game_data.rs`: Static game data endpoints (recipes, items, machines)
+
+**Features**:
+
+- Environment-based configuration (.env support)
+- CORS middleware (configurable for dev/prod)
+- Structured logging (tracing + tracing-subscriber)
+- Graceful shutdown (SIGINT, SIGTERM)
+- Health check endpoint (/health)
+
+**Deployment**:
+
+- Docker support with multi-stage builds
+- Non-root container execution
+- Docker Compose configuration
+- Production-ready with health checks
+
+### REST API Endpoints
+
+**Factory Endpoints**:
+- `GET /api/factories` - List all factories
+- `GET /api/factories/:id` - Get specific factory
+- `POST /api/factories` - Create factory
+- `PUT /api/factories/:id` - Update factory
+- `DELETE /api/factories/:id` - Delete factory
+
+**Logistics Endpoints**:
+- `GET /api/logistics` - List all logistics lines
+- `GET /api/logistics/:id` - Get specific line
+- `POST /api/logistics` - Create logistics line
+- `DELETE /api/logistics/:id` - Delete line
+
+**Dashboard Endpoints**:
+- `GET /api/dashboard/summary` - Global statistics
+- `GET /api/dashboard/items` - Item balance data
+- `GET /api/dashboard/power` - Power statistics
+
+**Game Data Endpoints**:
+- `GET /api/game-data/recipes` - All available recipes
+- `GET /api/game-data/items` - All game items
+- `GET /api/game-data/machines` - All machine types
+
+### Testing Infrastructure
+
+**Integration Tests** (`crates/satisflow-server/tests/`):
+- 484 lines of comprehensive test coverage
+- Factory CRUD operation tests
+- Logistics management tests
+- Dashboard endpoint validation
+- Game data endpoint tests
+- CORS functionality tests
+- Error handling tests
+- Concurrent request handling tests
+
+**Test Utilities**:
+- Helper functions for common operations
+- Assertion helpers for response validation
+- Test data generators
+- Isolated test server instances
+
+## Completed Components
+
+1. ✅ **PowerGenerator** system (5 generator types with fuel consumption)
+2. ✅ **Raw Input** system with Resource Well Pressurizer mechanics
+3. ✅ **Backend REST API** with complete CRUD operations
+4. ✅ **Testing infrastructure** with 484 lines of integration tests
+5. ✅ **Deployment setup** with Docker and Docker Compose
+6. ✅ **Frontend UI implementation** with Vue 3 + TypeScript + Vite
+7. ✅ **Complete component architecture** with 88 files and ~14,100 lines
+8. ✅ **Comprehensive factory example** demonstrating all engine features
+9. ✅ **Persistence layer** with full save/load functionality (2025-10-25)
+10. ✅ **Type synchronization** between frontend/backend (2025-10-24)
 
 ## Missing Components (To Be Implemented)
 
-1. **PowerGenerator** as distinct from ProductionLine
-2. **Persistence layer** (JSON serialization infrastructure)
-3. **Blueprint custom recipes** (ProductionLineBlueprint exists but needs UI integration)
-4. **Validation layer** for user inputs (partially done in add_machine_group)
+1. **Blueprint import/export UI** (ProductionLineBlueprint exists but needs UI)
+2. **Enhanced validation layer** for user inputs
+3. **Migration system** (architecture designed, full implementation deferred - YAGNI)
+
+## Best Practices & Lessons Learned
+
+### Type Synchronization (Frontend ↔ Backend)
+
+**Key Principle**: Use native types instead of string representations for enums.
+
+**Implementation**:
+- Backend: Serialize enums directly with serde (e.g., `pub item: Item`)
+- Frontend: Define matching TypeScript unions (e.g., `type Item = "IronOre" | "CopperOre" | ...`)
+- Avoid: Manual string parsing or Debug format (`format!("{:?}", item)`)
+
+**Benefits**:
+- Compile-time type safety on both sides
+- Eliminates 26+ lines of redundant parsing code
+- Automatic serialization/deserialization via serde
+- Future enum additions require zero changes to handlers
+
+### Null Handling
+
+**Rust Side**:
+```rust
+pub description: Option<String>  // Serializes to null or string
+```
+
+**TypeScript Side**:
+```typescript
+description: string | null  // Explicit null handling
+```
+
+**Rationale**: TypeScript strict null checking prevents runtime errors.
+
+### Serde Best Practices
+
+1. **Leverage serde defaults**: Enum serialization works correctly out-of-the-box
+2. **Trust the type system**: No need for manual string conversions
+3. **Version compatibility**: Use `#[serde(default)]` for new optional fields
+
+### Code Quality Wins (2025-10-24 Type Sync)
+
+- ✅ All 200+ Item variants work across entire API
+- ✅ Removed redundant manual parsing in logistics handler
+- ✅ Consistent serialization in all 4 API modules (factory, logistics, dashboard, game_data)
+- ✅ Proper nullable types prevent undefined behavior
 
 ## Performance Considerations
 

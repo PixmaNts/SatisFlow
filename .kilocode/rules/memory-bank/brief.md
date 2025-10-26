@@ -186,6 +186,42 @@ Feature:
 - factory production calculation, power consuption and generation, defining product avaibility (underflow, overflow, balanced) ect ...
 - persistence: every data can be serialized into json value, so that the user can actually save is progression on a json file, and reuse it later.
 
+### Save/Load System
+
+The engine implements a comprehensive save/load system with version management:
+
+**Save File Structure**:
+```json
+{
+  "version": "0.1.0",
+  "created_at": "2025-10-25T12:00:00Z",
+  "last_modified": "2025-10-25T12:00:00Z",
+  "game_version": null,
+  "engine": {
+    "factories": { /* ... */ },
+    "logistics_lines": { /* ... */ }
+  }
+}
+```
+
+**Version Management**:
+- Semantic versioning (MAJOR.MINOR.PATCH)
+- Same major version = compatible (can load with serde defaults)
+- Different major version = incompatible (clear error message)
+- Future versions rejected to prevent data loss
+- Migration architecture designed for schema evolution (full implementation deferred - YAGNI)
+
+**Implementation Levels**:
+1. **Engine (CLI-first)**: `save_to_file()`, `load_from_file()`, `save_to_json()`, `load_from_json()`
+2. **Server API**: GET /api/save, POST /api/load endpoints
+3. **Frontend UI**: Save/Load buttons in dashboard header
+
+**User Experience**:
+- Save button downloads `satisflow-save_[timestamp].json`
+- Load button opens file picker and validates version compatibility
+- Auto-refresh dashboard after successful load
+- Clear error messages for incompatible versions or invalid files
+
 ### Item Balance States
 
 The engine calculates item balance for each item type across all factories. The balance state is determined by:
@@ -204,7 +240,7 @@ The system should prevent invalid configurations through UI validation and engin
 
 - When creating a logistics line, the UI must offer factory selection dropdowns (cannot create line without valid source/destination)
 - Overclock values are validated in real-time (0.0 - 250.0 range)
-- Sommersloop limits are enforced based on machine type before submission
+- Somersloop limits are enforced based on machine type before submission
 
 **Engine-Level Validation** (currently uses `Box<dyn std::error::Error>`, needs custom error types):
 
@@ -213,7 +249,7 @@ The system should prevent invalid configurations through UI validation and engin
 pub enum SatisflowError {
     FactoryNotFound(u64),
     InvalidOverclock(f32),
-    InvalidSommersloop { machine: MachineType, provided: u8, max: u8 },
+    InvalidSomersloop { machine: MachineType, provided: u8, max: u8 },
     LogisticsEndpointInvalid { from: u64, to: u64 },
     // ... other error types
 }
@@ -222,7 +258,7 @@ pub enum SatisflowError {
 **Existing Validations**:
 
 - Overclock range (0-250%) ✅
-- Sommersloop limits per machine type ✅
+- Somersloop limits per machine type ✅
 - Factory existence when creating logistics lines ✅
 
 - engine should support blueprint (like in the game) as a custome recipe type.
@@ -319,6 +355,23 @@ A global Dashboard, a Factory View and a Logistics view.
 
 The Dashboard offer a global view of every item produced, the total power generation/consumption, the number of factory and the number of production line per factory, the number of logistics line.
 It offer convenient filtering to see item source by factory name, a way to order by amount produced, groups by production line groups, selecting only Overflow, underflow, balanced item production.
+
+**Save/Load Controls**:
+
+The dashboard header features two buttons for managing the entire factory state:
+
+- **Save Button**: Downloads the current engine state as a timestamped JSON file (`satisflow-save_YYYY-MM-DDTHH-MM-SS.json`)
+  - Shows loading state during operation
+  - Displays success message with factory/logistics count
+  - Allows users to keep backups and share configurations
+
+- **Load Button**: Opens file picker to restore a previously saved state
+  - Validates JSON format and version compatibility
+  - Replaces entire engine state (factories, production lines, logistics)
+  - Auto-refreshes dashboard after successful load
+  - Shows clear error messages for incompatible versions
+
+Both buttons are disabled during operations to prevent conflicts.
 
 ### FactoryView
 

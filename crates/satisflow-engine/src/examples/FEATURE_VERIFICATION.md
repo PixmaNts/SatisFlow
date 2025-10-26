@@ -122,7 +122,7 @@ The factory example creates a comprehensive setup with 5 specialized factories c
 - Compile-time recipe validation
 - Machine type compatibility checks
 - Overclock range validation (0-250%)
-- Sommersloop limit enforcement per machine type
+- Somersloop limit enforcement per machine type
 - Resource-extractor compatibility validation
 
 **Test Coverage**:
