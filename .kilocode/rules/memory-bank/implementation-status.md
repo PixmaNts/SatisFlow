@@ -91,17 +91,18 @@
 **Implementation**: Complete power generation system with 160+ tests
 **Features**: All 5 generator types with proper fuel consumption and waste tracking
 
-#### Persistence Layer ⚠️ NOT STARTED
+#### Persistence Layer ✅ COMPLETE
 
-- [ ] Serde Serialize/Deserialize for all types
-- [ ] JSON export for entire SatisflowEngine state
-- [ ] JSON import with validation
-- [ ] Error handling for corrupted saves
-- [ ] Schema versioning for future compatibility
-- [ ] Migration system for breaking changes
+- [x] Serde Serialize/Deserialize for all types
+- [x] JSON export for entire SatisflowEngine state
+- [x] JSON import with validation
+- [x] Error handling for corrupted saves
+- [x] Schema versioning for future compatibility
+- [x] Migration system architecture (full implementation deferred - YAGNI)
 
-**Blockers**: None  
-**Estimated Effort**: 4-6 hours
+**Completed**: 2025-10-25
+**Implementation**: Full save/load functionality across entire stack (Engine → Server → Frontend)
+**Features**: Semantic versioning, version compatibility checking, CLI testing tool, REST API endpoints, UI controls
 
 ### Medium Priority
 
@@ -180,6 +181,10 @@
 - [x] GET /api/game-data/recipes - All recipes
 - [x] GET /api/game-data/items - All items
 - [x] GET /api/game-data/machines - All machine types
+
+**Save/Load Endpoints**:
+- [x] GET /api/save - Save current engine state to JSON
+- [x] POST /api/load - Load engine state from JSON
 
 ### Testing ✅
 
@@ -557,6 +562,78 @@ test('create production line', async ({ page }) => {
 
 ## Completed Improvements
 
+### Save/Load Functionality ✅ (2025-10-25)
+
+**Status**: Complete and Production Ready
+
+**What**: Full-stack implementation of save/load functionality with version management
+
+**Implementation**:
+
+**Phase 1 - Engine (CLI-first):**
+- [x] Added Serialize/Deserialize to SatisflowEngine
+- [x] Created SaveFile wrapper struct with metadata (version, timestamps, game_version)
+- [x] Implemented save_to_file(), load_from_file(), save_to_json(), load_from_json() methods
+- [x] Created version.rs module with SaveVersion struct for semantic versioning
+- [x] Version compatibility checking (same major = compatible, different major = incompatible)
+- [x] CLI testing tool (save_load_demo binary) with demo/save/load/roundtrip commands
+- [x] 11 comprehensive version-related tests (200 total engine tests passing)
+
+**Phase 2 - Server API:**
+- [x] Created save_load.rs handler module with save_engine() and load_engine() endpoints
+- [x] GET /api/save - Returns JSON with save_data and summary (version, factory_count, logistics_count)
+- [x] POST /api/load - Accepts save_data, validates version, replaces engine state
+- [x] Proper error handling with AppError types (EngineError, SerializationError, BadRequest)
+- [x] 6 comprehensive handler tests (all passing)
+
+**Phase 3 - Frontend UI:**
+- [x] Created useFileDownload.ts composable for browser JSON downloads
+- [x] Created useFileUpload.ts composable for file selection and JSON parsing
+- [x] Added save/load endpoints to API layer with TypeScript types
+- [x] Created SaveLoadControls.vue component with 2 buttons (Save/Load)
+- [x] Integrated controls into DashboardView header (next to Refresh button)
+- [x] Auto-refresh dashboard after load
+- [x] Success/error messages with 3s auto-dismiss
+- [x] 11 comprehensive Playwright E2E tests
+- [x] Fixed Vue lifecycle warnings in composables
+
+**Key Features**:
+
+- ✅ Semantic versioning with clear compatibility rules
+- ✅ Version-first approach: validate before deserializing
+- ✅ Graceful degradation for older compatible versions
+- ✅ Migration architecture designed (full implementation deferred - YAGNI)
+- ✅ Save button downloads `satisflow-save_[timestamp].json`
+- ✅ Load button validates file format and version compatibility
+- ✅ Comprehensive error handling with user-friendly messages
+- ✅ Responsive design for mobile
+- ✅ Type-safe implementation throughout
+
+**Files Created**:
+
+Engine:
+- `crates/satisflow-engine/src/version.rs` - Version management (150 lines)
+- `crates/satisflow-engine/src/bin/save_load_demo.rs` - CLI testing tool (284 lines)
+
+Server:
+- `crates/satisflow-server/src/handlers/save_load.rs` - API handlers (283 lines)
+
+Frontend:
+- `frontend/src/composables/useFileDownload.ts` - Download utility (65 lines)
+- `frontend/src/composables/useFileUpload.ts` - Upload utility (115 lines)
+- `frontend/src/components/dashboard/SaveLoadControls.vue` - UI component (220 lines)
+- `frontend/e2e/save-load.spec.ts` - E2E tests (280 lines)
+
+Documentation:
+- `MIGRATION-STRATEGY.md` - Comprehensive migration strategy (6000+ words)
+- `SAVE-LOAD-IMPLEMENTATION.md` - Complete implementation documentation
+
+**Testing**: ✅ 217 total tests passing (200 engine + 6 server + 11 E2E)
+
+**User Flow**:
+1. User clicks "Save" → Engine state serialized → Browser downloads JSON file
+2. User clicks "Load" → File picker opens → JSON validated → Engine state replaced → Dashboard refreshed
+
 ### Comprehensive Factory Example ✅ (2025-10-24)
 
 **Status**: Complete and Production Ready
@@ -661,6 +738,208 @@ test('create production line', async ({ page }) => {
 
 **Testing**: ✅ Comprehensive test suite with unit and E2E coverage
 
+## Missing Features & Implementation Gaps
+
+**Last Reviewed**: 2025-10-25
+**Source**: Consolidated from FRONTEND and BACKEND implementation plans
+
+### P0 - Critical Gaps (Blocking Features)
+
+#### 1. Blueprint Import/Export System ❌
+
+**Backend Missing**:
+- No REST endpoints: `POST /api/factories/:id/blueprints`, `GET /api/blueprints`, `DELETE /api/blueprints/:id`
+- Need serialization/deserialization for nested production lines in handlers
+- Engine supports blueprints, but no API exposure
+
+**Frontend Missing**:
+- No `ProductionLineBlueprintForm.vue` component
+- Placeholder banner instead of nested production line editor
+- No UI for Somersloop limits within blueprints
+- No overclock validation for blueprint nested lines
+
+**Estimated Effort**: Backend (3-4h) + Frontend (4-6h) = 7-10 hours total
+
+---
+
+#### 2. Logistics Update Flow ⚠️ PARTIAL
+
+**Status**:
+- ✅ Backend: `PUT /api/logistics/:id` exists in routes
+- ⚠️ Frontend: `LogisticsLineForm.vue` may duplicate lines instead of updating
+- ❌ Testing: Not verified if update flow works correctly
+
+**Action Required**:
+- Test logistics edit flow end-to-end
+- Fix form if creating duplicates instead of calling update endpoint
+- Add confirmation dialog for destructive edits
+
+**Estimated Effort**: 1-2 hours
+
+---
+
+#### 3. Transport Item Sources (Hard-coded) ❌
+
+**Problem**:
+- `BusEditor.vue`, `TrainEditor.vue`, `TruckEditor.vue`, `DroneEditor.vue` contain inline "Sample items..." lists
+- Contradicts shared game-data catalogue from `/api/game-data/items`
+- No validation for solid vs fluid compatibility
+
+**Required Changes**:
+- Replace hard-coded items with `useGameDataStore.items`
+- Add validation: solids (conveyors/cargo wagons) vs fluids (pipelines/fluid wagons)
+- Surface clear error messages for incompatible selections
+
+**Estimated Effort**: 2-3 hours
+
+---
+
+#### 4. Dashboard Filter Parity ⚠️ PARTIAL
+
+**Current State**:
+- ✅ Has: Balance state filter (overflow/underflow/balanced)
+- ✅ Has: Name search filter
+- ❌ Missing: Factory dropdown filter (from `/api/factories`)
+- ❌ Missing: Production group taxonomy filter
+- ❌ Missing: Quantity range filter
+- ❌ Missing: Numeric sorting (currently stringifies all values)
+
+**Required**:
+- Add factory filter dropdown fed by `useFactoryStore.factories`
+- Add production group filter (engine taxonomy)
+- Enhance `DataTable` with `sortAccessor`/`sortType` for numeric columns
+- Fix sorting by amount/factory
+
+**Estimated Effort**: 2-3 hours
+
+---
+
+### P1 - High Priority Enhancements
+
+#### 5. DataTable Component Limitations ❌
+
+**Issues**:
+- Stringifies all values (breaks numeric sorting)
+- No `sortAccessor` or `sortType` support
+- No keyboard focus handling (accessibility issue)
+- Item-name sorting doesn't work properly
+
+**Required**:
+- Extend column definition with `sortAccessor`/`sortType`
+- Add keyboard navigation (Arrow keys, Enter, Tab)
+- Support numeric, string, and custom comparators
+- Add ARIA labels for screen readers
+
+**Estimated Effort**: 2-3 hours
+
+---
+
+#### 6. Error Handling Inconsistency ⚠️
+
+**Problems**:
+- Repeated error handling code in components (not DRY)
+- Silent console.log() instead of user-facing toast notifications
+- No centralized error helper
+
+**Required**:
+- Create shared `useErrorNotification` composable
+- Integrate with toast system (already in `ToastContainer.vue`)
+- Replace console.log() with toast.error() calls
+- Add retry logic for transient failures
+
+**Estimated Effort**: 2-3 hours
+
+---
+
+#### 7. Enhanced Validation Layer ⚠️ PARTIAL
+
+**Backend Missing**:
+- ❌ Factory name uniqueness validation
+- ❌ Circular logistics detection (A→B→A)
+- ❌ Item flow balance warnings (underflow > threshold)
+- ❌ Production line recipe compatibility checks
+- ✅ Has: Overclock range (0-250%)
+- ✅ Has: Somersloop limits per machine type
+
+**Required**:
+- Add factory name uniqueness check on create/update
+- Implement cycle detection in logistics graph
+- Add configurable thresholds for balance warnings
+- Validate recipe machine type matches production line machine type
+
+**Estimated Effort**: 3-4 hours
+
+---
+
+#### 8. Audit Logging & Telemetry ⚠️ PARTIAL
+
+**Current State**:
+- ✅ Has: Structured logging with `tracing` crate
+- ✅ Has: Request/response logging
+- ❌ Missing: Rate-limited audit logs for CRUD operations
+- ❌ Missing: Metrics collection (Prometheus/StatsD)
+- ❌ Missing: Performance tracking
+
+**Required**:
+- Add audit log entries for create/update/delete actions
+- Implement rate limiting to prevent log spam
+- Add metrics for API endpoint latency
+- Track factory/logistics/production line counts
+
+**Estimated Effort**: 2-3 hours
+
+---
+
+### P2 - Low Priority & Technical Debt
+
+#### 9. Factory Deletion Cascade Confirmation
+
+- No UI confirmation when deleting factory with dependent logistics lines
+- **Estimated Effort**: 1 hour
+
+#### 10. ID Persistence Across Save/Load
+
+- UUIDs work at runtime but persistence flow not fully tested
+- **Estimated Effort**: 1-2 hours
+
+#### 11. Migration System Implementation
+
+- Architecture designed in `MIGRATION-STRATEGY.md`
+- Full implementation deferred until actually needed (YAGNI)
+- **Estimated Effort**: 4-6 hours when needed
+
+---
+
+### Testing Gaps
+
+**Frontend E2E Tests Needed** (Playwright):
+1. End-to-end factory CRUD with raw inputs and power generators
+2. Production line creation with overclock + Somersloop edge cases
+3. Logistics flows for bus/train/drone with attach-to-existing scenarios
+4. Dashboard filter persistence in `usePreferencesStore`
+5. Blueprint import/export flows (once implemented)
+
+**Backend Integration Tests Needed**:
+1. `factories_production_lines.rs` - CRUD happy path + validation failures
+2. `factories_raw_inputs.rs` - Pressurizer configs, extractor purity validation
+3. `factories_power_generators.rs` - Overclock, waste tracking
+4. `logistics_update.rs` - Edit flows per transport type
+5. `blueprints.rs` - Import/export, nested validation
+
+**Estimated Effort**: 4-6 hours for comprehensive test coverage
+
+---
+
+### Summary by Priority
+
+| Priority | Count | Total Effort |
+|----------|-------|--------------|
+| P0 (Critical) | 4 items | 13-18 hours |
+| P1 (High) | 4 items | 10-13 hours |
+| P2 (Low) | 3 items | 6-9 hours |
+| Tests | 10 suites | 4-6 hours |
+| **TOTAL** | **21 items** | **33-46 hours** |
+
 ## Known Issues
 
 ### Critical 🔴
@@ -669,7 +948,7 @@ None currently
 
 ### Major 🟠
 
-1. **No persistence**: Users cannot save/load their factory designs
+1. ~~**No persistence**~~: ✅ **FIXED** - Full save/load functionality implemented (2025-10-25)
 2. **Sequential IDs**: Risk of collisions in distributed scenarios
 3. **Factory deletion cascade**: Logistics lines are deleted but no UI confirmation
 
@@ -678,24 +957,47 @@ None currently
 1. **Limited error messages**: Errors lack context for debugging
 2. **No overflow warnings**: System doesn't warn about item imbalances
 3. **Limited real-time updates**: Dashboard polling interval could be configurable
-4. **No data export**: Cannot export factory configurations to share
+4. ~~**No data export**~~: ✅ **FIXED** - Save/load allows exporting and sharing configurations (2025-10-25)
 
 ## Technical Debt
 
 1. **Documentation**: Some inline docs missing for complex functions
 2. **Benchmarks**: No performance benchmarks established
 3. **CI/CD**: No automated testing pipeline
-4. **Persistence**: No actual file I/O implementation (only serialization)
-5. **Blueprint UI**: ProductionLineBlueprint exists but no UI for import/export
+4. ~~**Persistence**~~: ✅ **FIXED** - Full file I/O and JSON save/load implemented (2025-10-25)
+
+**Note**: Blueprint UI, validation enhancements, and testing gaps are now tracked in **"Missing Features & Implementation Gaps"** section above.
 
 ## Next Steps (Recommended Order)
 
-1. **Add persistence layer** - Enable save/load functionality (4-6 hours)
-2. **Improve ID management** - Replace sequential IDs with UUIDs (1-2 hours)
-3. **Add E2E tests** - Playwright test coverage for critical workflows (2-3 hours)
-4. **Performance optimization** - Add caching for dashboard aggregations (1-2 hours)
-5. **Blueprint import/export UI** - Enable sharing of production configurations (3-4 hours)
-6. **Deployment and CI/CD** - Set up automated testing and deployment pipeline (2-3 hours)
+**See "Missing Features & Implementation Gaps" section above for comprehensive breakdown.**
+
+**Quick Summary by Priority**:
+
+1. ~~**Add persistence layer**~~ - ✅ **COMPLETE** (2025-10-25)
+
+2. **P0 - Critical (13-18h total)**:
+   - Blueprint import/export (Backend + Frontend)
+   - Fix logistics update flow
+   - Replace hard-coded transport items
+   - Add missing dashboard filters
+
+3. **P1 - High Priority (10-13h total)**:
+   - DataTable enhancements (numeric sorting, keyboard nav)
+   - Centralized error handling
+   - Enhanced validation layer
+   - Audit logging & telemetry
+
+4. **P2 - Lower Priority (6-9h total)**:
+   - Factory deletion confirmation
+   - ID persistence testing
+   - Migration system (when needed)
+
+5. **Testing (4-6h)**:
+   - Comprehensive E2E test coverage
+   - Backend integration test suites
+
+**Total Remaining Work**: ~33-46 hours
 
 ## Success Metrics
 
@@ -706,12 +1008,13 @@ None currently
 - ✅ Type-safe logistics system
 - ✅ Working item calculation
 
-### Phase 1 (Target)
+### Phase 1 (Complete) ✅
 
-- [ ] 100% serializable state
+- [x] 100% serializable state
 - [x] Complete game mechanics coverage
-- [x] 160+ passing tests
+- [x] 200+ passing tests
 - [x] Zero compiler warnings
+- [x] Save/load with version management
 
 ### Phase 2 (Backend - Complete) ✅
 

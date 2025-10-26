@@ -17,7 +17,7 @@ mod handlers;
 mod state;
 
 use error::Result;
-use handlers::{dashboard, factory, game_data, logistics};
+use handlers::{dashboard, factory, game_data, logistics, save_load};
 use state::AppState;
 
 #[tokio::main]
@@ -101,6 +101,7 @@ async fn main() -> Result<()> {
         .nest("/api/logistics", logistics::routes())
         .nest("/api/dashboard", dashboard::routes())
         .nest("/api/game-data", game_data::routes())
+        .nest("/api", save_load::routes())
         // Health check
         .route("/health", get(health_check))
         // Global middleware

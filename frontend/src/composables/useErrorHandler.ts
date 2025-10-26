@@ -351,12 +351,6 @@ export function useErrorHandler() {
     }
   }
 
-  // Set up network status listeners
-  if (typeof window !== 'undefined') {
-    window.addEventListener('online', handleOnlineStatusChange)
-    window.addEventListener('offline', handleOnlineStatusChange)
-  }
-
   return {
     // State
     errors: () => state.errors,
@@ -381,8 +375,19 @@ export function useErrorHandler() {
 // Create singleton instance
 export const errorHandler = useErrorHandler()
 
-// Global error handlers
+// Global error handlers - set up at module level
 if (typeof window !== 'undefined') {
+  // Network status change handler
+  const handleNetworkChange = () => {
+    state.isOnline = navigator.onLine
+    if (state.isOnline) {
+      errorHandler.processRetryQueue()
+    }
+  }
+
+  window.addEventListener('online', handleNetworkChange)
+  window.addEventListener('offline', handleNetworkChange)
+
   // Handle unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
     errorHandler.handleError(event.reason, {

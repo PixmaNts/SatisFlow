@@ -1,0 +1,142 @@
+{
+  "version": "0.1.0",
+  "created_at": "2025-10-25T16:55:47.939216Z",
+  "last_modified": "2025-10-25T16:55:47.939216Z",
+  "game_version": null,
+  "engine": {
+    "factories": {
+      "b1e8c374-b2f4-42c3-af5e-fd3ca7b29b66": {
+        "id": "b1e8c374-b2f4-42c3-af5e-fd3ca7b29b66",
+        "name": "Iron Processing Plant",
+        "description": "Main iron smelting facility",
+        "notes": null,
+        "production_lines": {
+          "a31dda0e-c3c3-4752-9b87-a9283033a4a6": {
+            "ProductionLineRecipe": {
+              "id": "a31dda0e-c3c3-4752-9b87-a9283033a4a6",
+              "name": "Iron Ingot Production",
+              "description": "Smelting iron ore",
+              "recipe": "IronIngot",
+              "machine_groups": [
+                {
+                  "number_of_machine": 10,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          }
+        },
+        "raw_inputs": {
+          "6f63ccd0-f4d8-4f88-987e-144bdebc3376": {
+            "id": "6f63ccd0-f4d8-4f88-987e-144bdebc3376",
+            "extractor_type": "MinerMk2",
+            "item": "IronOre",
+            "purity": "Pure",
+            "quantity_per_min": 240.0,
+            "pressurizer": null,
+            "extractors": []
+          }
+        },
+        "power_generators": {
+          "12feebda-0a74-40d9-974d-5bc663ca3cd1": {
+            "id": "12feebda-0a74-40d9-974d-5bc663ca3cd1",
+            "generator_type": "Coal",
+            "fuel_type": "Coal",
+            "groups": [
+              {
+                "number_of_generators": 8,
+                "clock_speed": 100.0
+              }
+            ]
+          }
+        },
+        "items": {}
+      },
+      "13f4543f-a381-4de9-a994-e87a3bc1c642": {
+        "id": "13f4543f-a381-4de9-a994-e87a3bc1c642",
+        "name": "Steel Processing Plant",
+        "description": "Advanced steel production",
+        "notes": null,
+        "production_lines": {
+          "5e17a3b7-db12-43a3-8864-25d781a1e8e4": {
+            "ProductionLineRecipe": {
+              "id": "5e17a3b7-db12-43a3-8864-25d781a1e8e4",
+              "name": "Steel Ingot Production",
+              "description": "Making steel from iron and coal",
+              "recipe": "SteelIngot",
+              "machine_groups": [
+                {
+                  "number_of_machine": 5,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          }
+        },
+        "raw_inputs": {
+          "f4ecf3ed-c4f1-4683-bc97-d1c7b9c11a19": {
+            "id": "f4ecf3ed-c4f1-4683-bc97-d1c7b9c11a19",
+            "extractor_type": "MinerMk1",
+            "item": "Coal",
+            "purity": "Normal",
+            "quantity_per_min": 60.0,
+            "pressurizer": null,
+            "extractors": []
+          }
+        },
+        "power_generators": {
+          "04adef47-a96c-4167-b859-b5f6e79efdda": {
+            "id": "04adef47-a96c-4167-b859-b5f6e79efdda",
+            "generator_type": "Fuel",
+            "fuel_type": "Fuel",
+            "groups": [
+              {
+                "number_of_generators": 4,
+                "clock_speed": 100.0
+              }
+            ]
+          }
+        },
+        "items": {}
+      }
+    },
+    "logistics_lines": {
+      "3e96f616-349a-480b-8210-3f0cb8bfc3c7": {
+        "id": "3e96f616-349a-480b-8210-3f0cb8bfc3c7",
+        "from_factory": "b1e8c374-b2f4-42c3-af5e-fd3ca7b29b66",
+        "to_factory": "13f4543f-a381-4de9-a994-e87a3bc1c642",
+        "transport_type": {
+          "Bus": {
+            "bus_id": 1,
+            "bus_name": "Iron Ingot Bus",
+            "lines": [
+              {
+                "line_id": 1,
+                "speed": "Mk3",
+                "item": "IronIngot",
+                "quantity_per_min": 270.0
+              }
+            ],
+            "pipelines": []
+          }
+        },
+        "transport_details": "Iron Ingot Bus"
+      },
+      "55389022-a344-403b-9291-60c5cc9e6151": {
+        "id": "55389022-a344-403b-9291-60c5cc9e6151",
+        "from_factory": "13f4543f-a381-4de9-a994-e87a3bc1c642",
+        "to_factory": "b1e8c374-b2f4-42c3-af5e-fd3ca7b29b66",
+        "transport_type": {
+          "Truck": {
+            "truck_id": 2,
+            "item": "Coal",
+            "quantity_per_min": 60.0
+          }
+        },
+        "transport_details": "Coal Truck Route"
+      }
+    }
+  }
+}

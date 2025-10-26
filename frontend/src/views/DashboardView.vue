@@ -7,6 +7,10 @@
         <p class="dashboard-subtitle">Global overview of all production</p>
       </div>
       <div class="header-actions">
+        <SaveLoadControls
+          @saved="handleSaved"
+          @loaded="handleLoaded"
+        />
         <Button
           variant="secondary"
           size="sm"
@@ -163,7 +167,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useDashboardStore } from '@/stores'
 import { usePreferencesStore } from '@/stores/preferences'
 import { Button, Alert, LoadingSpinner, DataTable } from '@/components/ui'
-import { SummaryCards, PowerStatsChart } from '@/components/dashboard'
+import { SummaryCards, PowerStatsChart, SaveLoadControls } from '@/components/dashboard'
 import type { Column } from '@/components/ui/DataTable.vue'
 
 // Store
@@ -266,6 +270,17 @@ const handleFilterChange = () => {
 const handleSortChange = ({ key, direction }: { key: string; direction: 'asc' | 'desc' }) => {
   // Sorting is handled by the DataTable component
   console.log('Sort changed:', { key, direction })
+}
+
+const handleSaved = () => {
+  // Optionally refresh dashboard after save
+  console.log('Engine state saved successfully')
+}
+
+const handleLoaded = async () => {
+  // Refresh dashboard data after loading
+  console.log('Engine state loaded successfully, refreshing dashboard...')
+  await fetchData()
 }
 
 const setupAutoRefresh = () => {

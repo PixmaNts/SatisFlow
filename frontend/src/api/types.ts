@@ -581,6 +581,36 @@ export interface PaginatedResponse<T> {
 }
 
 // ============================================================================
+// Save/Load Types
+// ============================================================================
+
+// Save file summary information
+export interface SaveFileSummary {
+  version: string;
+  factory_count: number;
+  logistics_count: number;
+  created_at: string;
+  last_modified: string;
+}
+
+// Save response
+export interface SaveResponse {
+  save_data: string;
+  summary: SaveFileSummary;
+}
+
+// Load request
+export interface LoadRequest {
+  save_data: string;
+}
+
+// Load response
+export interface LoadResponse {
+  message: string;
+  summary: SaveFileSummary;
+}
+
+// ============================================================================
 // Utility Types
 // ============================================================================
 

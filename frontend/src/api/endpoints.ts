@@ -19,6 +19,9 @@ import type {
   UpdateRawInputRequest,
   CreatePowerGeneratorRequest,
   UpdatePowerGeneratorRequest,
+  SaveResponse,
+  LoadRequest,
+  LoadResponse,
 } from './types';
 
 /**
@@ -288,6 +291,30 @@ export const system = {
 };
 
 /**
+ * Save/Load API endpoints
+ * Provides save and load functionality for engine state
+ */
+export const saveLoad = {
+  /**
+   * Save the current engine state
+   * @returns Promise resolving to save data and summary
+   */
+  save: async (): Promise<SaveResponse> => {
+    return api.get<SaveResponse>('/save');
+  },
+
+  /**
+   * Load engine state from save data
+   * @param saveData - The save data JSON string
+   * @returns Promise resolving to load response with summary
+   */
+  load: async (saveData: string): Promise<LoadResponse> => {
+    const request: LoadRequest = { save_data: saveData };
+    return api.post<LoadResponse>('/load', request);
+  },
+};
+
+/**
  * Export all endpoint groups for convenient importing
  */
 export const endpoints = {
@@ -296,6 +323,7 @@ export const endpoints = {
   dashboard,
   gameData,
   system,
+  saveLoad,
 };
 
 /**

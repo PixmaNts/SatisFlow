@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted } from 'vue'
+// Removed onMounted, onUnmounted - not needed for module-level event listeners
 
 export interface KeyboardShortcut {
   key: string
@@ -150,15 +150,6 @@ export function useKeyboardShortcuts() {
     }))
   }
 
-  // Set up event listeners
-  onMounted(() => {
-    document.addEventListener('keydown', handleKeyDown)
-  })
-
-  onUnmounted(() => {
-    document.removeEventListener('keydown', handleKeyDown)
-  })
-
   return {
     registerShortcut,
     registerShortcuts,
@@ -173,6 +164,11 @@ export function useKeyboardShortcuts() {
  * Global keyboard shortcuts instance
  */
 export const keyboardShortcuts = useKeyboardShortcuts()
+
+// Set up global event listeners at module level
+if (typeof document !== 'undefined') {
+  document.addEventListener('keydown', handleKeyDown)
+}
 
 /**
  * Common keyboard shortcuts

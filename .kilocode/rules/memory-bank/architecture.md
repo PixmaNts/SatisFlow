@@ -428,12 +428,58 @@ Vue.js UI (Update)
 6. ✅ **Frontend UI implementation** with Vue 3 + TypeScript + Vite
 7. ✅ **Complete component architecture** with 88 files and ~14,100 lines
 8. ✅ **Comprehensive factory example** demonstrating all engine features
+9. ✅ **Persistence layer** with full save/load functionality (2025-10-25)
+10. ✅ **Type synchronization** between frontend/backend (2025-10-24)
 
 ## Missing Components (To Be Implemented)
 
-1. **Persistence layer** (JSON file save/load - only serialization exists)
-2. **Blueprint import/export UI** (ProductionLineBlueprint exists but needs UI)
-3. **Enhanced validation layer** for user inputs
+1. **Blueprint import/export UI** (ProductionLineBlueprint exists but needs UI)
+2. **Enhanced validation layer** for user inputs
+3. **Migration system** (architecture designed, full implementation deferred - YAGNI)
+
+## Best Practices & Lessons Learned
+
+### Type Synchronization (Frontend ↔ Backend)
+
+**Key Principle**: Use native types instead of string representations for enums.
+
+**Implementation**:
+- Backend: Serialize enums directly with serde (e.g., `pub item: Item`)
+- Frontend: Define matching TypeScript unions (e.g., `type Item = "IronOre" | "CopperOre" | ...`)
+- Avoid: Manual string parsing or Debug format (`format!("{:?}", item)`)
+
+**Benefits**:
+- Compile-time type safety on both sides
+- Eliminates 26+ lines of redundant parsing code
+- Automatic serialization/deserialization via serde
+- Future enum additions require zero changes to handlers
+
+### Null Handling
+
+**Rust Side**:
+```rust
+pub description: Option<String>  // Serializes to null or string
+```
+
+**TypeScript Side**:
+```typescript
+description: string | null  // Explicit null handling
+```
+
+**Rationale**: TypeScript strict null checking prevents runtime errors.
+
+### Serde Best Practices
+
+1. **Leverage serde defaults**: Enum serialization works correctly out-of-the-box
+2. **Trust the type system**: No need for manual string conversions
+3. **Version compatibility**: Use `#[serde(default)]` for new optional fields
+
+### Code Quality Wins (2025-10-24 Type Sync)
+
+- ✅ All 200+ Item variants work across entire API
+- ✅ Removed redundant manual parsing in logistics handler
+- ✅ Consistent serialization in all 4 API modules (factory, logistics, dashboard, game_data)
+- ✅ Proper nullable types prevent undefined behavior
 
 ## Performance Considerations
 
