@@ -22,6 +22,7 @@ import type {
   SaveResponse,
   LoadRequest,
   LoadResponse,
+  ResetResponse,
 } from './types';
 
 /**
@@ -311,6 +312,14 @@ export const saveLoad = {
   load: async (saveData: string): Promise<LoadResponse> => {
     const request: LoadRequest = { save_data: saveData };
     return api.post<LoadResponse>('/load', request);
+  },
+
+  /**
+   * Reset the engine to an empty state (clears all factories and logistics)
+   * @returns Promise resolving to reset confirmation message
+   */
+  reset: async (): Promise<ResetResponse> => {
+    return api.post<ResetResponse>('/reset', {});
   },
 };
 

@@ -10,6 +10,7 @@
         <SaveLoadControls
           @saved="handleSaved"
           @loaded="handleLoaded"
+          @reset="handleReset"
         />
         <Button
           variant="secondary"
@@ -164,14 +165,17 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useDashboardStore } from '@/stores'
+import { useDashboardStore, useFactoryStore, useLogisticsStore, useGameDataStore } from '@/stores'
 import { usePreferencesStore } from '@/stores/preferences'
 import { Button, Alert, LoadingSpinner, DataTable } from '@/components/ui'
 import { SummaryCards, PowerStatsChart, SaveLoadControls } from '@/components/dashboard'
 import type { Column } from '@/components/ui/DataTable.vue'
 
-// Store
+// Stores
 const dashboardStore = useDashboardStore()
+const factoryStore = useFactoryStore()
+const logisticsStore = useLogisticsStore()
+const gameDataStore = useGameDataStore()
 const preferencesStore = usePreferencesStore()
 
 // State
@@ -278,8 +282,38 @@ const handleSaved = () => {
 }
 
 const handleLoaded = async () => {
-  // Refresh dashboard data after loading
-  console.log('Engine state loaded successfully, refreshing dashboard...')
+  // Reset all stores to clear cached data (since we just loaded new state)
+  console.log('Engine state loaded successfully, clearing stores and refreshing dashboard...')
+
+  // Reset all stores (except preferences - we want to keep user settings)
+  dashboardStore.reset()
+  factoryStore.reset()
+  logisticsStore.reset()
+  // Note: gameDataStore contains static game data, so we don't reset it
+
+  // Clear factory/logistics references in preferences (they no longer exist)
+  preferencesStore.setSelectedFactoryId(null)
+  preferencesStore.resetLogisticsFilters() // Clears sourceFactory/destinationFactory filters
+
+  // Refresh dashboard data
+  await fetchData()
+}
+
+const handleReset = async () => {
+  // Reset all stores to clear cached data
+  console.log('Engine state reset successfully, clearing stores and refreshing dashboard...')
+
+  // Reset all stores (except preferences - we want to keep user settings)
+  dashboardStore.reset()
+  factoryStore.reset()
+  logisticsStore.reset()
+  // Note: gameDataStore contains static game data, so we don't reset it
+
+  // Clear factory/logistics references in preferences (they no longer exist)
+  preferencesStore.setSelectedFactoryId(null)
+  preferencesStore.resetLogisticsFilters() // Clears sourceFactory/destinationFactory filters
+
+  // Refresh dashboard data
   await fetchData()
 }
 

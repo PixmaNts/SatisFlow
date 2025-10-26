@@ -219,6 +219,30 @@ impl SatisflowEngine {
         Ok(())
     }
 
+    /// Reset the engine to an empty state (clear all factories and logistics)
+    ///
+    /// # Returns
+    ///
+    /// Result indicating success or failure
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use satisflow_engine::SatisflowEngine;
+    ///
+    /// let mut engine = SatisflowEngine::new();
+    /// engine.create_factory("Test Factory".to_string(), None);
+    /// assert_eq!(engine.get_all_factories().len(), 1);
+    ///
+    /// engine.reset().unwrap();
+    /// assert_eq!(engine.get_all_factories().len(), 0);
+    /// ```
+    pub fn reset(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        self.factories.clear();
+        self.logistics_lines.clear();
+        Ok(())
+    }
+
     /// Save the engine state to a JSON file
     ///
     /// # Arguments
@@ -915,5 +939,48 @@ mod tests {
 
         let err = result.unwrap_err();
         assert!(err.to_string().contains("Invalid version format"));
+    }
+
+    #[test]
+    fn test_reset_engine() {
+        let mut engine = SatisflowEngine::new();
+
+        // Create factories and logistics
+        let factory1_id = engine.create_factory("Factory 1".to_string(), None);
+        let factory2_id = engine.create_factory("Factory 2".to_string(), None);
+
+        let transport = TransportType::Truck(TruckTransport::new(1, Item::IronOre, 60.0));
+        engine
+            .create_logistics_line(
+                factory1_id,
+                factory2_id,
+                transport,
+                "Test truck".to_string(),
+            )
+            .unwrap();
+
+        // Verify initial state
+        assert_eq!(engine.get_all_factories().len(), 2);
+        assert_eq!(engine.get_all_logistics().len(), 1);
+
+        // Reset the engine
+        engine.reset().unwrap();
+
+        // Verify engine is empty
+        assert_eq!(engine.get_all_factories().len(), 0);
+        assert_eq!(engine.get_all_logistics().len(), 0);
+    }
+
+    #[test]
+    fn test_reset_empty_engine() {
+        let mut engine = SatisflowEngine::new();
+
+        // Reset empty engine (should not fail)
+        let result = engine.reset();
+        assert!(result.is_ok());
+
+        // Verify still empty
+        assert_eq!(engine.get_all_factories().len(), 0);
+        assert_eq!(engine.get_all_logistics().len(), 0);
     }
 }

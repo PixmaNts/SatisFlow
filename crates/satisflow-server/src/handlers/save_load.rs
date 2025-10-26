@@ -37,6 +37,13 @@ pub struct LoadResponse {
     pub summary: SaveFileSummary,
 }
 
+/// Response for reset endpoint
+#[derive(Debug, Serialize)]
+pub struct ResetResponse {
+    /// Success message
+    pub message: String,
+}
+
 /// GET /api/save
 ///
 /// Saves the current engine state and returns it as JSON
@@ -109,11 +116,35 @@ pub async fn load_engine(
     }))
 }
 
+/// POST /api/reset
+///
+/// Resets the engine to an empty state (clears all factories and logistics lines)
+///
+/// # Returns
+///
+/// - `200 OK` with success message
+/// - `500 Internal Server Error` if reset fails
+pub async fn reset_engine(
+    State(state): State<AppState>,
+) -> Result<Json<ResetResponse>, AppError> {
+    // Reset the engine
+    let mut engine = state.engine.write().await;
+    engine
+        .reset()
+        .map_err(|e| AppError::EngineError(e.to_string()))?;
+
+    Ok(Json(ResetResponse {
+        message: "Engine reset successfully - all factories and logistics lines have been cleared"
+            .to_string(),
+    }))
+}
+
 // Route configuration
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/save", get(save_engine))
         .route("/load", post(load_engine))
+        .route("/reset", post(reset_engine))
 }
 
 #[cfg(test)]
@@ -279,5 +310,88 @@ mod tests {
 
         let result = load_engine(State(state), Json(request)).await;
         assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_reset_empty_engine() {
+        let state = create_test_state();
+
+        let result = reset_engine(State(state.clone())).await;
+        assert!(result.is_ok());
+
+        let response = result.unwrap();
+        assert!(response.0.message.contains("reset successfully"));
+
+        // Verify engine is empty
+        let engine = state.engine.read().await;
+        assert_eq!(engine.get_all_factories().len(), 0);
+        assert_eq!(engine.get_all_logistics().len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_reset_with_data() {
+        let state = create_test_state();
+
+        // Add some data
+        {
+            let mut engine = state.engine.write().await;
+            engine.create_factory("Factory 1".to_string(), None);
+            engine.create_factory("Factory 2".to_string(), None);
+        }
+
+        // Verify data exists
+        {
+            let engine = state.engine.read().await;
+            assert_eq!(engine.get_all_factories().len(), 2);
+        }
+
+        // Reset
+        let result = reset_engine(State(state.clone())).await;
+        assert!(result.is_ok());
+
+        // Verify data is cleared
+        {
+            let engine = state.engine.read().await;
+            assert_eq!(engine.get_all_factories().len(), 0);
+            assert_eq!(engine.get_all_logistics().len(), 0);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_reset_clears_logistics() {
+        use satisflow_engine::models::logistics::{TransportType, TruckTransport};
+        use satisflow_engine::models::Item;
+
+        let state = create_test_state();
+
+        // Add factories and logistics
+        {
+            let mut engine = state.engine.write().await;
+            let factory1 = engine.create_factory("Factory 1".to_string(), None);
+            let factory2 = engine.create_factory("Factory 2".to_string(), None);
+
+            let transport = TransportType::Truck(TruckTransport::new(1, Item::IronOre, 60.0));
+            engine
+                .create_logistics_line(factory1, factory2, transport, "Test".to_string())
+                .unwrap();
+        }
+
+        // Verify data exists
+        {
+            let engine = state.engine.read().await;
+            assert_eq!(engine.get_all_factories().len(), 2);
+            assert_eq!(engine.get_all_logistics().len(), 1);
+        }
+
+        // Reset
+        let result = reset_engine(State(state.clone())).await;
+        assert!(result.is_ok());
+
+        // Verify everything is cleared
+        {
+            let engine = state.engine.read().await;
+            assert_eq!(engine.get_all_factories().len(), 0);
+            assert_eq!(engine.get_all_logistics().len(), 0);
+        }
     }
 }

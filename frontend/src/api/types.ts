@@ -610,6 +610,11 @@ export interface LoadResponse {
   summary: SaveFileSummary;
 }
 
+// Reset response
+export interface ResetResponse {
+  message: string;
+}
+
 // ============================================================================
 // Utility Types
 // ============================================================================
