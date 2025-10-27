@@ -1,40 +1,46 @@
 import { api } from './client';
 import type {
-  FactoryResponse,
-  LogisticsResponse,
-  DashboardSummary,
-  ItemBalance,
-  PowerStats,
-  RecipeInfo,
-  MachineInfo,
-  ItemInfo,
-  HealthCheckResponse,
-  CreateFactoryRequest,
-  UpdateFactoryRequest,
-  CreateLogisticsRequest,
-  UpdateLogisticsRequest,
-  CreateProductionLineRequest,
-  UpdateProductionLineRequest,
-  CreateRawInputRequest,
-  UpdateRawInputRequest,
-  CreatePowerGeneratorRequest,
-  UpdatePowerGeneratorRequest,
-  SaveResponse,
-  LoadRequest,
-  LoadResponse,
-  ResetResponse,
-  BlueprintExportResponse,
-  BlueprintImportRequest,
-  BlueprintImportResponse,
-  BlueprintMetadata,
-  BlueprintTemplateResponse,
-  CreateBlueprintTemplateRequest,
-  UpdateBlueprintTemplateRequest,
-  ImportTemplateRequest,
-  ExportTemplateResponse,
-  TemplateMetadata,
-  CreateFromTemplateRequest,
-  CreateFromTemplateResponse,
+   FactoryResponse,
+   LogisticsResponse,
+   DashboardSummary,
+   ItemBalance,
+   PowerStats,
+   RecipeInfo,
+   MachineInfo,
+   ItemInfo,
+   HealthCheckResponse,
+   CreateFactoryRequest,
+   UpdateFactoryRequest,
+   CreateLogisticsRequest,
+   UpdateLogisticsRequest,
+   CreateProductionLineRequest,
+   UpdateProductionLineRequest,
+   CreateRawInputRequest,
+   UpdateRawInputRequest,
+   CreatePowerGeneratorRequest,
+   UpdatePowerGeneratorRequest,
+   SaveResponse,
+   LoadRequest,
+   LoadResponse,
+   ResetResponse,
+   BlueprintExportResponse,
+   BlueprintImportRequest,
+   BlueprintImportResponse,
+   BlueprintMetadata,
+   BlueprintTemplateResponse,
+   CreateBlueprintTemplateRequest,
+   UpdateBlueprintTemplateRequest,
+   ImportTemplateRequest,
+   ExportTemplateResponse,
+   TemplateMetadata,
+   CreateFromTemplateRequest,
+   CreateFromTemplateResponse,
+   ProductionLinePreviewRequest,
+   ProductionLinePreviewResponse,
+   PowerGeneratorPreviewRequest,
+   PowerGeneratorPreviewResponse,
+   RawInputPreviewRequest,
+   RawInputPreviewResponse,
 } from './types';
 
 /**
@@ -170,6 +176,59 @@ export const factories = {
     ): Promise<FactoryResponse> => {
       return api.delete<FactoryResponse>(
         `/factories/${factoryId}/power-generators/${generatorId}`
+      );
+    },
+  },
+
+  /**
+   * Preview endpoints for real-time form calculations
+   */
+  preview: {
+    /**
+     * Preview production line calculations without creating it
+     * @param factoryId - The factory ID for context
+     * @param request - The production line preview request
+     * @returns Promise resolving to preview calculations
+     */
+    productionLine: async (
+      factoryId: string,
+      request: ProductionLinePreviewRequest
+    ): Promise<ProductionLinePreviewResponse> => {
+      return api.post<ProductionLinePreviewResponse>(
+        `/factories/${factoryId}/production-lines/preview`,
+        request
+      );
+    },
+
+    /**
+     * Preview power generator calculations without creating it
+     * @param factoryId - The factory ID for context
+     * @param request - The power generator preview request
+     * @returns Promise resolving to preview calculations
+     */
+    powerGenerator: async (
+      factoryId: string,
+      request: PowerGeneratorPreviewRequest
+    ): Promise<PowerGeneratorPreviewResponse> => {
+      return api.post<PowerGeneratorPreviewResponse>(
+        `/factories/${factoryId}/power-generators/preview`,
+        request
+      );
+    },
+
+    /**
+     * Preview raw input calculations without creating it
+     * @param factoryId - The factory ID for context
+     * @param request - The raw input preview request
+     * @returns Promise resolving to preview calculations
+     */
+    rawInput: async (
+      factoryId: string,
+      request: RawInputPreviewRequest
+    ): Promise<RawInputPreviewResponse> => {
+      return api.post<RawInputPreviewResponse>(
+        `/factories/${factoryId}/raw-inputs/preview`,
+        request
       );
     },
   },

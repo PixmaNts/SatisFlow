@@ -327,6 +327,9 @@ export type ProductionLineResponse =
       };
       total_power_consumption: number;
       total_machines: number;
+      total_somersloop: number;
+      input_rate: ItemQuantity[];
+      output_rate: ItemQuantity[];
     }
   | {
       ProductionLineBlueprint: {
@@ -337,6 +340,9 @@ export type ProductionLineResponse =
       };
       total_power_consumption: number;
       total_machines: number;
+      total_somersloop: number;
+      input_rate: ItemQuantity[];
+      output_rate: ItemQuantity[];
     };
 
 // Raw input response
@@ -348,6 +354,7 @@ export interface RawInputResponse {
   quantity_per_min: number;
   pressurizer: ResourceWellPressurizer | null;
   extractors: ResourceWellExtractor[];
+  power_consumption: number;
 }
 
 // Resource well pressurizer
@@ -371,6 +378,10 @@ export interface PowerGeneratorResponse {
   generator_type: GeneratorType;
   fuel_type: Item | null;
   groups: GeneratorGroup[];
+  total_power_generation: number;
+  total_fuel_consumption: number;
+  waste_production_rate: number;
+  waste_product: Item | null;
 }
 
 // Logistics response
@@ -667,6 +678,68 @@ export type UpdatePowerGeneratorRequest = CreatePowerGeneratorRequest;
 
 // Update logistics request (same shape as create)
 export type UpdateLogisticsRequest = CreateLogisticsRequest;
+
+// ============================================================================
+// Preview Types
+// ============================================================================
+
+// Production line preview request
+export interface ProductionLinePreviewRequest {
+  name: string;
+  description?: string;
+  type: "recipe" | "blueprint";
+  recipe?: string;
+  machine_groups?: MachineGroup[];
+  production_lines?: BlueprintRecipeRequest[];
+}
+
+// Power generator preview request
+export interface PowerGeneratorPreviewRequest {
+  generator_type: GeneratorType;
+  fuel_type?: Item;
+  groups: GeneratorGroup[];
+}
+
+// Raw input preview request
+export interface RawInputPreviewRequest {
+  extractor_type: ExtractorType;
+  item: Item;
+  purity?: Purity;
+  quantity_per_min?: number;
+  pressurizer?: {
+    id?: number;
+    clock_speed: number;
+  };
+  extractors?: Array<{
+    id?: number;
+    purity: Purity;
+    item?: Item;
+    quantity_per_min?: number;
+  }>;
+}
+
+// Production line preview response
+export interface ProductionLinePreviewResponse {
+  total_power_consumption: number;
+  total_machines: number;
+  total_somersloop: number;
+  input_rate: ItemQuantity[];
+  output_rate: ItemQuantity[];
+}
+
+// Power generator preview response
+export interface PowerGeneratorPreviewResponse {
+  total_power_generation: number;
+  total_fuel_consumption: number;
+  waste_production_rate: number;
+  waste_product: Item | null;
+}
+
+// Raw input preview response
+export interface RawInputPreviewResponse {
+  power_consumption: number;
+  quantity_per_min: number;
+}
 
 // ============================================================================
 // Error Response Type

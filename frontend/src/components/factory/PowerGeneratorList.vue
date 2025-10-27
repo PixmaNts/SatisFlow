@@ -120,7 +120,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useFactoryStore } from '@/stores/factory'
-import { useGameDataStore } from '@/stores/gameData'
 import type { PowerGeneratorResponse, GeneratorType } from '@/api/types'
 import Button from '@/components/ui/Button.vue'
 import DataTable from '@/components/ui/DataTable.vue'
@@ -205,43 +204,13 @@ const getTotalGenerators = (generator: PowerGeneratorResponse): number => {
 }
 
 const getPowerOutput = (generator: PowerGeneratorResponse): number => {
-  // Base power output for different generator types
-  const basePower: Record<GeneratorType, number> = {
-    Biomass: 30,
-    Coal: 150,
-    Fuel: 150,
-    Nuclear: 2500,
-    Geothermal: 200
-  }
-
-  const basePowerValue = basePower[generator.generator_type] || 0
-
-  return generator.groups.reduce((total, group) => {
-    const clockSpeed = group.clock_speed / 100
-    const powerMultiplier = Math.pow(clockSpeed, 1.321928)
-    return total + (group.number_of_generators * basePowerValue * powerMultiplier)
-  }, 0)
+  // Use backend-calculated power generation
+  return generator.total_power_generation
 }
 
 const getFuelConsumption = (generator: PowerGeneratorResponse): number => {
-  if (!generator.fuel_type) return 0
-
-  // Base fuel consumption rates (items/min) for different generators
-  const baseFuelRate: Record<GeneratorType, number> = {
-    Biomass: 4,
-    Coal: 15.3,
-    Fuel: 4.5,
-    Nuclear: 0.025, // Uranium Fuel Rods/min
-    Geothermal: 0 // No fuel consumption
-  }
-
-  const baseRate = baseFuelRate[generator.generator_type] || 0
-
-  return generator.groups.reduce((total, group) => {
-    const clockSpeed = group.clock_speed / 100
-    const fuelMultiplier = Math.pow(clockSpeed, 1.321928)
-    return total + (group.number_of_generators * baseRate * fuelMultiplier)
-  }, 0)
+  // Use backend-calculated fuel consumption
+  return generator.total_fuel_consumption
 }
 
 const formatPower = (power: number): string => {

@@ -107,18 +107,24 @@
         </div>
 
         <!-- Power Calculation Preview -->
-        <div v-if="calculatedPower > 0" class="power-preview">
-          <div class="preview-item">
-            <span class="preview-label">Total Power:</span>
-            <span class="preview-value">{{ formatPower(calculatedPower) }}</span>
+        <div v-if="calculatedPower > 0 || previewLoading" class="power-preview">
+          <div v-if="previewLoading" class="preview-item">
+            <span class="preview-label">Calculating...</span>
+            <span class="preview-value">Loading...</span>
           </div>
-          <div class="preview-item">
-            <span class="preview-label">Total Generators:</span>
-            <span class="preview-value">{{ totalGenerators }}</span>
-          </div>
-          <div v-if="calculatedFuelRate > 0" class="preview-item">
-            <span class="preview-label">Fuel Consumption:</span>
-            <span class="preview-value">{{ formatFuelRate(calculatedFuelRate) }}</span>
+          <div v-else>
+            <div class="preview-item">
+              <span class="preview-label">Total Power:</span>
+              <span class="preview-value">{{ formatPower(calculatedPower) }}</span>
+            </div>
+            <div class="preview-item">
+              <span class="preview-label">Total Generators:</span>
+              <span class="preview-value">{{ totalGenerators }}</span>
+            </div>
+            <div v-if="calculatedFuelRate > 0" class="preview-item">
+              <span class="preview-label">Fuel Consumption:</span>
+              <span class="preview-value">{{ formatFuelRate(calculatedFuelRate) }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -148,7 +154,8 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useGameDataStore } from '@/stores/gameData'
 import { useFactoryStore } from '@/stores/factory'
-import type { PowerGeneratorResponse, GeneratorType, Item, GeneratorGroup, CreatePowerGeneratorRequest } from '@/api/types'
+import { factories } from '@/api/endpoints'
+import type { PowerGeneratorResponse, GeneratorType, Item, GeneratorGroup, CreatePowerGeneratorRequest, PowerGeneratorPreviewResponse } from '@/api/types'
 import Button from '@/components/ui/Button.vue'
 import Modal from '@/components/ui/Modal.vue'
 
@@ -171,6 +178,8 @@ const factoryStore = useFactoryStore()
 
 // State
 const saving = ref(false)
+const previewLoading = ref(false)
+const previewData = ref<PowerGeneratorPreviewResponse | null>(null)
 const formData = ref({
   generator_type: '' as GeneratorType,
   fuel_type: null as Item | null,
@@ -241,49 +250,11 @@ const availableFuels = computed(() => {
 })
 
 const calculatedPower = computed(() => {
-  if (!selectedGenerator.value || !formData.value.groups.length) {
-    return 0
-  }
-
-  // Base power output for different generator types
-  const basePower: Record<GeneratorType, number> = {
-    Biomass: 30,
-    Coal: 150,
-    Fuel: 150,
-    Nuclear: 2500,
-    Geothermal: 200
-  }
-
-  const basePowerValue = basePower[formData.value.generator_type] || 0
-
-  return formData.value.groups.reduce((total, group) => {
-    const clockSpeed = group.clock_speed / 100
-    const powerMultiplier = Math.pow(clockSpeed, 1.321928)
-    return total + (group.number_of_generators * basePowerValue * powerMultiplier)
-  }, 0)
+  return previewData.value?.total_power_generation || 0
 })
 
 const calculatedFuelRate = computed(() => {
-  if (!selectedGenerator.value || !formData.value.groups.length) {
-    return 0
-  }
-
-  // Base fuel consumption rates (items/min) for different generators
-  const baseFuelRate: Record<GeneratorType, number> = {
-    Biomass: 4,
-    Coal: 15.3,
-    Fuel: 4.5,
-    Nuclear: 0.025, // Uranium Fuel Rods/min
-    Geothermal: 0 // No fuel consumption
-  }
-
-  const baseRate = baseFuelRate[formData.value.generator_type] || 0
-
-  return formData.value.groups.reduce((total, group) => {
-    const clockSpeed = group.clock_speed / 100
-    const fuelMultiplier = Math.pow(clockSpeed, 1.321928)
-    return total + (group.number_of_generators * baseRate * fuelMultiplier)
-  }, 0)
+  return previewData.value?.total_fuel_consumption || 0
 })
 
 const totalGenerators = computed(() => {
@@ -302,6 +273,33 @@ const canSubmit = computed(() => {
     (!showFuelType.value || formData.value.fuel_type)
   )
 })
+
+// Preview calculation
+const fetchPreview = async () => {
+  if (!props.factoryId || !canSubmit.value) {
+    previewData.value = null
+    return
+  }
+
+  previewLoading.value = true
+  try {
+    const request = {
+      generator_type: formData.value.generator_type,
+      fuel_type: formData.value.fuel_type || undefined,
+      groups: formData.value.groups.map(group => ({
+        number_of_generators: group.number_of_generators,
+        clock_speed: group.clock_speed
+      }))
+    }
+
+    previewData.value = await factories.preview.powerGenerator(props.factoryId, request)
+  } catch (error) {
+    console.error('Failed to fetch power generator preview:', error)
+    previewData.value = null
+  } finally {
+    previewLoading.value = false
+  }
+}
 
 // Methods
 const formatItemName = (item: string): string => {
@@ -373,6 +371,9 @@ const loadPowerGenerator = () => {
     fuel_type: props.powerGenerator.fuel_type,
     groups: [...props.powerGenerator.groups]
   }
+
+  // Fetch preview for the loaded generator
+  fetchPreview()
 }
 
 const handleSubmit = async () => {
@@ -427,10 +428,23 @@ watch(() => props.powerGenerator, () => {
 watch(() => props.show, (show) => {
   if (show) {
     loadPowerGenerator()
+    // Also fetch preview for new generators
+    if (!props.powerGenerator) {
+      fetchPreview()
+    }
   } else {
     resetForm()
   }
 })
+
+// Watch for form data changes to update preview
+watch(
+  () => [formData.value.generator_type, formData.value.fuel_type, formData.value.groups],
+  () => {
+    fetchPreview()
+  },
+  { deep: true }
+)
 
 // Load items on mount
 onMounted(async () => {

@@ -440,7 +440,7 @@ const handlePressurizerToggle = () => {
     formData.value.pressurizer = {
       id: 0, // Will be assigned by backend
       clock_speed: 100,
-      power_consumption: 150 * Math.pow(1, 1.321928) // Will be calculated by backend
+      power_consumption: 0 // Will be calculated by backend
     }
 
     // Initialize with one extractor

@@ -220,23 +220,8 @@ const formatRate = (rate: number): string => {
 }
 
 const getPowerConsumption = (input: RawInputResponse): number => {
-  // Base power consumption for different extractor types
-  const basePower: Record<ExtractorType, number> = {
-    MinerMk1: 5,
-    MinerMk2: 10,
-    MinerMk3: 20,
-    WaterExtractor: 10,
-    OilExtractor: 30,
-    ResourceWellExtractor: 0 // Extractors are powered by pressurizer
-  }
-
-  if (input.pressurizer) {
-    // Resource well pressurizer power consumption
-    const clockSpeed = input.pressurizer.clock_speed / 100
-    return 150 * Math.pow(clockSpeed, 1.321928)
-  }
-
-  return basePower[input.extractor_type] || 0
+  // Use backend-calculated power consumption
+  return input.power_consumption
 }
 
 const formatPower = (power: number): string => {

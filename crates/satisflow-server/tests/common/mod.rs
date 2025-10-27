@@ -334,6 +334,17 @@ pub mod assertions {
         assert_status(response, 400).await;
     }
 
+    /// Convenience helper asserting either 400 Bad Request or 422 Unprocessable Entity.
+    /// Use this for validation errors that may be caught at different layers.
+    pub async fn assert_bad_request_or_unprocessable(response: Response) {
+        let status = response.status().as_u16();
+        assert!(
+            status == 400 || status == 422,
+            "Expected status 400 or 422, got {}",
+            status
+        );
+    }
+
     /// Assert that a JSON error payload contains a descriptive substring.
     pub fn assert_contains_error(json: &Value, expected_error: &str) {
         let error = json.get("error").and_then(|e| e.as_str()).unwrap_or("");

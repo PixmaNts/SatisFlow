@@ -142,14 +142,20 @@
         </div>
 
         <!-- Power Calculation Preview -->
-        <div v-if="calculatedPower > 0" class="power-preview">
-          <div class="preview-item">
-            <span class="preview-label">Total Power:</span>
-            <span class="preview-value">{{ formatPower(calculatedPower) }}</span>
+        <div v-if="calculatedPower > 0 || previewLoading" class="power-preview">
+          <div v-if="previewLoading" class="preview-item">
+            <span class="preview-label">Calculating...</span>
+            <span class="preview-value">Loading...</span>
           </div>
-          <div class="preview-item">
-            <span class="preview-label">Total Machines:</span>
-            <span class="preview-value">{{ totalMachines }}</span>
+          <div v-else>
+            <div class="preview-item">
+              <span class="preview-label">Total Power:</span>
+              <span class="preview-value">{{ formatPower(calculatedPower) }}</span>
+            </div>
+            <div class="preview-item">
+              <span class="preview-label">Total Machines:</span>
+              <span class="preview-value">{{ totalMachines }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -196,13 +202,14 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameDataStore } from '@/stores/gameData'
 import { useFactoryStore } from '@/stores/factory'
-import { blueprintTemplates } from '@/api/endpoints'
+import { factories, blueprintTemplates } from '@/api/endpoints'
 import type {
   ProductionLineResponse,
   MachineGroup,
   CreateProductionLineRequest,
   RecipeInfo,
-  BlueprintTemplateResponse
+  BlueprintTemplateResponse,
+  ProductionLinePreviewResponse
 } from '@/api/types'
 
 interface BlueprintOption {
@@ -236,6 +243,8 @@ const { recipes } = storeToRefs(gameDataStore)
 // State
 const saving = ref(false)
 const loadingTemplates = ref(false)
+const previewLoading = ref(false)
+const previewData = ref<ProductionLinePreviewResponse | null>(null)
 const blueprintTemplates_list = ref<BlueprintTemplateResponse[]>([])
 const formData = ref({
   name: '',
@@ -262,22 +271,11 @@ const selectedMachineInfo = computed(() => {
 })
 
 const calculatedPower = computed(() => {
-  if (!selectedMachineInfo.value || !formData.value.machine_groups.length) {
-    return 0
-  }
-
-  return formData.value.machine_groups.reduce((total, group) => {
-    const basePower = selectedMachineInfo.value!.base_power
-    const clockSpeed = group.oc_value / 100
-    const powerMultiplier = Math.pow(clockSpeed, 1.321928)
-    const somersloopMultiplier = Math.pow(1 + group.somersloop / selectedMachineInfo.value!.max_somersloop, 2)
-
-    return total + (group.number_of_machine * basePower * powerMultiplier * somersloopMultiplier)
-  }, 0)
+  return previewData.value?.total_power_consumption || 0
 })
 
 const totalMachines = computed(() => {
-  return formData.value.machine_groups.reduce((total, group) => total + group.number_of_machine, 0)
+  return previewData.value?.total_machines || formData.value.machine_groups.reduce((total, group) => total + group.number_of_machine, 0)
 })
 
 const blueprintOptions = computed((): BlueprintOption[] => {
@@ -307,6 +305,36 @@ const canSubmit = computed(() => {
 
   return false
 })
+
+// Preview calculation
+const fetchPreview = async () => {
+  if (!props.factoryId || !canSubmit.value || formData.value.type !== 'recipe') {
+    previewData.value = null
+    return
+  }
+
+  previewLoading.value = true
+  try {
+    const request = {
+      name: formData.value.name.trim(),
+      description: formData.value.description?.trim() || undefined,
+      type: formData.value.type,
+      recipe: formData.value.recipe,
+      machine_groups: formData.value.machine_groups.map(group => ({
+        number_of_machine: group.number_of_machine,
+        oc_value: group.oc_value,
+        somersloop: group.somersloop
+      }))
+    }
+
+    previewData.value = await factories.preview.productionLine(props.factoryId, request)
+  } catch (error) {
+    console.error('Failed to fetch production line preview:', error)
+    previewData.value = null
+  } finally {
+    previewLoading.value = false
+  }
+}
 
 const getProductionLineId = (line?: ProductionLineResponse | null): string | null => {
   if (!line) return null
@@ -417,6 +445,8 @@ const loadProductionLine = () => {
       machine_groups: [...recipe.machine_groups]
     }
     lastSelectedRecipe.value = recipe.recipe
+    // Fetch preview for the loaded production line
+    fetchPreview()
   } else if ('ProductionLineBlueprint' in props.productionLine) {
     const blueprint = props.productionLine.ProductionLineBlueprint
     formData.value = {
@@ -497,10 +527,25 @@ watch(() => props.productionLine, () => {
 watch(() => props.show, (show) => {
   if (show) {
     loadProductionLine()
+    // Also fetch preview for new production lines
+    if (!props.productionLine) {
+      fetchPreview()
+    }
   } else {
     resetForm()
   }
 })
+
+// Watch for form data changes to update preview
+watch(
+  () => [formData.value.recipe, formData.value.machine_groups],
+  () => {
+    if (formData.value.type === 'recipe') {
+      fetchPreview()
+    }
+  },
+  { deep: true }
+)
 
 // Load recipes and blueprint templates on mount
 onMounted(async () => {

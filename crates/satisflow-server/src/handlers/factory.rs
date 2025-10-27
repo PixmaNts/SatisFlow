@@ -129,23 +129,37 @@ pub struct ItemBalanceResponse {
 }
 
 #[derive(Serialize)]
+pub struct ItemQuantity {
+    pub item: Item,
+    pub quantity: f32,
+}
+
+#[derive(Serialize)]
 pub struct ProductionLineResponse {
     #[serde(flatten)]
     pub production_line: ProductionLine,
     pub total_power_consumption: f32,
     pub total_machines: u32,
+    pub total_somersloop: u32,
+    pub input_rate: Vec<ItemQuantity>,
+    pub output_rate: Vec<ItemQuantity>,
 }
 
 #[derive(Serialize)]
 pub struct RawInputResponse {
     #[serde(flatten)]
     pub raw_input: RawInput,
+    pub power_consumption: f32,
 }
 
 #[derive(Serialize)]
 pub struct PowerGeneratorResponse {
     #[serde(flatten)]
     pub power_generator: PowerGenerator,
+    pub total_power_generation: f32,
+    pub total_fuel_consumption: f32,
+    pub waste_production_rate: f32,
+    pub waste_product: Option<Item>,
 }
 
 #[derive(Serialize)]
@@ -161,6 +175,64 @@ pub struct FactoryResponse {
     pub total_power_consumption: f32,
     pub total_power_generation: f32,
     pub power_balance: f32,
+}
+
+// Preview request/response types
+#[derive(Deserialize, Clone)]
+pub struct ProductionLinePreviewRequest {
+    pub name: String,
+    pub description: Option<String>,
+    #[serde(rename = "type")]
+    pub line_type: ProductionLineType,
+    pub recipe: Option<String>,
+    #[serde(default)]
+    pub machine_groups: Vec<MachineGroupPayload>,
+    #[serde(default)]
+    pub production_lines: Vec<BlueprintSubLinePayload>,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct PowerGeneratorPreviewRequest {
+    pub generator_type: GeneratorType,
+    pub fuel_type: Option<Item>,
+    #[serde(default)]
+    pub groups: Vec<GeneratorGroupPayload>,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct RawInputPreviewRequest {
+    pub extractor_type: ExtractorType,
+    pub item: Item,
+    pub purity: Option<Purity>,
+    #[serde(default)]
+    pub quantity_per_min: f32,
+    #[serde(default)]
+    pub pressurizer: Option<RawInputPressurizerPayload>,
+    #[serde(default)]
+    pub extractors: Vec<RawInputExtractorPayload>,
+}
+
+#[derive(Serialize)]
+pub struct ProductionLinePreviewResponse {
+    pub total_power_consumption: f32,
+    pub total_machines: u32,
+    pub total_somersloop: u32,
+    pub input_rate: Vec<ItemQuantity>,
+    pub output_rate: Vec<ItemQuantity>,
+}
+
+#[derive(Serialize)]
+pub struct PowerGeneratorPreviewResponse {
+    pub total_power_generation: f32,
+    pub total_fuel_consumption: f32,
+    pub waste_production_rate: f32,
+    pub waste_product: Option<Item>,
+}
+
+#[derive(Serialize)]
+pub struct RawInputPreviewResponse {
+    pub power_consumption: f32,
+    pub quantity_per_min: f32,
 }
 
 // Helper function to convert HashMap<Item, f32> to Vec<ItemBalanceResponse>
@@ -180,10 +252,26 @@ fn convert_production_lines_to_response(
 ) -> Vec<ProductionLineResponse> {
     production_lines
         .values()
-        .map(|pl| ProductionLineResponse {
-            total_power_consumption: pl.total_power_consumption(),
-            total_machines: pl.total_machines(),
-            production_line: pl.clone(),
+        .map(|pl| {
+            let input_rate = pl
+                .input_rate()
+                .into_iter()
+                .map(|(item, quantity)| ItemQuantity { item, quantity })
+                .collect();
+            let output_rate = pl
+                .output_rate()
+                .into_iter()
+                .map(|(item, quantity)| ItemQuantity { item, quantity })
+                .collect();
+
+            ProductionLineResponse {
+                total_power_consumption: pl.total_power_consumption(),
+                total_machines: pl.total_machines(),
+                total_somersloop: pl.total_somersloop(),
+                input_rate,
+                output_rate,
+                production_line: pl.clone(),
+            }
         })
         .collect()
 }
@@ -191,8 +279,10 @@ fn convert_production_lines_to_response(
 fn convert_raw_inputs_to_response(raw_inputs: &HashMap<Uuid, RawInput>) -> Vec<RawInputResponse> {
     raw_inputs
         .values()
-        .cloned()
-        .map(|ri| RawInputResponse { raw_input: ri })
+        .map(|ri| RawInputResponse {
+            raw_input: ri.clone(),
+            power_consumption: ri.power_consumption(),
+        })
         .collect()
 }
 
@@ -201,9 +291,12 @@ fn convert_power_generators_to_response(
 ) -> Vec<PowerGeneratorResponse> {
     power_generators
         .values()
-        .cloned()
         .map(|pg| PowerGeneratorResponse {
-            power_generator: pg,
+            power_generator: pg.clone(),
+            total_power_generation: pg.total_power_generation(),
+            total_fuel_consumption: pg.total_fuel_consumption(),
+            waste_production_rate: pg.waste_production_rate(),
+            waste_product: pg.waste_product(),
         })
         .collect()
 }
@@ -785,6 +878,123 @@ pub async fn delete_power_generator(
     Ok(Json(response))
 }
 
+// Preview handlers for real-time form calculations
+pub async fn preview_production_line(
+    State(state): State<AppState>,
+    Path(factory_id): Path<Uuid>,
+    Json(request): Json<ProductionLinePreviewRequest>,
+) -> Result<Json<ProductionLinePreviewResponse>> {
+    let engine = state.engine.read().await;
+
+    // Validate factory exists
+    engine
+        .get_factory(factory_id)
+        .ok_or_else(|| AppError::NotFound(format!("Factory with id {} not found", factory_id)))?;
+
+    // Build production line from request (same logic as create/update)
+    let production_line = build_production_line_from_payload(
+        &ProductionLinePayload {
+            name: request.name,
+            description: request.description,
+            line_type: request.line_type,
+            recipe: request.recipe,
+            machine_groups: request.machine_groups,
+            production_lines: request.production_lines,
+        },
+        None,
+    )?;
+
+    // Calculate preview data
+    let input_rate = production_line
+        .input_rate()
+        .into_iter()
+        .map(|(item, quantity)| ItemQuantity { item, quantity })
+        .collect();
+
+    let output_rate = production_line
+        .output_rate()
+        .into_iter()
+        .map(|(item, quantity)| ItemQuantity { item, quantity })
+        .collect();
+
+    let response = ProductionLinePreviewResponse {
+        total_power_consumption: production_line.total_power_consumption(),
+        total_machines: production_line.total_machines(),
+        total_somersloop: production_line.total_somersloop(),
+        input_rate,
+        output_rate,
+    };
+
+    Ok(Json(response))
+}
+
+pub async fn preview_power_generator(
+    State(state): State<AppState>,
+    Path(factory_id): Path<Uuid>,
+    Json(request): Json<PowerGeneratorPreviewRequest>,
+) -> Result<Json<PowerGeneratorPreviewResponse>> {
+    let engine = state.engine.read().await;
+
+    // Validate factory exists
+    engine
+        .get_factory(factory_id)
+        .ok_or_else(|| AppError::NotFound(format!("Factory with id {} not found", factory_id)))?;
+
+    // Build power generator from request (same logic as create/update)
+    let generator = build_power_generator_from_payload(
+        &PowerGeneratorPayload {
+            generator_type: request.generator_type,
+            fuel_type: request.fuel_type,
+            groups: request.groups,
+        },
+        None,
+    )?;
+
+    // Calculate preview data
+    let response = PowerGeneratorPreviewResponse {
+        total_power_generation: generator.total_power_generation(),
+        total_fuel_consumption: generator.total_fuel_consumption(),
+        waste_production_rate: generator.waste_production_rate(),
+        waste_product: generator.waste_product(),
+    };
+
+    Ok(Json(response))
+}
+
+pub async fn preview_raw_input(
+    State(state): State<AppState>,
+    Path(factory_id): Path<Uuid>,
+    Json(request): Json<RawInputPreviewRequest>,
+) -> Result<Json<RawInputPreviewResponse>> {
+    let engine = state.engine.read().await;
+
+    // Validate factory exists
+    engine
+        .get_factory(factory_id)
+        .ok_or_else(|| AppError::NotFound(format!("Factory with id {} not found", factory_id)))?;
+
+    // Build raw input from request (same logic as create/update)
+    let raw_input = build_raw_input_from_payload(
+        &RawInputPayload {
+            extractor_type: request.extractor_type,
+            item: request.item,
+            purity: request.purity,
+            quantity_per_min: request.quantity_per_min,
+            pressurizer: request.pressurizer,
+            extractors: request.extractors,
+        },
+        None,
+    )?;
+
+    // Calculate preview data
+    let response = RawInputPreviewResponse {
+        power_consumption: raw_input.power_consumption(),
+        quantity_per_min: raw_input.quantity_per_min,
+    };
+
+    Ok(Json(response))
+}
+
 // Route configuration
 pub fn routes() -> Router<AppState> {
     Router::new()
@@ -807,5 +1017,18 @@ pub fn routes() -> Router<AppState> {
         .route(
             "/:id/power-generators/:generator_id",
             put(update_power_generator).delete(delete_power_generator),
+        )
+        // Preview endpoints for real-time form calculations
+        .route(
+            "/:id/production-lines/preview",
+            post(preview_production_line),
+        )
+        .route(
+            "/:id/power-generators/preview",
+            post(preview_power_generator),
+        )
+        .route(
+            "/:id/raw-inputs/preview",
+            post(preview_raw_input),
         )
 }

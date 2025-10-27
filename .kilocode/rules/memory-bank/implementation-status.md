@@ -808,16 +808,92 @@ Documentation:
 
 **Testing**: ✅ Comprehensive test suite with unit and E2E coverage
 
+### Calculation Migration ✅ (2025-10-27)
+
+**Status**: Complete and Production Ready
+
+**What**: Eliminated all gameplay calculations from the Vue frontend, delegating every calculation to the Rust engine as the single source of truth
+
+**Problem Solved**:
+- Frontend components were duplicating game calculations (power consumption, fuel rates, extraction rates)
+- Hardcoded constants like `Math.pow(x, 1.321928)` and base power values scattered across UI code
+- Risk of calculation drift between frontend and backend
+- Maintenance burden of keeping calculations in sync
+
+**Implementation**:
+
+**Backend Enhancements**:
+- [x] Added calculated fields to all API responses (`total_power_consumption`, `total_machines`, `total_somersloop`, `input_rate`, `output_rate`)
+- [x] Created preview endpoints for real-time form feedback (`/factories/{id}/production-lines/preview`, `/power-generators/preview`, `/raw-inputs/preview`)
+- [x] Engine methods exposed: `ProductionLine::total_power_consumption()`, `PowerGenerator::total_power_generation()`, `RawInput::power_consumption()`
+- [x] Comprehensive backend tests covering all calculation scenarios
+
+**Frontend Migration**:
+- [x] Removed all hardcoded gameplay constants (`Math.pow`, `1.321928`, base power arrays)
+- [x] Updated all list components to use backend-provided calculated fields
+- [x] Implemented preview API calls in forms for real-time calculation feedback
+- [x] Added debounced preview updates (300ms) for optimal UX
+- [x] Created regression guardrails: `calculation-violations.test.ts` and `calculation-accuracy.spec.ts`
+
+**Key Features**:
+- ✅ **Single Source of Truth**: All calculations now originate in the Rust engine
+- ✅ **Live Previews**: Forms show real-time calculations as users edit (production lines, power generators, raw inputs)
+- ✅ **Zero Frontend Math**: No gameplay formulas remain in Vue/TypeScript code
+- ✅ **Automated Guards**: Static analysis and E2E tests prevent regression to frontend calculations
+- ✅ **Type Safety**: Full TypeScript integration with backend-calculated values
+- ✅ **Performance**: Debounced API calls prevent excessive server requests
+
+**Files Modified**:
+
+Backend:
+- `crates/satisflow-server/src/handlers/factory.rs` - Added calculated fields to all responses
+- `crates/satisflow-server/tests/calculated_fields.rs` - Integration tests for calculated values
+
+Frontend:
+- `frontend/src/components/factory/ProductionLineList.vue` - Uses `total_power_consumption` from API
+- `frontend/src/components/factory/PowerGeneratorForm.vue` - Real-time preview integration
+- `frontend/src/components/factory/PowerGeneratorList.vue` - Backend-calculated power/fuel display
+- `frontend/src/components/factory/RawInputList.vue` - Engine-provided power consumption
+- `frontend/src/components/factory/RawInputForm.vue` - Preview endpoint integration
+- `frontend/src/components/factory/ProductionLineForm.vue` - Live calculation previews
+- `frontend/src/api/endpoints.ts` - Preview endpoint definitions
+- `frontend/src/tests/calculation-violations.test.ts` - Regression prevention tests
+- `frontend/e2e/calculation-accuracy.spec.ts` - End-to-end calculation validation
+
+**Quality Assurance**:
+- ✅ Engine unit tests verify all calculation methods
+- ✅ API integration tests confirm calculated field accuracy
+- ✅ Frontend static analysis prevents math reintroduction
+- ✅ E2E tests validate UI displays match engine values
+- ✅ Manual verification of power/fuel calculations across all scenarios
+
+**Technical Achievements**:
+- **DRY Principle**: Calculations exist in ONE place only (Rust engine)
+- **Type Safety**: End-to-end type safety from engine to UI display
+- **Maintainability**: Future recipe/machine changes only require engine updates
+- **Performance**: Efficient API responses with pre-calculated values
+- **Reliability**: Comprehensive test coverage prevents calculation drift
+
+**User Impact**:
+- Accurate power consumption displays for all production lines, generators, and extractors
+- Real-time calculation feedback in forms as users adjust overclock and Somersloop values
+- Consistent calculations across all UI surfaces
+- No risk of frontend/backend calculation mismatches
+
 ## New Documentation and Examples (2025-10-27)
 
 ### Documentation Files Added
 
-- **CALCULATION_MIGRATION_PLAN.md**: Plan for migrating calculations from frontend to backend
-- **CALCULATION_MIGRATION_SUMMARY.md**: Summary of calculation migration work
-- **FRONTEND_CALCULATION_REVIEW.md**: Review of frontend calculation implementation
 - **MIGRATION-STRATEGY.md**: Comprehensive migration strategy for save file versions
 - **SAVE-LOAD-IMPLEMENTATION.md**: Complete implementation documentation for save/load functionality
 - **BLUEPRINT_LIBRARY_IMPLEMENTATION.md**: Implementation guide for blueprint library system
+
+### Archive Documentation
+
+- **docs/archive/calculation-migration/**: Complete calculation migration documentation including:
+  - **CALCULATION_MIGRATION_PLAN.md**: Plan for migrating calculations from frontend to backend
+  - **CALCULATION_MIGRATION_SUMMARY.md**: Summary of calculation migration work
+  - **FRONTEND_CALCULATION_REVIEW.md**: Review of frontend calculation implementation
 
 ### Blueprint Examples Added
 
