@@ -1,5 +1,7 @@
 # Satisfflow Development Guide
 
+**Last Updated**: 2025-10-27
+
 ## Project Setup
 
 ### Prerequisites
@@ -483,6 +485,42 @@ The frontend includes 88 files with ~14,100 lines of production-ready code:
 
 For more details, see the component documentation and implementation status.
 
+## Documentation and Examples
+
+### Project Documentation
+
+The project includes comprehensive documentation in the `.kilocode/rules/memory-bank/` directory:
+
+- **implementation-status.md**: Current progress tracking and feature status
+- **architecture.md**: Technical architecture and design decisions
+- **brief.md**: Project overview and requirements
+- **development-guide.md**: Development workflow and guidelines (this file)
+- **api-and-testing.md**: Complete API contract and testing infrastructure
+
+### Additional Documentation
+
+- **CALCULATION_MIGRATION_PLAN.md**: Plan for migrating calculations from frontend to backend
+- **CALCULATION_MIGRATION_SUMMARY.md**: Summary of calculation migration work
+- **FRONTEND_CALCULATION_REVIEW.md**: Review of frontend calculation implementation
+- **MIGRATION-STRATEGY.md**: Comprehensive migration strategy for save file versions
+- **SAVE-LOAD-IMPLEMENTATION.md**: Complete implementation documentation for save/load functionality
+- **BLUEPRINT_LIBRARY_IMPLEMENTATION.md**: Implementation guide for blueprint library system
+
+### Blueprint Examples
+
+Ready-to-use blueprint examples are available in the project root:
+
+- **example-blueprint-iron-plates.json**: Example blueprint for iron plate production
+- **example-blueprint-motor-production.json**: Example blueprint for motor production
+- **example-blueprint-reinforced-plates.json**: Example blueprint for reinforced plate production
+
+### Archive Documentation
+
+Historical documentation is preserved in `docs/archive/`:
+
+- **BLUEPRINT_FEATURE_STATUS.md**: Status tracking for blueprint feature development
+- **docs/archive/blueprint-v1-import-export/**: Complete blueprint import/export documentation
+
 ## Resources
 
 - [Satisfactory Wiki](https://satisfactory.wiki.gg/) - Game mechanics reference
@@ -495,3 +533,5 @@ For more details, see the component documentation and implementation status.
 - **Project Issues**: Check `.kilocode/rules/memory-bank/implementation-status.md`
 - **Architecture Questions**: See `.kilocode/rules/memory-bank/architecture.md`
 - **Game Mechanics**: Consult `.kilocode/rules/memory-bank/brief.md`
+- **Development Workflow**: See `.kilocode/rules/memory-bank/development-guide.md`
+- **API Documentation**: Check `.kilocode/rules/memory-bank/api-and-testing.md`

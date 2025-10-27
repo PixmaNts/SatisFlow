@@ -1,6 +1,6 @@
 # API Contract and Testing Guide
 
-**Last Updated**: 2025-10-22
+**Last Updated**: 2025-10-27
 
 This document provides the complete API contract, testing infrastructure, and development workflow for the Satisfflow backend server. All information is self-contained in this document.
 
@@ -656,6 +656,42 @@ Get all available machine types.
 curl http://localhost:3000/api/game-data/machines
 ```
 
+### Save/Load Endpoints
+
+#### GET /api/save
+
+Save current engine state to JSON.
+
+**Response**: JSON with save_data and summary (version, factory_count, logistics_count)
+
+**Example**:
+
+```bash
+curl http://localhost:3000/api/save
+```
+
+#### POST /api/load
+
+Load engine state from JSON.
+
+**Request Body**:
+
+```json
+{
+  "save_data": "{...}"
+}
+```
+
+**Response**: Confirmation message
+
+**Example**:
+
+```bash
+curl -X POST http://localhost:3000/api/load \
+  -H "Content-Type: application/json" \
+  -d '{"save_data": "{\"version\":\"0.1.0\",...}"}'
+```
+
 ### Health Check
 
 #### GET /health
@@ -832,7 +868,7 @@ tests/
 
 ### Test Coverage
 
-**Total Lines**: 484 lines of comprehensive integration tests
+**Total Lines**: 484+ lines of comprehensive integration tests
 
 **Coverage Areas**:
 
@@ -840,6 +876,7 @@ tests/
 - ✅ Logistics management (all 4 transport types)
 - ✅ Dashboard endpoint validation (summary, items, power)
 - ✅ Game data endpoint tests (recipes, items, machines)
+- ✅ Save/Load functionality tests (version compatibility, data integrity)
 - ✅ CORS functionality tests (preflight, headers)
 - ✅ Error handling tests (404, 400, validation)
 - ✅ Concurrent request handling tests
@@ -887,6 +924,9 @@ cargo test --package satisflow-server -- --exact test_dashboard_endpoints
 # Game data tests
 cargo test --package satisflow-server -- --exact test_game_data_endpoints
 
+# Save/Load tests
+cargo test --package satisflow-server -- --exact test_save_load_endpoints
+
 # CORS tests
 cargo test --package satisflow-server -- --exact test_cors_headers
 
@@ -905,6 +945,7 @@ cargo run --bin test_runner factory
 cargo run --bin test_runner logistics
 cargo run --bin test_runner dashboard
 cargo run --bin test_runner game_data
+cargo run --bin test_runner save_load
 cargo run --bin test_runner cors
 cargo run --bin test_runner errors
 

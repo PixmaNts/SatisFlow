@@ -1,6 +1,8 @@
-# Satifslow brief
+# Satisflow Brief
 
-Satisflow is a production tracker for player of the game satisfactory.
+**Last Updated**: 2025-10-27
+
+Satisflow is a production tracker for players of the game Satisfactory.
 
 The purpose is to create a memory for the player of what is extracted (raw-input), what is produced (production line) and where (factory) and how items are exanged between facotry (logitics)
 
@@ -393,3 +395,27 @@ When creating a new logistic line, in the case of Train and Bus, the user can ch
 Test should be written before the feature (TDD) to ensure code quality and feature completed.
 On the engine side, test a mandatory for every aspect.
 On the UI side, playwright is recommended for testing the UI.
+
+## Documentation
+
+The project includes comprehensive documentation covering all aspects of development:
+
+### Core Documentation (`.kilocode/rules/memory-bank/`)
+- **brief.md**: Project overview and requirements
+- **architecture.md**: Technical architecture and design decisions
+- **implementation-status.md**: Current progress tracking and feature status
+- **development-guide.md**: Development workflow and guidelines
+- **api-and-testing.md**: Complete API contract and testing infrastructure
+
+### Technical Documentation
+- **CALCULATION_MIGRATION_PLAN.md**: Plan for migrating calculations from frontend to backend
+- **CALCULATION_MIGRATION_SUMMARY.md**: Summary of calculation migration work
+- **FRONTEND_CALCULATION_REVIEW.md**: Review of frontend calculation implementation
+- **MIGRATION-STRATEGY.md**: Comprehensive migration strategy for save file versions
+- **SAVE-LOAD-IMPLEMENTATION.md**: Complete implementation documentation for save/load functionality
+- **BLUEPRINT_LIBRARY_IMPLEMENTATION.md**: Implementation guide for blueprint library system
+
+### Examples and Archives
+- **example-blueprint-*.json**: Ready-to-use blueprint examples
+- **docs/BLUEPRINT_FEATURE_STATUS.md**: Blueprint feature development tracking
+- **docs/archive/blueprint-v1-import-export/**: Complete blueprint import/export documentation archive
