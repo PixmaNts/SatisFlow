@@ -1,6 +1,6 @@
 # Satisfflow Implementation Status
 
-**Last Updated**: 2025-10-26
+**Last Updated**: 2025-10-27
 
 ## Phase 0: Core Engine Foundation ✅ COMPLETE
 
@@ -562,6 +562,76 @@ test('create production line', async ({ page }) => {
 
 ## Completed Improvements
 
+### Blueprint Library System Phase 2 ✅ (2025-10-27)
+
+**Status**: Complete and Production Ready
+
+**What**: Completed Blueprint Library system with import enhancements, template selection, and power calculation fixes
+
+**Implementation**:
+
+**Enhancement 1 - Blueprint Library Import:**
+- [x] Replaced manual JSON paste modal with automatic preview modal
+- [x] Import validates JSON and fetches metadata from backend
+- [x] Shows rich preview with power, machines, input/output items
+- [x] Matches factory view import UX for consistency
+- [x] Uses `blueprintTemplates.preview()` endpoint
+
+**Enhancement 2 - Template Selection in Production Line Form:**
+- [x] Created SearchableSelect component for blueprint templates
+- [x] Fetches all available templates on mount
+- [x] Search by name or description with debouncing
+- [x] Shows helpful messages when no templates available
+- [x] Validates template selection before submission
+- [x] Calls `blueprintTemplates.createInstanceInFactory()` API
+- [x] Updates form validation to support blueprint type
+
+**Enhancement 3 - Power Consumption Display Fix:**
+- [x] Added `total_power_consumption` and `total_machines` to backend API response
+- [x] Backend calls engine's calculation methods (single source of truth)
+- [x] Frontend simplified to use backend-provided values
+- [x] Removed frontend power calculation logic and dependencies
+- [x] Fixes missing power display for blueprint production lines
+- [x] Works correctly for nested blueprints (recursive calculation)
+
+**Key Features**:
+- ✅ Automatic JSON validation and preview on import
+- ✅ Searchable template dropdown with 50-result limit
+- ✅ Accurate power calculations from engine (not duplicated in frontend)
+- ✅ Type-safe implementation throughout (TypeScript + Rust)
+- ✅ Consistent UX across factory and library views
+- ✅ All 52 backend tests passing
+- ✅ Frontend type-checks with 0 errors
+
+**Files Created**:
+
+Frontend:
+- `frontend/src/components/forms/SearchableSelect.vue` - Searchable dropdown component (477 lines)
+
+**Files Modified**:
+
+Backend:
+- `crates/satisfflow-server/src/handlers/factory.rs` - Added power/machine fields to response
+
+Frontend:
+- `frontend/src/views/BlueprintLibraryView.vue` - Updated import flow to use preview modal
+- `frontend/src/components/factory/ProductionLineForm.vue` - Added template selection with SearchableSelect
+- `frontend/src/components/factory/ProductionLineList.vue` - Simplified to use backend power values
+- `frontend/src/api/endpoints.ts` - Added blueprintTemplates.preview() endpoint
+- `frontend/src/api/types.ts` - Updated ProductionLineResponse with power/machine fields
+
+**User Impact**:
+- Users can now easily import blueprints with live preview and validation
+- Blueprint templates can be selected when creating production lines
+- Power consumption displays correctly for all production line types
+- Consistent and intuitive UX across all blueprint operations
+
+**Technical Achievements**:
+- Single source of truth for calculations (DRY principle)
+- Backend handles all calculations (proper separation of concerns)
+- Type-safe end-to-end implementation
+- Reusable SearchableSelect component for other features
+
 ### Save/Load Functionality ✅ (2025-10-25)
 
 **Status**: Complete and Production Ready
@@ -738,6 +808,34 @@ Documentation:
 
 **Testing**: ✅ Comprehensive test suite with unit and E2E coverage
 
+## New Documentation and Examples (2025-10-27)
+
+### Documentation Files Added
+
+- **CALCULATION_MIGRATION_PLAN.md**: Plan for migrating calculations from frontend to backend
+- **CALCULATION_MIGRATION_SUMMARY.md**: Summary of calculation migration work
+- **FRONTEND_CALCULATION_REVIEW.md**: Review of frontend calculation implementation
+- **MIGRATION-STRATEGY.md**: Comprehensive migration strategy for save file versions
+- **SAVE-LOAD-IMPLEMENTATION.md**: Complete implementation documentation for save/load functionality
+- **BLUEPRINT_LIBRARY_IMPLEMENTATION.md**: Implementation guide for blueprint library system
+
+### Blueprint Examples Added
+
+- **example-blueprint-iron-plates.json**: Example blueprint for iron plate production
+- **example-blueprint-motor-production.json**: Example blueprint for motor production
+- **example-blueprint-reinforced-plates.json**: Example blueprint for reinforced plate production
+
+### Archive Documentation
+
+- **docs/BLUEPRINT_FEATURE_STATUS.md**: Status tracking for blueprint feature development
+- **docs/archive/blueprint-v1-import-export/**: Complete documentation archive for blueprint import/export feature including:
+  - BLUEPRINT_FEATURE_COMPLETE.md
+  - BLUEPRINT_FEATURE_PROMPT.md
+  - BLUEPRINT_IMPLEMENTATION_FINAL_STEPS.md
+  - BLUEPRINT_QUICK_START.md
+  - README_BLUEPRINT_FEATURE.md
+  - README.md
+
 ## Missing Features & Implementation Gaps
 
 **Last Reviewed**: 2025-10-25
@@ -745,7 +843,7 @@ Documentation:
 
 ### P0 - Critical Gaps (Blocking Features)
 
-#### 1. Blueprint System ⚠️ PHASE 2 IN PROGRESS
+#### 1. Blueprint System ✅ PHASE 2 COMPLETE
 
 **Phase 1 Complete** (2025-10-26):
 - ✅ Backend: Export, import, preview endpoints
@@ -753,15 +851,22 @@ Documentation:
 - ✅ 14 passing backend tests
 - ✅ 3 example blueprint files with documentation
 
-**Phase 2 In Progress** (Blueprint Library):
-- 🚧 Engine: `blueprint_templates` storage in memory + save/load
-- 🚧 Backend: Template CRUD API endpoints
-- 🚧 Frontend: Blueprint Library view with management UI
-- 🚧 Frontend: Blueprint creation modal (from scratch)
-- 🚧 Frontend: Template selector in factory view
+**Phase 2 Complete** (2025-10-27):
+- ✅ Engine: `blueprint_templates` storage in memory + save/load
+- ✅ Backend: Template CRUD API endpoints (8 endpoints)
+- ✅ Frontend: Blueprint Library view with management UI
+- ✅ Frontend: Blueprint creation modal (from scratch)
+- ✅ Frontend: Template selector in factory view (SearchableSelect component)
+- ✅ **Bonus**: Blueprint import uses preview modal with backend metadata
+- ✅ **Bonus**: Power consumption display fix (backend-calculated values)
 
-**Estimated Remaining Effort**: ~42 hours (see BLUEPRINT_LIBRARY_IMPLEMENTATION.md)
-**Status**: Import/export working, library system next
+**Completed**: 2025-10-27
+**Status**: Fully functional and production-ready
+**Key Features**:
+- Import blueprints to library with automatic preview and validation
+- Create production lines from blueprint templates with searchable dropdown
+- Power consumption correctly displayed for all production lines (recipes and blueprints)
+- Single source of truth for calculations (engine calculates, frontend displays)
 
 ---
 
