@@ -11,7 +11,7 @@ async fn test_health_check() {
     let client = create_test_client();
 
     let response = client
-        .get(&format!("{}/health", server.base_url))
+        .get(format!("{}/health", server.base_url))
         .send()
         .await
         .expect("Failed to send request");
@@ -29,7 +29,7 @@ async fn test_factory_crud_operations() {
 
     // Test 1: Create factory
     let create_response = client
-        .post(&format!("{}/api/factories", server.base_url))
+        .post(format!("{}/api/factories", server.base_url))
         .json(&create_factory_request())
         .send()
         .await
@@ -44,17 +44,17 @@ async fn test_factory_crud_operations() {
 
         // Test 2: Get all factories
         let list_response = client
-            .get(&format!("{}/api/factories", server.base_url))
+            .get(format!("{}/api/factories", server.base_url))
             .send()
             .await
             .expect("Failed to get factories");
 
         let factories: Value = assert_json_response(list_response).await;
-        assert!(factories.as_array().unwrap().len() > 0);
+        assert!(!factories.as_array().unwrap().is_empty());
 
         // Test 3: Get specific factory
         let get_response = client
-            .get(&format!("{}/api/factories/{}", server.base_url, factory_id))
+            .get(format!("{}/api/factories/{}", server.base_url, factory_id))
             .send()
             .await
             .expect("Failed to get factory");
@@ -66,7 +66,7 @@ async fn test_factory_crud_operations() {
 
         // Test 4: Update factory
         let update_response = client
-            .put(&format!("{}/api/factories/{}", server.base_url, factory_id))
+            .put(format!("{}/api/factories/{}", server.base_url, factory_id))
             .json(&update_factory_request())
             .send()
             .await
@@ -78,7 +78,7 @@ async fn test_factory_crud_operations() {
 
         // Test 5: Delete factory
         let delete_response = client
-            .delete(&format!("{}/api/factories/{}", server.base_url, factory_id))
+            .delete(format!("{}/api/factories/{}", server.base_url, factory_id))
             .send()
             .await
             .expect("Failed to delete factory");
@@ -87,7 +87,7 @@ async fn test_factory_crud_operations() {
 
         // Test 6: Verify factory is deleted
         let verify_response = client
-            .get(&format!("{}/api/factories/{}", server.base_url, factory_id))
+            .get(format!("{}/api/factories/{}", server.base_url, factory_id))
             .send()
             .await
             .expect("Failed to verify deletion");
@@ -108,7 +108,7 @@ async fn test_factory_error_cases() {
     let unknown = Uuid::new_v4();
 
     let response = client
-        .get(&format!("{}/api/factories/{}", server.base_url, unknown))
+        .get(format!("{}/api/factories/{}", server.base_url, unknown))
         .send()
         .await
         .expect("Failed to send request");
@@ -117,7 +117,7 @@ async fn test_factory_error_cases() {
 
     // Test 2: Update non-existent factory
     let response = client
-        .put(&format!("{}/api/factories/{}", server.base_url, unknown))
+        .put(format!("{}/api/factories/{}", server.base_url, unknown))
         .json(&update_factory_request())
         .send()
         .await
@@ -127,7 +127,7 @@ async fn test_factory_error_cases() {
 
     // Test 3: Delete non-existent factory
     let response = client
-        .delete(&format!("{}/api/factories/{}", server.base_url, unknown))
+        .delete(format!("{}/api/factories/{}", server.base_url, unknown))
         .send()
         .await
         .expect("Failed to send request");
@@ -136,7 +136,7 @@ async fn test_factory_error_cases() {
 
     // Test 4: Create factory with invalid data
     let response = client
-        .post(&format!("{}/api/factories", server.base_url))
+        .post(format!("{}/api/factories", server.base_url))
         .json(&invalid_factory_request())
         .send()
         .await
@@ -154,7 +154,7 @@ async fn test_logistics_crud_operations() {
 
     // First create two factories for logistics testing
     let factory1_response = client
-        .post(&format!("{}/api/factories", server.base_url))
+        .post(format!("{}/api/factories", server.base_url))
         .json(&json!({
             "name": "Factory 1",
             "description": "Source factory"
@@ -164,7 +164,7 @@ async fn test_logistics_crud_operations() {
         .expect("Failed to create factory 1");
 
     let factory2_response = client
-        .post(&format!("{}/api/factories", server.base_url))
+        .post(format!("{}/api/factories", server.base_url))
         .json(&json!({
             "name": "Factory 2",
             "description": "Destination factory"
@@ -191,7 +191,7 @@ async fn test_logistics_crud_operations() {
         });
 
         let create_response = client
-            .post(&format!("{}/api/logistics", server.base_url))
+            .post(format!("{}/api/logistics", server.base_url))
             .json(&logistics_request)
             .send()
             .await
@@ -206,17 +206,17 @@ async fn test_logistics_crud_operations() {
 
             // Test 2: Get all logistics
             let list_response = client
-                .get(&format!("{}/api/logistics", server.base_url))
+                .get(format!("{}/api/logistics", server.base_url))
                 .send()
                 .await
                 .expect("Failed to get logistics");
 
             let logistics_list: Value = assert_json_response(list_response).await;
-            assert!(logistics_list.as_array().unwrap().len() > 0);
+            assert!(!logistics_list.as_array().unwrap().is_empty());
 
             // Test 3: Get specific logistics line
             let get_response = client
-                .get(&format!(
+                .get(format!(
                     "{}/api/logistics/{}",
                     server.base_url, logistics_id
                 ))
@@ -234,7 +234,7 @@ async fn test_logistics_crud_operations() {
 
             // Test 4: Delete logistics line
             let delete_response = client
-                .delete(&format!(
+                .delete(format!(
                     "{}/api/logistics/{}",
                     server.base_url, logistics_id
                 ))
@@ -246,7 +246,7 @@ async fn test_logistics_crud_operations() {
 
             // Test 5: Verify logistics is deleted
             let verify_response = client
-                .get(&format!(
+                .get(format!(
                     "{}/api/logistics/{}",
                     server.base_url, logistics_id
                 ))
@@ -281,7 +281,7 @@ async fn test_logistics_crud_operations() {
             });
 
             let bus_response = client
-                .post(&format!("{}/api/logistics", server.base_url))
+                .post(format!("{}/api/logistics", server.base_url))
                 .json(&bus_request)
                 .send()
                 .await
@@ -320,7 +320,7 @@ async fn test_logistics_crud_operations() {
             });
 
             let train_response = client
-                .post(&format!("{}/api/logistics", server.base_url))
+                .post(format!("{}/api/logistics", server.base_url))
                 .json(&train_request)
                 .send()
                 .await
@@ -338,11 +338,11 @@ async fn test_logistics_crud_operations() {
 
             // Clean up created logistics lines
             let _ = client
-                .delete(&format!("{}/api/logistics/{}", server.base_url, bus_id))
+                .delete(format!("{}/api/logistics/{}", server.base_url, bus_id))
                 .send()
                 .await;
             let _ = client
-                .delete(&format!("{}/api/logistics/{}", server.base_url, train_id))
+                .delete(format!("{}/api/logistics/{}", server.base_url, train_id))
                 .send()
                 .await;
         } else {
@@ -361,7 +361,7 @@ async fn test_logistics_error_cases() {
     let unknown = Uuid::new_v4();
 
     let response = client
-        .get(&format!("{}/api/logistics/{}", server.base_url, unknown))
+        .get(format!("{}/api/logistics/{}", server.base_url, unknown))
         .send()
         .await
         .expect("Failed to send request");
@@ -370,7 +370,7 @@ async fn test_logistics_error_cases() {
 
     // Test 2: Delete non-existent logistics line
     let response = client
-        .delete(&format!("{}/api/logistics/{}", server.base_url, unknown))
+        .delete(format!("{}/api/logistics/{}", server.base_url, unknown))
         .send()
         .await
         .expect("Failed to send request");
@@ -379,7 +379,7 @@ async fn test_logistics_error_cases() {
 
     // Test 3: Create logistics with invalid data
     let response = client
-        .post(&format!("{}/api/logistics", server.base_url))
+        .post(format!("{}/api/logistics", server.base_url))
         .json(&invalid_logistics_request())
         .send()
         .await
@@ -396,7 +396,7 @@ async fn test_dashboard_endpoints() {
 
     // Test 1: Get dashboard summary
     let response = client
-        .get(&format!("{}/api/dashboard/summary", server.base_url))
+        .get(format!("{}/api/dashboard/summary", server.base_url))
         .send()
         .await
         .expect("Failed to get dashboard summary");
@@ -411,7 +411,7 @@ async fn test_dashboard_endpoints() {
 
     // Test 2: Get item balances
     let response = client
-        .get(&format!("{}/api/dashboard/items", server.base_url))
+        .get(format!("{}/api/dashboard/items", server.base_url))
         .send()
         .await
         .expect("Failed to get item balances");
@@ -421,7 +421,7 @@ async fn test_dashboard_endpoints() {
 
     // Test 3: Get power statistics
     let response = client
-        .get(&format!("{}/api/dashboard/power", server.base_url))
+        .get(format!("{}/api/dashboard/power", server.base_url))
         .send()
         .await
         .expect("Failed to get power statistics");
@@ -438,14 +438,14 @@ async fn test_game_data_endpoints() {
 
     // Test 1: Get recipes
     let response = client
-        .get(&format!("{}/api/game-data/recipes", server.base_url))
+        .get(format!("{}/api/game-data/recipes", server.base_url))
         .send()
         .await
         .expect("Failed to get recipes");
 
     let recipes: Value = assert_json_response(response).await;
     assert!(recipes.is_array());
-    assert!(recipes.as_array().unwrap().len() > 0);
+    assert!(!recipes.as_array().unwrap().is_empty());
 
     // Verify recipe structure
     if let Some(first_recipe) = recipes.as_array().unwrap().first() {
@@ -457,25 +457,25 @@ async fn test_game_data_endpoints() {
 
     // Test 2: Get items
     let response = client
-        .get(&format!("{}/api/game-data/items", server.base_url))
+        .get(format!("{}/api/game-data/items", server.base_url))
         .send()
         .await
         .expect("Failed to get items");
 
     let items: Value = assert_json_response(response).await;
     assert!(items.is_array());
-    assert!(items.as_array().unwrap().len() > 0);
+    assert!(!items.as_array().unwrap().is_empty());
 
     // Test 3: Get machines
     let response = client
-        .get(&format!("{}/api/game-data/machines", server.base_url))
+        .get(format!("{}/api/game-data/machines", server.base_url))
         .send()
         .await
         .expect("Failed to get machines");
 
     let machines: Value = assert_json_response(response).await;
     assert!(machines.is_array());
-    assert!(machines.as_array().unwrap().len() > 0);
+    assert!(!machines.as_array().unwrap().is_empty());
 
     // Verify machine structure
     if let Some(first_machine) = machines.as_array().unwrap().first() {
@@ -495,7 +495,7 @@ async fn test_cors_headers() {
     let response = client
         .request(
             reqwest::Method::OPTIONS,
-            &format!("{}/api/factories", server.base_url),
+            format!("{}/api/factories", server.base_url),
         )
         .header("Origin", "http://localhost:5173")
         .header("Access-Control-Request-Method", "POST")
@@ -518,7 +518,7 @@ async fn test_cors_headers() {
 
     // Test actual request with Origin header
     let response = client
-        .get(&format!("{}/api/factories", server.base_url))
+        .get(format!("{}/api/factories", server.base_url))
         .header("Origin", "http://localhost:5173")
         .send()
         .await
@@ -539,7 +539,7 @@ async fn test_error_response_format() {
 
     // Test error response format for non-existent resource
     let response = client
-        .get(&format!(
+        .get(format!(
             "{}/api/factories/{}",
             server.base_url,
             Uuid::new_v4()
@@ -595,7 +595,7 @@ async fn test_invalid_routes() {
 
     // Test invalid endpoint
     let response = client
-        .get(&format!("{}/api/invalid", server.base_url))
+        .get(format!("{}/api/invalid", server.base_url))
         .send()
         .await
         .expect("Failed to send request");
@@ -605,7 +605,7 @@ async fn test_invalid_routes() {
     // Test invalid HTTP method - use a custom method since PATCH isn't directly available
     let patch_method = reqwest::Method::from_bytes(b"PATCH").unwrap();
     let response = client
-        .request(patch_method, &format!("{}/api/factories", server.base_url))
+        .request(patch_method, format!("{}/api/factories", server.base_url))
         .send()
         .await
         .expect("Failed to send request");
@@ -621,7 +621,7 @@ async fn test_blueprint_template_crud_operations() {
 
     // Test 1: Get all templates (should be empty initially)
     let list_response = client
-        .get(&format!("{}/api/blueprints/templates", server.base_url))
+        .get(format!("{}/api/blueprints/templates", server.base_url))
         .send()
         .await
         .expect("Failed to get blueprint templates");
@@ -650,7 +650,7 @@ async fn test_blueprint_template_crud_operations() {
     });
 
     let create_response = client
-        .post(&format!("{}/api/blueprints/templates", server.base_url))
+        .post(format!("{}/api/blueprints/templates", server.base_url))
         .json(&create_request)
         .send()
         .await
@@ -665,11 +665,11 @@ async fn test_blueprint_template_crud_operations() {
         assert_eq!(template["description"], "Basic iron ingot production setup");
         assert_eq!(template["total_machines"], 4);
         assert!(template["total_power"].as_f64().unwrap() > 0.0);
-        assert!(template["production_lines"].as_array().unwrap().len() > 0);
+        assert!(!template["production_lines"].as_array().unwrap().is_empty());
 
         // Test 3: Get all templates (should have one now)
         let list_response = client
-            .get(&format!("{}/api/blueprints/templates", server.base_url))
+            .get(format!("{}/api/blueprints/templates", server.base_url))
             .send()
             .await
             .expect("Failed to get blueprint templates");
@@ -679,7 +679,10 @@ async fn test_blueprint_template_crud_operations() {
 
         // Test 4: Get specific template
         let get_response = client
-            .get(&format!("{}/api/blueprints/templates/{}", server.base_url, template_id))
+            .get(format!(
+                "{}/api/blueprints/templates/{}",
+                server.base_url, template_id
+            ))
             .send()
             .await
             .expect("Failed to get blueprint template");
@@ -709,7 +712,10 @@ async fn test_blueprint_template_crud_operations() {
         });
 
         let update_response = client
-            .put(&format!("{}/api/blueprints/templates/{}", server.base_url, template_id))
+            .put(format!(
+                "{}/api/blueprints/templates/{}",
+                server.base_url, template_id
+            ))
             .json(&update_request)
             .send()
             .await
@@ -725,7 +731,7 @@ async fn test_blueprint_template_crud_operations() {
 
         // Test 6: Get all templates (should have two now - original + new version)
         let list_response = client
-            .get(&format!("{}/api/blueprints/templates", server.base_url))
+            .get(format!("{}/api/blueprints/templates", server.base_url))
             .send()
             .await
             .expect("Failed to get blueprint templates");
@@ -735,7 +741,10 @@ async fn test_blueprint_template_crud_operations() {
 
         // Test 7: Export template
         let export_response = client
-            .get(&format!("{}/api/blueprints/templates/{}/export", server.base_url, new_template_id))
+            .get(format!(
+                "{}/api/blueprints/templates/{}/export",
+                server.base_url, new_template_id
+            ))
             .send()
             .await
             .expect("Failed to export blueprint template");
@@ -746,7 +755,10 @@ async fn test_blueprint_template_crud_operations() {
 
         // Test 8: Delete template
         let delete_response = client
-            .delete(&format!("{}/api/blueprints/templates/{}", server.base_url, new_template_id))
+            .delete(format!(
+                "{}/api/blueprints/templates/{}",
+                server.base_url, new_template_id
+            ))
             .send()
             .await
             .expect("Failed to delete blueprint template");
@@ -755,7 +767,10 @@ async fn test_blueprint_template_crud_operations() {
 
         // Test 9: Verify template is deleted
         let verify_response = client
-            .get(&format!("{}/api/blueprints/templates/{}", server.base_url, new_template_id))
+            .get(format!(
+                "{}/api/blueprints/templates/{}",
+                server.base_url, new_template_id
+            ))
             .send()
             .await
             .expect("Failed to verify deletion");
@@ -764,7 +779,7 @@ async fn test_blueprint_template_crud_operations() {
 
         // Test 10: Get all templates (should have one again - only original)
         let list_response = client
-            .get(&format!("{}/api/blueprints/templates", server.base_url))
+            .get(format!("{}/api/blueprints/templates", server.base_url))
             .send()
             .await
             .expect("Failed to get blueprint templates");
@@ -786,7 +801,10 @@ async fn test_blueprint_template_error_cases() {
     let unknown_id = Uuid::new_v4();
 
     let response = client
-        .get(&format!("{}/api/blueprints/templates/{}", server.base_url, unknown_id))
+        .get(format!(
+            "{}/api/blueprints/templates/{}",
+            server.base_url, unknown_id
+        ))
         .send()
         .await
         .expect("Failed to send request");
@@ -800,7 +818,10 @@ async fn test_blueprint_template_error_cases() {
     });
 
     let response = client
-        .put(&format!("{}/api/blueprints/templates/{}", server.base_url, unknown_id))
+        .put(format!(
+            "{}/api/blueprints/templates/{}",
+            server.base_url, unknown_id
+        ))
         .json(&update_request)
         .send()
         .await
@@ -810,7 +831,10 @@ async fn test_blueprint_template_error_cases() {
 
     // Test 3: Delete non-existent template
     let response = client
-        .delete(&format!("{}/api/blueprints/templates/{}", server.base_url, unknown_id))
+        .delete(format!(
+            "{}/api/blueprints/templates/{}",
+            server.base_url, unknown_id
+        ))
         .send()
         .await
         .expect("Failed to send request");
@@ -819,7 +843,10 @@ async fn test_blueprint_template_error_cases() {
 
     // Test 4: Export non-existent template
     let response = client
-        .get(&format!("{}/api/blueprints/templates/{}/export", server.base_url, unknown_id))
+        .get(format!(
+            "{}/api/blueprints/templates/{}/export",
+            server.base_url, unknown_id
+        ))
         .send()
         .await
         .expect("Failed to send request");
@@ -833,7 +860,7 @@ async fn test_blueprint_template_error_cases() {
     });
 
     let response = client
-        .post(&format!("{}/api/blueprints/templates", server.base_url))
+        .post(format!("{}/api/blueprints/templates", server.base_url))
         .json(&invalid_request)
         .send()
         .await
@@ -888,7 +915,10 @@ async fn test_blueprint_template_import_export() {
     });
 
     let import_response = client
-        .post(&format!("{}/api/blueprints/templates/import", server.base_url))
+        .post(format!(
+            "{}/api/blueprints/templates/import",
+            server.base_url
+        ))
         .json(&import_request)
         .send()
         .await
@@ -901,11 +931,20 @@ async fn test_blueprint_template_import_export() {
         // Verify imported template
         assert_eq!(imported_template["name"], "Imported Motor Complex");
         assert_eq!(imported_template["total_machines"], 10);
-        assert_eq!(imported_template["production_lines"].as_array().unwrap().len(), 2);
+        assert_eq!(
+            imported_template["production_lines"]
+                .as_array()
+                .unwrap()
+                .len(),
+            2
+        );
 
         // Test 2: Export the imported template
         let export_response = client
-            .get(&format!("{}/api/blueprints/templates/{}/export", server.base_url, template_id))
+            .get(format!(
+                "{}/api/blueprints/templates/{}/export",
+                server.base_url, template_id
+            ))
             .send()
             .await
             .expect("Failed to export blueprint template");
@@ -918,12 +957,18 @@ async fn test_blueprint_template_import_export() {
         let exported_json = export_data["blueprint_json"].as_str().unwrap();
         let exported_blueprint: Value = serde_json::from_str(exported_json).unwrap();
         assert_eq!(exported_blueprint["name"], "Imported Motor Complex");
-        assert_eq!(exported_blueprint["production_lines"].as_array().unwrap().len(), 2);
+        assert_eq!(
+            exported_blueprint["production_lines"]
+                .as_array()
+                .unwrap()
+                .len(),
+            2
+        );
 
         // Test 3: Create instance from template in factory
         // First create a factory
         let factory_response = client
-            .post(&format!("{}/api/factories", server.base_url))
+            .post(format!("{}/api/factories", server.base_url))
             .json(&json!({
                 "name": "Test Factory",
                 "description": "Factory for testing blueprint instances"
@@ -942,8 +987,10 @@ async fn test_blueprint_template_import_export() {
             });
 
             let instance_response = client
-                .post(&format!("{}/api/factories/{}/production-lines/from-template/{}",
-                    server.base_url, factory_id, template_id))
+                .post(format!(
+                    "{}/api/factories/{}/production-lines/from-template/{}",
+                    server.base_url, factory_id, template_id
+                ))
                 .json(&instance_request)
                 .send()
                 .await
@@ -951,19 +998,28 @@ async fn test_blueprint_template_import_export() {
 
             if instance_response.status().as_u16() == 201 {
                 let instance_data: Value = assert_created_response(instance_response).await;
-                assert_eq!(instance_data["message"], "Blueprint instance created in factory ".to_string() + &factory_id);
+                assert_eq!(
+                    instance_data["message"],
+                    "Blueprint instance created in factory ".to_string() + &factory_id
+                );
                 assert!(instance_data.get("blueprint_id").is_some());
                 assert_eq!(instance_data["factory_id"], factory_id);
 
                 // Verify factory now has the blueprint instance
                 let factory_response = client
-                    .get(&format!("{}/api/factories/{}", server.base_url, factory_id))
+                    .get(format!("{}/api/factories/{}", server.base_url, factory_id))
                     .send()
                     .await
                     .expect("Failed to get updated factory");
 
                 let updated_factory: Value = assert_json_response(factory_response).await;
-                assert_eq!(updated_factory["production_lines"].as_array().unwrap().len(), 1);
+                assert_eq!(
+                    updated_factory["production_lines"]
+                        .as_array()
+                        .unwrap()
+                        .len(),
+                    1
+                );
             }
         }
     } else {

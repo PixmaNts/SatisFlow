@@ -169,7 +169,9 @@ fn create_sample_engine() -> SatisflowEngine {
             Some(Purity::Pure),
         )
         .expect("Failed to create miner");
-        factory.add_raw_input(iron_miner);
+        factory
+            .add_raw_input(iron_miner)
+            .expect("Fail to add raw input iron");
 
         // Add production line - Iron Ingot smelting
         let mut iron_ingot_line = ProductionLineRecipe::new(
@@ -188,19 +190,17 @@ fn create_sample_engine() -> SatisflowEngine {
         factory.add_production_line(ProductionLine::ProductionLineRecipe(iron_ingot_line));
 
         // Add power generator - Coal
-        let mut coal_gen = PowerGenerator::new(
-            Uuid::new_v4(),
-            GeneratorType::Coal,
-            Item::Coal,
-        )
-        .expect("Failed to create generator");
+        let mut coal_gen = PowerGenerator::new(Uuid::new_v4(), GeneratorType::Coal, Item::Coal)
+            .expect("Failed to create generator");
         coal_gen
             .add_group(GeneratorGroup {
                 number_of_generators: 8,
                 clock_speed: 100.0,
             })
             .expect("Failed to add generator group");
-        factory.add_power_generator(coal_gen);
+        factory
+            .add_power_generator(coal_gen)
+            .expect("Failed to add generator to engine");
     }
 
     // Create steel factory
@@ -218,7 +218,9 @@ fn create_sample_engine() -> SatisflowEngine {
             Some(Purity::Normal),
         )
         .expect("Failed to create miner");
-        factory.add_raw_input(coal_miner);
+        factory
+            .add_raw_input(coal_miner)
+            .expect("Fail to add raw input coal");
 
         // Add steel ingot production
         let mut steel_ingot_line = ProductionLineRecipe::new(
@@ -237,31 +239,27 @@ fn create_sample_engine() -> SatisflowEngine {
         factory.add_production_line(ProductionLine::ProductionLineRecipe(steel_ingot_line));
 
         // Add fuel generator
-        let mut fuel_gen = PowerGenerator::new(
-            Uuid::new_v4(),
-            GeneratorType::Fuel,
-            Item::Fuel,
-        )
-        .expect("Failed to create generator");
+        let mut fuel_gen = PowerGenerator::new(Uuid::new_v4(), GeneratorType::Fuel, Item::Fuel)
+            .expect("Failed to create generator");
         fuel_gen
             .add_group(GeneratorGroup {
                 number_of_generators: 4,
                 clock_speed: 100.0,
             })
             .expect("Failed to add generator group");
-        factory.add_power_generator(fuel_gen);
+        factory
+            .add_power_generator(fuel_gen)
+            .expect("Fail to add power generator");
     }
 
     // Create logistics line - Iron transport
-    let bus_transport = TransportType::Bus(
-        Bus::new(1, "Iron Ingot Bus")
-            .with_conveyor(Conveyor::new(
-                1,
-                ConveyorSpeed::Mk3,
-                Item::IronIngot,
-                270.0,
-            ))
-    );
+    let bus_transport =
+        TransportType::Bus(Bus::new(1, "Iron Ingot Bus").with_conveyor(Conveyor::new(
+            1,
+            ConveyorSpeed::Mk3,
+            Item::IronIngot,
+            270.0,
+        )));
 
     engine
         .create_logistics_line(
@@ -294,10 +292,7 @@ fn print_engine_summary(engine: &SatisflowEngine) {
     println!("  Logistics Lines: {}", engine.get_all_logistics().len());
 
     let power_stats = engine.global_power_stats();
-    println!(
-        "  Power Generation: {:.2} MW",
-        power_stats.total_generation
-    );
+    println!("  Power Generation: {:.2} MW", power_stats.total_generation);
     println!(
         "  Power Consumption: {:.2} MW",
         power_stats.total_consumption
@@ -316,7 +311,7 @@ fn print_engine_summary(engine: &SatisflowEngine) {
     }
 
     println!("\nLogistics Lines:");
-    for (_id, logistics) in engine.get_all_logistics() {
+    for logistics in engine.get_all_logistics().values() {
         let from_factory = engine
             .get_factory(logistics.from_factory)
             .map(|f| f.name.as_str())
@@ -351,15 +346,12 @@ fn verify_engines_match(original: &SatisflowEngine, loaded: &SatisflowEngine) {
         loaded_logistics.len(),
         "Logistics count mismatch"
     );
-    println!(
-        "  ✓ Logistics count matches: {}",
-        original_logistics.len()
-    );
+    println!("  ✓ Logistics count matches: {}", original_logistics.len());
 
     for (id, original_factory) in original_factories {
         let loaded_factory = loaded_factories
             .get(id)
-            .expect(&format!("Factory {} not found in loaded data", id));
+            .unwrap_or_else(|| panic!("Factory {} not found in loaded data", id));
 
         assert_eq!(
             original_factory.name, loaded_factory.name,

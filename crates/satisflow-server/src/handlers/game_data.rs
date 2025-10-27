@@ -56,10 +56,7 @@ pub async fn get_recipes(State(_state): State<AppState>) -> Result<Json<Vec<Reci
 }
 
 pub async fn get_items(State(_state): State<AppState>) -> Result<Json<Vec<Item>>> {
-    let items: Vec<Item> = all_items()
-        .iter()
-        .map(|(item, _)| *item)
-        .collect();
+    let items: Vec<Item> = all_items().iter().map(|(item, _)| *item).collect();
 
     Ok(Json(items))
 }

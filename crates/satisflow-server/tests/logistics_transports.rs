@@ -21,7 +21,7 @@ use uuid::Uuid;
 /// up logistics lines within integration tests.
 async fn create_factory(client: &Client, base_url: &str, name: &str) -> Uuid {
     client
-        .post(&format!("{}/api/factories", base_url))
+        .post(format!("{}/api/factories", base_url))
         .json(&minimal_factory_request(name))
         .send()
         .await
@@ -45,7 +45,7 @@ async fn logistics_truck_assigns_default_identifier() {
     let to_id = create_factory(&client, &server.base_url, "Sink").await;
 
     let response = client
-        .post(&format!("{}/api/logistics", server.base_url))
+        .post(format!("{}/api/logistics", server.base_url))
         .json(&truck_logistics_request(from_id, to_id, "IronPlate", 180.0))
         .send()
         .await
@@ -82,7 +82,7 @@ async fn logistics_truck_rejects_zero_quantity() {
     let to_id = create_factory(&client, &server.base_url, "Sink").await;
 
     let response = client
-        .post(&format!("{}/api/logistics", server.base_url))
+        .post(format!("{}/api/logistics", server.base_url))
         .json(&truck_logistics_request(from_id, to_id, "IronOre", 0.0))
         .send()
         .await
@@ -111,7 +111,7 @@ async fn logistics_truck_respects_custom_identifier() {
     let to_id = create_factory(&client, &server.base_url, "Sink").await;
 
     let response = client
-        .post(&format!("{}/api/logistics", server.base_url))
+        .post(format!("{}/api/logistics", server.base_url))
         .json(&truck_logistics_with_id_request(
             from_id,
             to_id,
@@ -145,7 +145,7 @@ async fn logistics_bus_mixed_payload_totals_items() {
     let to_id = create_factory(&client, &server.base_url, "Bus Drop").await;
 
     let response = client
-        .post(&format!("{}/api/logistics", server.base_url))
+        .post(format!("{}/api/logistics", server.base_url))
         .json(&mixed_bus_logistics_request(from_id, to_id))
         .send()
         .await
@@ -178,7 +178,7 @@ async fn logistics_bus_requires_transport_segments() {
 
     let empty_bus = common::test_data::empty_bus_logistics_request(from_id, to_id);
     let response = client
-        .post(&format!("{}/api/logistics", server.base_url))
+        .post(format!("{}/api/logistics", server.base_url))
         .json(&empty_bus)
         .send()
         .await
@@ -206,7 +206,7 @@ async fn logistics_bus_whitespace_name_defaults() {
     let to_id = create_factory(&client, &server.base_url, "Bus Drop").await;
 
     let response = client
-        .post(&format!("{}/api/logistics", server.base_url))
+        .post(format!("{}/api/logistics", server.base_url))
         .json(&bus_with_whitespace_name_request(from_id, to_id))
         .send()
         .await
@@ -227,7 +227,7 @@ async fn logistics_bus_rejects_zero_pipeline_throughput() {
     let to_id = create_factory(&client, &server.base_url, "Bus Drop").await;
 
     let response = client
-        .post(&format!("{}/api/logistics", server.base_url))
+        .post(format!("{}/api/logistics", server.base_url))
         .json(&bus_with_zero_pipeline_request(from_id, to_id))
         .send()
         .await
@@ -254,7 +254,7 @@ async fn logistics_train_rejects_invalid_wagon_type() {
     let to_id = create_factory(&client, &server.base_url, "Train Unloader").await;
 
     let response = client
-        .post(&format!("{}/api/logistics", server.base_url))
+        .post(format!("{}/api/logistics", server.base_url))
         .json(&train_logistics_request(
             from_id,
             to_id,
@@ -288,7 +288,7 @@ async fn logistics_train_requires_wagon_entry() {
     let to_id = create_factory(&client, &server.base_url, "Train Unloader").await;
 
     let response = client
-        .post(&format!("{}/api/logistics", server.base_url))
+        .post(format!("{}/api/logistics", server.base_url))
         .json(&train_empty_wagons_request(from_id, to_id))
         .send()
         .await
@@ -315,7 +315,7 @@ async fn logistics_rejects_unknown_item() {
     let to_id = create_factory(&client, &server.base_url, "Item Sink").await;
 
     let response = client
-        .post(&format!("{}/api/logistics", server.base_url))
+        .post(format!("{}/api/logistics", server.base_url))
         .json(&truck_logistics_request(
             from_id,
             to_id,
@@ -330,7 +330,9 @@ async fn logistics_rejects_unknown_item() {
     // Axum's default JSON rejection returns plain text, not JSON
     let error_text = response.text().await.expect("Failed to read error text");
     assert!(
-        error_text.contains("InvalidItemName") || error_text.contains("unknown variant") || error_text.contains("Failed to deserialize"),
+        error_text.contains("InvalidItemName")
+            || error_text.contains("unknown variant")
+            || error_text.contains("Failed to deserialize"),
         "Expected error describing invalid item variant, got: {}",
         error_text
     );

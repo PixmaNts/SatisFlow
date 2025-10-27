@@ -259,7 +259,10 @@ impl SatisflowEngine {
     /// # Returns
     ///
     /// The ID of the added blueprint template
-    pub fn add_blueprint_template(&mut self, blueprint: ProductionLineBlueprint) -> ProductionLineId {
+    pub fn add_blueprint_template(
+        &mut self,
+        blueprint: ProductionLineBlueprint,
+    ) -> ProductionLineId {
         let id = blueprint.id;
         self.blueprint_templates.insert(id, blueprint);
         id
@@ -283,7 +286,9 @@ impl SatisflowEngine {
     /// # Returns
     ///
     /// Reference to the hash map of all blueprint templates
-    pub fn get_all_blueprint_templates(&self) -> &HashMap<ProductionLineId, ProductionLineBlueprint> {
+    pub fn get_all_blueprint_templates(
+        &self,
+    ) -> &HashMap<ProductionLineId, ProductionLineBlueprint> {
         &self.blueprint_templates
     }
 
@@ -296,7 +301,10 @@ impl SatisflowEngine {
     /// # Returns
     ///
     /// Result indicating success or an error if the template doesn't exist
-    pub fn remove_blueprint_template(&mut self, id: ProductionLineId) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn remove_blueprint_template(
+        &mut self,
+        id: ProductionLineId,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         if !self.blueprint_templates.contains_key(&id) {
             return Err(format!("Blueprint template with id {} does not exist", id).into());
         }
@@ -421,7 +429,9 @@ impl SatisflowEngine {
                 "INFO: Loading save file from older version {} (current: {})",
                 file_version, engine_version
             );
-            println!("INFO: Migration system not yet implemented - using default values for new fields");
+            println!(
+                "INFO: Migration system not yet implemented - using default values for new fields"
+            );
         }
 
         let save_file: SaveFile = serde_json::from_str(json)?;
@@ -772,7 +782,10 @@ mod tests {
 
         let loaded_factory2 = loaded_engine.get_factory(factory2_id).unwrap();
         assert_eq!(loaded_factory2.name, "Factory 2");
-        assert_eq!(loaded_factory2.description.as_ref().unwrap(), "Test factory");
+        assert_eq!(
+            loaded_factory2.description.as_ref().unwrap(),
+            "Test factory"
+        );
     }
 
     #[test]
@@ -866,12 +879,7 @@ mod tests {
 
         let transport = TransportType::Truck(TruckTransport::new(1, Item::IronOre, 60.0));
         engine
-            .create_logistics_line(
-                factory2_id,
-                factory3_id,
-                transport,
-                "Test".to_string(),
-            )
+            .create_logistics_line(factory2_id, factory3_id, transport, "Test".to_string())
             .unwrap();
 
         let save_file = SaveFile::new(engine);

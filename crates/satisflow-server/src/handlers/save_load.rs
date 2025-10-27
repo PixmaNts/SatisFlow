@@ -10,7 +10,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 
 use crate::{error::AppError, state::AppState};
-use satisflow_engine::{SaveFile, SaveFileSummary, SatisflowEngine};
+use satisflow_engine::{SatisflowEngine, SaveFile, SaveFileSummary};
 
 /// Request body for loading a save file
 #[derive(Debug, Deserialize)]
@@ -61,8 +61,8 @@ pub async fn save_engine(State(state): State<AppState>) -> Result<Json<SaveRespo
         .map_err(|e| AppError::EngineError(e.to_string()))?;
 
     // Parse to get summary
-    let save_file: SaveFile = serde_json::from_str(&save_json)
-        .map_err(|e| AppError::SerializationError(e))?;
+    let save_file: SaveFile =
+        serde_json::from_str(&save_json).map_err(AppError::SerializationError)?;
 
     let summary = save_file.summary();
 
@@ -124,9 +124,7 @@ pub async fn load_engine(
 ///
 /// - `200 OK` with success message
 /// - `500 Internal Server Error` if reset fails
-pub async fn reset_engine(
-    State(state): State<AppState>,
-) -> Result<Json<ResetResponse>, AppError> {
+pub async fn reset_engine(State(state): State<AppState>) -> Result<Json<ResetResponse>, AppError> {
     // Reset the engine
     let mut engine = state.engine.write().await;
     engine

@@ -26,9 +26,6 @@ pub enum AppError {
 
     #[error("Validation error: {0}")]
     ValidationError(String),
-
-    #[error("Conflict: {0}")]
-    Conflict(String),
 }
 
 impl IntoResponse for AppError {
@@ -37,7 +34,6 @@ impl IntoResponse for AppError {
             AppError::NotFound(msg) => (StatusCode::NOT_FOUND, msg),
             AppError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg),
             AppError::ValidationError(msg) => (StatusCode::BAD_REQUEST, msg),
-            AppError::Conflict(msg) => (StatusCode::CONFLICT, msg),
             AppError::InternalError(ref e) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 // Don't expose internal error details in production

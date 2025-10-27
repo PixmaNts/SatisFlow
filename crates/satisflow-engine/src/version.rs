@@ -31,29 +31,22 @@ impl SaveVersion {
             });
         }
 
-        let major = parts[0]
-            .parse()
-            .map_err(|_| VersionError::InvalidFormat {
-                version: version.to_string(),
-            })?;
-        let minor = parts[1]
-            .parse()
-            .map_err(|_| VersionError::InvalidFormat {
-                version: version.to_string(),
-            })?;
-        let patch = parts[2]
-            .parse()
-            .map_err(|_| VersionError::InvalidFormat {
-                version: version.to_string(),
-            })?;
+        let major = parts[0].parse().map_err(|_| VersionError::InvalidFormat {
+            version: version.to_string(),
+        })?;
+        let minor = parts[1].parse().map_err(|_| VersionError::InvalidFormat {
+            version: version.to_string(),
+        })?;
+        let patch = parts[2].parse().map_err(|_| VersionError::InvalidFormat {
+            version: version.to_string(),
+        })?;
 
         Ok(Self::new(major, minor, patch))
     }
 
     /// Get the current engine version
     pub fn current() -> Self {
-        Self::parse(env!("CARGO_PKG_VERSION"))
-            .expect("Engine version should always be valid")
+        Self::parse(env!("CARGO_PKG_VERSION")).expect("Engine version should always be valid")
     }
 
     /// Check if this version is compatible with another version
@@ -85,10 +78,14 @@ impl fmt::Display for SaveVersion {
 /// Errors related to version handling
 #[derive(Debug, thiserror::Error)]
 pub enum VersionError {
-    #[error("Invalid version format: '{version}'. Expected format: MAJOR.MINOR.PATCH (e.g., '0.1.0')")]
+    #[error(
+        "Invalid version format: '{version}'. Expected format: MAJOR.MINOR.PATCH (e.g., '0.1.0')"
+    )]
     InvalidFormat { version: String },
 
-    #[error("Save file version {save_version} is incompatible with engine version {engine_version}")]
+    #[error(
+        "Save file version {save_version} is incompatible with engine version {engine_version}"
+    )]
     Incompatible {
         save_version: String,
         engine_version: String,
@@ -167,7 +164,10 @@ mod tests {
     fn test_current_version() {
         let current = SaveVersion::current();
         // Should match Cargo.toml version
-        assert_eq!(current, SaveVersion::parse(env!("CARGO_PKG_VERSION")).unwrap());
+        assert_eq!(
+            current,
+            SaveVersion::parse(env!("CARGO_PKG_VERSION")).unwrap()
+        );
     }
 
     #[test]

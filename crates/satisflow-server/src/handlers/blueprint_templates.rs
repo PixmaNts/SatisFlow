@@ -6,7 +6,7 @@
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    routing::{delete, get, post, put},
+    routing::{get, post},
     Json, Router,
 };
 use chrono::Utc;
@@ -15,7 +15,9 @@ use uuid::Uuid;
 
 use crate::{error::AppError, state::AppState};
 use satisflow_engine::models::{
-    production_line::{ProductionLine, ProductionLineBlueprint, ProductionLineRecipe, MachineGroup},
+    production_line::{
+        MachineGroup, ProductionLine, ProductionLineBlueprint, ProductionLineRecipe,
+    },
     recipes::recipe_by_name,
     Item, ProductionLineId,
 };
@@ -116,21 +118,25 @@ impl From<&ProductionLineBlueprint> for BlueprintTemplateResponse {
             id: blueprint.id,
             name: blueprint.name.clone(),
             description: blueprint.description.clone(),
-            production_lines: blueprint.production_lines.iter().map(|line| {
-                ProductionLineRecipeInfo {
+            production_lines: blueprint
+                .production_lines
+                .iter()
+                .map(|line| ProductionLineRecipeInfo {
                     id: line.id,
                     name: line.name.clone(),
                     description: line.description.clone(),
                     recipe: format!("{:?}", line.recipe),
-                    machine_groups: line.machine_groups.iter().map(|mg| {
-                        MachineGroupInfo {
+                    machine_groups: line
+                        .machine_groups
+                        .iter()
+                        .map(|mg| MachineGroupInfo {
                             number_of_machine: mg.number_of_machine,
                             oc_value: mg.oc_value,
                             somersloop: mg.somersloop,
-                        }
-                    }).collect(),
-                }
-            }).collect(),
+                        })
+                        .collect(),
+                })
+                .collect(),
             total_machines: production_line.total_machines(),
             total_power: production_line.total_power_consumption(),
             input_items: production_line.input_rate(),
@@ -195,20 +201,20 @@ pub async fn create_template(
 ) -> Result<(StatusCode, Json<BlueprintTemplateResponse>), AppError> {
     // Validate name is not empty
     if request.name.trim().is_empty() {
-        return Err(AppError::BadRequest("Blueprint name cannot be empty".to_string()));
+        return Err(AppError::BadRequest(
+            "Blueprint name cannot be empty".to_string(),
+        ));
     }
 
-    let mut blueprint = ProductionLineBlueprint::new(
-        Uuid::new_v4(),
-        request.name,
-        request.description,
-    );
+    let mut blueprint =
+        ProductionLineBlueprint::new(Uuid::new_v4(), request.name, request.description);
 
     // Convert request production lines to actual ProductionLineRecipe instances
     for line_request in request.production_lines {
         // Parse recipe string
-        let recipe = recipe_by_name(&line_request.recipe)
-            .ok_or_else(|| AppError::BadRequest(format!("Invalid recipe: {}", line_request.recipe)))?;
+        let recipe = recipe_by_name(&line_request.recipe).ok_or_else(|| {
+            AppError::BadRequest(format!("Invalid recipe: {}", line_request.recipe))
+        })?;
 
         let mut line = ProductionLineRecipe::new(
             Uuid::new_v4(),
@@ -223,7 +229,8 @@ pub async fn create_template(
                 mg.number_of_machine,
                 mg.oc_value,
                 mg.somersloop,
-            )).map_err(|e| AppError::BadRequest(e.to_string()))?;
+            ))
+            .map_err(|e| AppError::BadRequest(e.to_string()))?;
         }
 
         blueprint.add_production_line(line);
@@ -262,16 +269,14 @@ pub async fn update_template(
     }
 
     // Create new template with new ID (versioning behavior)
-    let mut new_blueprint = ProductionLineBlueprint::new(
-        Uuid::new_v4(),
-        request.name,
-        request.description,
-    );
+    let mut new_blueprint =
+        ProductionLineBlueprint::new(Uuid::new_v4(), request.name, request.description);
 
     // Convert request production lines
     for line_request in request.production_lines {
-        let recipe = recipe_by_name(&line_request.recipe)
-            .ok_or_else(|| AppError::BadRequest(format!("Invalid recipe: {}", line_request.recipe)))?;
+        let recipe = recipe_by_name(&line_request.recipe).ok_or_else(|| {
+            AppError::BadRequest(format!("Invalid recipe: {}", line_request.recipe))
+        })?;
 
         let mut line = ProductionLineRecipe::new(
             Uuid::new_v4(),
@@ -285,7 +290,8 @@ pub async fn update_template(
                 mg.number_of_machine,
                 mg.oc_value,
                 mg.somersloop,
-            )).map_err(|e| AppError::BadRequest(e.to_string()))?;
+            ))
+            .map_err(|e| AppError::BadRequest(e.to_string()))?;
         }
 
         new_blueprint.add_production_line(line);
@@ -313,7 +319,8 @@ pub async fn delete_template(
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, AppError> {
     let mut engine = state.engine.write().await;
-    engine.remove_blueprint_template(id)
+    engine
+        .remove_blueprint_template(id)
         .map_err(|e| AppError::NotFound(e.to_string()))?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -372,8 +379,8 @@ pub async fn export_template(
         .get_blueprint_template(id)
         .ok_or_else(|| AppError::NotFound(format!("Blueprint template {} not found", id)))?;
 
-    let blueprint_json = serde_json::to_string_pretty(template)
-        .map_err(|e| AppError::SerializationError(e))?;
+    let blueprint_json =
+        serde_json::to_string_pretty(template).map_err(AppError::SerializationError)?;
 
     let production_line = ProductionLine::ProductionLineBlueprint(template.clone());
 
@@ -432,15 +439,19 @@ pub async fn create_from_template(
         .ok_or_else(|| AppError::NotFound(format!("Factory {} not found", factory_id)))?;
 
     let blueprint_id = blueprint.id;
-    factory
-        .production_lines
-        .insert(blueprint_id, ProductionLine::ProductionLineBlueprint(blueprint));
-
-    Ok((StatusCode::CREATED, Json(CreateFromTemplateResponse {
-        message: format!("Blueprint instance created in factory {}", factory_id),
+    factory.production_lines.insert(
         blueprint_id,
-        factory_id,
-    })))
+        ProductionLine::ProductionLineBlueprint(blueprint),
+    );
+
+    Ok((
+        StatusCode::CREATED,
+        Json(CreateFromTemplateResponse {
+            message: format!("Blueprint instance created in factory {}", factory_id),
+            blueprint_id,
+            factory_id,
+        }),
+    ))
 }
 
 /// Validates a blueprint template
@@ -470,8 +481,16 @@ fn validate_template(blueprint: &ProductionLineBlueprint) -> Result<(), AppError
 // Route configuration
 pub fn routes() -> Router<AppState> {
     Router::new()
-        .route("/blueprints/templates", get(get_all_templates).post(create_template))
-        .route("/blueprints/templates/:id", get(get_template).put(update_template).delete(delete_template))
+        .route(
+            "/blueprints/templates",
+            get(get_all_templates).post(create_template),
+        )
+        .route(
+            "/blueprints/templates/:id",
+            get(get_template)
+                .put(update_template)
+                .delete(delete_template),
+        )
         .route("/blueprints/templates/import", post(import_template))
         .route("/blueprints/templates/:id/export", get(export_template))
         .route(

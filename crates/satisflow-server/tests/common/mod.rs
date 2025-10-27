@@ -7,7 +7,9 @@
 //! focus on behaviour instead of JSON boilerplate.
 use axum::Router;
 use satisflow_server::{
-    handlers::{blueprint, blueprint_templates, dashboard, factory, game_data, logistics, save_load},
+    handlers::{
+        blueprint, blueprint_templates, dashboard, factory, game_data, logistics, save_load,
+    },
     state::AppState,
 };
 use std::net::SocketAddr;

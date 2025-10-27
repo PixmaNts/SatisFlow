@@ -624,7 +624,7 @@ pub async fn create_raw_input(
         })?;
         factory
             .add_raw_input(raw_input)
-            .map_err(|e| AppError::ValidationError(e))?;
+            .map_err(AppError::ValidationError)?;
     }
 
     let factory = engine
@@ -710,7 +710,7 @@ pub async fn create_power_generator(
         })?;
         factory
             .add_power_generator(generator)
-            .map_err(|e| AppError::ValidationError(e))?;
+            .map_err(AppError::ValidationError)?;
     }
 
     let factory = engine
@@ -809,5 +809,3 @@ pub fn routes() -> Router<AppState> {
             put(update_power_generator).delete(delete_power_generator),
         )
 }
-
-

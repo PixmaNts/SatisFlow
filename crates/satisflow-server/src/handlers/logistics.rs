@@ -185,7 +185,7 @@ pub async fn get_logistics(State(state): State<AppState>) -> Result<Json<Vec<Log
 
     let responses = logistics_lines
         .values()
-        .map(|logistics| logistics_to_response(logistics))
+        .map(logistics_to_response)
         .collect();
 
     Ok(Json(responses))
@@ -311,7 +311,7 @@ fn build_transport(
                 .unwrap_or_else(|| format!("TRK-{numeric_id:03}"));
 
             let transport =
-                TransportType::Truck(TruckTransport::new(numeric_id, item_enum.clone(), quantity));
+                TransportType::Truck(TruckTransport::new(numeric_id, item_enum, quantity));
 
             let details = serde_json::to_string(&json!({
                 "truck_id": display_id,
@@ -343,7 +343,7 @@ fn build_transport(
                 .unwrap_or_else(|| format!("DRN-{numeric_id:03}"));
 
             let transport =
-                TransportType::Drone(DroneTransport::new(numeric_id, item_enum.clone(), quantity));
+                TransportType::Drone(DroneTransport::new(numeric_id, item_enum, quantity));
 
             let details = serde_json::to_string(&json!({
                 "drone_id": display_id,
@@ -399,7 +399,7 @@ fn build_transport(
                 bus.add_conveyor(Conveyor::new(
                     numeric_line_id,
                     speed.clone(),
-                    item_enum.clone(),
+                    item_enum,
                     quantity,
                 ));
 
@@ -435,7 +435,7 @@ fn build_transport(
                 bus.add_pipeline(Pipeline::new(
                     numeric_pipeline_id,
                     capacity.clone(),
-                    item_enum.clone(),
+                    item_enum,
                     quantity,
                 ));
 
@@ -504,7 +504,7 @@ fn build_transport(
                 train.add_wagon(Wagon::new(
                     numeric_wagon_id,
                     wagon_type_enum.clone(),
-                    item_enum.clone(),
+                    item_enum,
                     quantity,
                 ));
 

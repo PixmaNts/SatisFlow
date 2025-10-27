@@ -11,7 +11,8 @@
       "Bash(npm run type-check:*)",
       "Bash(find:*)",
       "Bash(cargo build:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(timeout 5 npm run dev:*)"
     ],
     "deny": [],
     "ask": []

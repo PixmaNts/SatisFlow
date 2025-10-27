@@ -80,9 +80,7 @@ pub async fn export_blueprint(
     let production_line = factory
         .production_lines
         .get(&line_id)
-        .ok_or_else(|| {
-            AppError::NotFound(format!("Production line {} not found", line_id))
-        })?;
+        .ok_or_else(|| AppError::NotFound(format!("Production line {} not found", line_id)))?;
 
     // Verify it's a blueprint
     let blueprint = match production_line {
@@ -95,8 +93,8 @@ pub async fn export_blueprint(
     };
 
     // Serialize blueprint to JSON
-    let blueprint_json = serde_json::to_string_pretty(blueprint)
-        .map_err(|e| AppError::SerializationError(e))?;
+    let blueprint_json =
+        serde_json::to_string_pretty(blueprint).map_err(AppError::SerializationError)?;
 
     // Build metadata using the ProductionLine wrapper methods
     let metadata = BlueprintMetadata {
@@ -141,9 +139,7 @@ pub async fn import_blueprint(
 ) -> Result<Json<BlueprintImportResponse>, AppError> {
     // Deserialize the blueprint JSON
     let mut blueprint: ProductionLineBlueprint = serde_json::from_str(&request.blueprint_json)
-        .map_err(|e| {
-            AppError::BadRequest(format!("Invalid blueprint JSON: {}", e))
-        })?;
+        .map_err(|e| AppError::BadRequest(format!("Invalid blueprint JSON: {}", e)))?;
 
     // Validate the blueprint structure
     validate_blueprint(&blueprint)?;
@@ -166,9 +162,10 @@ pub async fn import_blueprint(
         .ok_or_else(|| AppError::NotFound(format!("Factory {} not found", factory_id)))?;
 
     let blueprint_id = blueprint.id;
-    factory
-        .production_lines
-        .insert(blueprint_id, ProductionLine::ProductionLineBlueprint(blueprint));
+    factory.production_lines.insert(
+        blueprint_id,
+        ProductionLine::ProductionLineBlueprint(blueprint),
+    );
 
     Ok(Json(BlueprintImportResponse {
         message: format!(
@@ -233,12 +230,7 @@ pub async fn preview_blueprint(
 ) -> Result<Json<BlueprintMetadata>, AppError> {
     // Deserialize the blueprint JSON
     let blueprint: ProductionLineBlueprint = serde_json::from_str(&request.blueprint_json)
-        .map_err(|e| {
-            AppError::BadRequest(format!(
-                "Invalid Blueprint JSON: {}",
-                e
-            ))
-        })?;
+        .map_err(|e| AppError::BadRequest(format!("Invalid Blueprint JSON: {}", e)))?;
 
     // Validate blueprint structure
     validate_blueprint(&blueprint)?;
@@ -271,10 +263,7 @@ pub fn routes() -> Router<AppState> {
             "/factories/:factory_id/production-lines/import",
             post(import_blueprint),
         )
-        .route(
-            "/blueprints/preview",
-            post(preview_blueprint),
-        )
+        .route("/blueprints/preview", post(preview_blueprint))
 }
 
 #[cfg(test)]
@@ -283,7 +272,9 @@ mod tests {
     use crate::state::AppState;
     use satisflow_engine::{
         models::{
-            production_line::{MachineGroup, ProductionLine, ProductionLineBlueprint, ProductionLineRecipe},
+            production_line::{
+                MachineGroup, ProductionLine, ProductionLineBlueprint, ProductionLineRecipe,
+            },
             Recipe,
         },
         SatisflowEngine,
@@ -342,18 +333,15 @@ mod tests {
             let mut engine = state.engine.write().await;
             let factory_id = engine.create_factory("Test Factory".to_string(), None);
             let factory = engine.get_factory_mut(factory_id).unwrap();
-            factory
-                .production_lines
-                .insert(blueprint_id, ProductionLine::ProductionLineBlueprint(blueprint));
+            factory.production_lines.insert(
+                blueprint_id,
+                ProductionLine::ProductionLineBlueprint(blueprint),
+            );
             factory_id
         };
 
         // Export blueprint
-        let result = export_blueprint(
-            State(state),
-            Path((factory_id, blueprint_id)),
-        )
-        .await;
+        let result = export_blueprint(State(state), Path((factory_id, blueprint_id))).await;
 
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -374,11 +362,7 @@ mod tests {
         let fake_factory_id = Uuid::new_v4();
         let fake_line_id = Uuid::new_v4();
 
-        let result = export_blueprint(
-            State(state),
-            Path((fake_factory_id, fake_line_id)),
-        )
-        .await;
+        let result = export_blueprint(State(state), Path((fake_factory_id, fake_line_id))).await;
 
         assert!(result.is_err());
         match result.unwrap_err() {
@@ -399,11 +383,7 @@ mod tests {
 
         let fake_line_id = Uuid::new_v4();
 
-        let result = export_blueprint(
-            State(state),
-            Path((factory_id, fake_line_id)),
-        )
-        .await;
+        let result = export_blueprint(State(state), Path((factory_id, fake_line_id))).await;
 
         assert!(result.is_err());
         match result.unwrap_err() {
@@ -534,11 +514,7 @@ mod tests {
 
         let blueprint = create_test_blueprint();
         let original_id = blueprint.id;
-        let original_line_ids: Vec<_> = blueprint
-            .production_lines
-            .iter()
-            .map(|l| l.id)
-            .collect();
+        let original_line_ids: Vec<_> = blueprint.production_lines.iter().map(|l| l.id).collect();
 
         let blueprint_json = serde_json::to_string(&blueprint).unwrap();
 
@@ -619,18 +595,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_validate_blueprint_invalid_overclock() {
-        let mut blueprint = ProductionLineBlueprint::new(
-            Uuid::new_v4(),
-            "Test".to_string(),
-            None,
-        );
+        let mut blueprint = ProductionLineBlueprint::new(Uuid::new_v4(), "Test".to_string(), None);
 
-        let mut line = ProductionLineRecipe::new(
-            Uuid::new_v4(),
-            "Line".to_string(),
-            None,
-            Recipe::IronPlate,
-        );
+        let mut line =
+            ProductionLineRecipe::new(Uuid::new_v4(), "Line".to_string(), None, Recipe::IronPlate);
 
         // Add invalid machine group (overclock > 250%)
         line.machine_groups.push(MachineGroup::new(1, 300.0, 0));
@@ -646,18 +614,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_validate_blueprint_zero_machines() {
-        let mut blueprint = ProductionLineBlueprint::new(
-            Uuid::new_v4(),
-            "Test".to_string(),
-            None,
-        );
+        let mut blueprint = ProductionLineBlueprint::new(Uuid::new_v4(), "Test".to_string(), None);
 
-        let mut line = ProductionLineRecipe::new(
-            Uuid::new_v4(),
-            "Line".to_string(),
-            None,
-            Recipe::IronPlate,
-        );
+        let mut line =
+            ProductionLineRecipe::new(Uuid::new_v4(), "Line".to_string(), None, Recipe::IronPlate);
 
         // Add invalid machine group (0 machines)
         line.machine_groups.push(MachineGroup::new(0, 100.0, 0));
@@ -683,18 +643,16 @@ mod tests {
 
             let blueprint = create_test_blueprint();
             let blueprint_id = blueprint.id;
-            factory
-                .production_lines
-                .insert(blueprint_id, ProductionLine::ProductionLineBlueprint(blueprint));
+            factory.production_lines.insert(
+                blueprint_id,
+                ProductionLine::ProductionLineBlueprint(blueprint),
+            );
             (factory_id, blueprint_id)
         };
 
         // Export
-        let export_result = export_blueprint(
-            State(state.clone()),
-            Path((factory_id, blueprint_id)),
-        )
-        .await;
+        let export_result =
+            export_blueprint(State(state.clone()), Path((factory_id, blueprint_id))).await;
 
         assert!(export_result.is_ok());
         let export_response = export_result.unwrap();

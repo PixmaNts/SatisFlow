@@ -17,7 +17,9 @@ mod handlers;
 mod state;
 
 use error::Result;
-use handlers::{blueprint, blueprint_templates, dashboard, factory, game_data, logistics, save_load};
+use handlers::{
+    blueprint, blueprint_templates, dashboard, factory, game_data, logistics, save_load,
+};
 use state::AppState;
 
 #[tokio::main]

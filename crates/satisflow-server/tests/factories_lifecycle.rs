@@ -24,7 +24,7 @@ async fn factory_create_rejects_blank_name() {
     let client = create_test_client();
 
     let response = client
-        .post(&format!("{}/api/factories", server.base_url))
+        .post(format!("{}/api/factories", server.base_url))
         .json(&minimal_factory_request(""))
         .send()
         .await
@@ -43,7 +43,7 @@ async fn factory_create_defaults_optional_fields() {
     let client = create_test_client();
 
     let response = client
-        .post(&format!("{}/api/factories", server.base_url))
+        .post(format!("{}/api/factories", server.base_url))
         .json(&minimal_factory_request("Compact Factory"))
         .send()
         .await
@@ -64,7 +64,7 @@ async fn factory_create_trims_whitespace_notes() {
     let client = create_test_client();
 
     let response = client
-        .post(&format!("{}/api/factories", server.base_url))
+        .post(format!("{}/api/factories", server.base_url))
         .json(&factory_with_notes_request("Whitespace Factory", "    "))
         .send()
         .await
@@ -83,7 +83,7 @@ async fn factory_update_clears_notes_when_empty() {
     let client = create_test_client();
 
     let create_response = client
-        .post(&format!("{}/api/factories", server.base_url))
+        .post(format!("{}/api/factories", server.base_url))
         .json(&create_factory_request())
         .send()
         .await
@@ -96,7 +96,7 @@ async fn factory_update_clears_notes_when_empty() {
         .expect("Factory id missing from create response");
 
     let update_response = client
-        .put(&format!("{}/api/factories/{}", server.base_url, factory_id))
+        .put(format!("{}/api/factories/{}", server.base_url, factory_id))
         .json(&update_factory_notes_request("   "))
         .send()
         .await
@@ -116,7 +116,7 @@ async fn factory_delete_cascades_logistics() {
 
     // Seed two factories to connect via logistics.
     let factory_a = client
-        .post(&format!("{}/api/factories", server.base_url))
+        .post(format!("{}/api/factories", server.base_url))
         .json(&minimal_factory_request("Alpha"))
         .send()
         .await
@@ -126,7 +126,7 @@ async fn factory_delete_cascades_logistics() {
         .unwrap();
 
     let factory_b = client
-        .post(&format!("{}/api/factories", server.base_url))
+        .post(format!("{}/api/factories", server.base_url))
         .json(&minimal_factory_request("Beta"))
         .send()
         .await
@@ -146,7 +146,7 @@ async fn factory_delete_cascades_logistics() {
 
     // Create a logistics line between the factories.
     let logistics_response = client
-        .post(&format!("{}/api/logistics", server.base_url))
+        .post(format!("{}/api/logistics", server.base_url))
         .json(&truck_logistics_request(
             factory_a_id,
             factory_b_id,
@@ -166,7 +166,7 @@ async fn factory_delete_cascades_logistics() {
 
     // Delete factory A and ensure the logistics line is removed as part of the cascade.
     let delete_response = client
-        .delete(&format!(
+        .delete(format!(
             "{}/api/factories/{}",
             server.base_url, factory_a_id
         ))
@@ -176,7 +176,7 @@ async fn factory_delete_cascades_logistics() {
     assert_no_content(delete_response).await;
 
     let get_response = client
-        .get(&format!(
+        .get(format!(
             "{}/api/logistics/{}",
             server.base_url, logistics_id
         ))
@@ -197,7 +197,7 @@ async fn factory_delete_cascades_logistics() {
 
     // Confirm logistics collection is empty to guard against orphaned entries.
     let list_response = client
-        .get(&format!("{}/api/logistics", server.base_url))
+        .get(format!("{}/api/logistics", server.base_url))
         .send()
         .await
         .expect("Failed to list logistics after cascade");

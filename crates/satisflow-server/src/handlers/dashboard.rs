@@ -105,9 +105,7 @@ pub async fn get_item_balances(State(state): State<AppState>) -> Result<Json<Vec
     }
 
     // Sort by item name for consistent ordering
-    item_balances.sort_by(|a, b| {
-        format!("{:?}", a.item).cmp(&format!("{:?}", b.item))
-    });
+    item_balances.sort_by(|a, b| format!("{:?}", a.item).cmp(&format!("{:?}", b.item)));
 
     Ok(Json(item_balances))
 }
