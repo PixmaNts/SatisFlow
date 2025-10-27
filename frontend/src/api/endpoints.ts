@@ -27,6 +27,14 @@ import type {
   BlueprintImportRequest,
   BlueprintImportResponse,
   BlueprintMetadata,
+  BlueprintTemplateResponse,
+  CreateBlueprintTemplateRequest,
+  UpdateBlueprintTemplateRequest,
+  ImportTemplateRequest,
+  ExportTemplateResponse,
+  TemplateMetadata,
+  CreateFromTemplateRequest,
+  CreateFromTemplateResponse,
 } from './types';
 
 /**
@@ -378,6 +386,107 @@ export const saveLoad = {
 };
 
 /**
+ * Blueprint Templates API endpoints
+ * Provides CRUD operations for blueprint template library
+ */
+export const blueprintTemplates = {
+  /**
+   * Get all blueprint templates from library
+   * @returns Promise resolving to array of blueprint templates
+   */
+  getAll: async (): Promise<BlueprintTemplateResponse[]> => {
+    return api.get<BlueprintTemplateResponse[]>('/blueprints/templates');
+  },
+
+  /**
+   * Get a specific blueprint template by ID
+   * @param id - The template ID
+   * @returns Promise resolving to blueprint template data
+   */
+  getById: async (id: string): Promise<BlueprintTemplateResponse> => {
+    return api.get<BlueprintTemplateResponse>(`/blueprints/templates/${id}`);
+  },
+
+  /**
+   * Create a new blueprint template
+   * @param templateData - The template creation data
+   * @returns Promise resolving to created template
+   */
+  create: async (templateData: CreateBlueprintTemplateRequest): Promise<BlueprintTemplateResponse> => {
+    return api.post<BlueprintTemplateResponse>('/blueprints/templates', templateData);
+  },
+
+  /**
+   * Update an existing template (creates new version)
+   * @param id - The template ID
+   * @param templateData - The template update data
+   * @returns Promise resolving to new template version
+   */
+  update: async (
+    id: string,
+    templateData: UpdateBlueprintTemplateRequest
+  ): Promise<BlueprintTemplateResponse> => {
+    return api.put<BlueprintTemplateResponse>(`/blueprints/templates/${id}`, templateData);
+  },
+
+  /**
+   * Delete a template from library
+   * @param id - The template ID
+   * @returns Promise resolving when deletion is complete
+   */
+  delete: async (id: string): Promise<void> => {
+    return api.delete<void>(`/blueprints/templates/${id}`);
+  },
+
+  /**
+   * Import a blueprint JSON to library
+   * @param importData - The import request data
+   * @returns Promise resolving to imported template
+   */
+  importToLibrary: async (importData: ImportTemplateRequest): Promise<BlueprintTemplateResponse> => {
+    return api.post<BlueprintTemplateResponse>('/blueprints/templates/import', importData);
+  },
+
+  /**
+   * Export a template as JSON
+   * @param id - The template ID
+   * @returns Promise resolving to export data with metadata
+   */
+  export: async (id: string): Promise<ExportTemplateResponse> => {
+    return api.get<ExportTemplateResponse>(`/blueprints/templates/${id}/export`);
+  },
+
+  /**
+   * Create an instance from template in a factory
+   * @param factoryId - The factory ID
+   * @param templateId - The template ID
+   * @param requestData - The creation request data
+   * @returns Promise resolving to creation response
+   */
+  createInstanceInFactory: async (
+    factoryId: string,
+    templateId: string,
+    requestData: CreateFromTemplateRequest
+  ): Promise<CreateFromTemplateResponse> => {
+    return api.post<CreateFromTemplateResponse>(
+      `/factories/${factoryId}/production-lines/from-template/${templateId}`,
+      requestData
+    );
+  },
+
+  /**
+   * Preview a blueprint JSON without importing to library
+   * Returns calculated metadata (power, machines, items) from the backend
+   * @param blueprintJson - The blueprint JSON string to preview
+   * @returns Promise resolving to blueprint metadata
+   */
+  preview: async (blueprintJson: string): Promise<BlueprintMetadata> => {
+    // Reuse the same preview endpoint as blueprints
+    return blueprints.preview(blueprintJson);
+  },
+};
+
+/**
  * Export all endpoint groups for convenient importing
  */
 export const endpoints = {
@@ -387,6 +496,7 @@ export const endpoints = {
   gameData,
   system,
   blueprints,
+  blueprintTemplates,
   saveLoad,
 };
 

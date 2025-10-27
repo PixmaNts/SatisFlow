@@ -132,6 +132,8 @@ pub struct ItemBalanceResponse {
 pub struct ProductionLineResponse {
     #[serde(flatten)]
     pub production_line: ProductionLine,
+    pub total_power_consumption: f32,
+    pub total_machines: u32,
 }
 
 #[derive(Serialize)]
@@ -178,9 +180,10 @@ fn convert_production_lines_to_response(
 ) -> Vec<ProductionLineResponse> {
     production_lines
         .values()
-        .cloned()
         .map(|pl| ProductionLineResponse {
-            production_line: pl,
+            total_power_consumption: pl.total_power_consumption(),
+            total_machines: pl.total_machines(),
+            production_line: pl.clone(),
         })
         .collect()
 }

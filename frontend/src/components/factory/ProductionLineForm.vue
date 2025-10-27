@@ -154,11 +154,19 @@
         </div>
       </div>
 
-      <!-- Blueprint (simplified for now) -->
+      <!-- Blueprint Selection -->
       <div v-if="formData.type === 'blueprint'" class="form-group">
-        <p class="blueprint-notice">
-          Blueprint creation will be implemented in a future update.
-          For now, please use the Recipe type.
+        <label for="blueprint-select" class="form-label">Blueprint Template *</label>
+        <SearchableSelect
+          id="blueprint-select"
+          v-model="formData.blueprint_template_id"
+          :options="blueprintOptions"
+          placeholder="Search for a blueprint template..."
+          :disabled="!blueprintTemplates_list.length || loadingTemplates"
+        />
+        <p v-if="loadingTemplates" class="helper-text">Loading blueprint templates...</p>
+        <p v-else-if="!blueprintTemplates_list.length" class="helper-text">
+          No blueprint templates available. Create one in the Blueprint Library first.
         </p>
       </div>
 
@@ -188,15 +196,24 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameDataStore } from '@/stores/gameData'
 import { useFactoryStore } from '@/stores/factory'
+import { blueprintTemplates } from '@/api/endpoints'
 import type {
   ProductionLineResponse,
   MachineGroup,
   CreateProductionLineRequest,
-  RecipeInfo
+  RecipeInfo,
+  BlueprintTemplateResponse
 } from '@/api/types'
+
+interface BlueprintOption {
+  value: string;
+  label: string;
+  category?: string;
+}
 import Button from '@/components/ui/Button.vue'
 import Modal from '@/components/ui/Modal.vue'
 import RecipeAutocomplete from './RecipeAutocomplete.vue'
+import SearchableSelect from '@/components/forms/SearchableSelect.vue'
 
 interface Props {
   show: boolean
@@ -218,11 +235,14 @@ const { recipes } = storeToRefs(gameDataStore)
 
 // State
 const saving = ref(false)
+const loadingTemplates = ref(false)
+const blueprintTemplates_list = ref<BlueprintTemplateResponse[]>([])
 const formData = ref({
   name: '',
   description: '',
   type: 'recipe' as 'recipe' | 'blueprint',
   recipe: '',
+  blueprint_template_id: '',
   machine_groups: [] as MachineGroup[]
 })
 
@@ -260,18 +280,32 @@ const totalMachines = computed(() => {
   return formData.value.machine_groups.reduce((total, group) => total + group.number_of_machine, 0)
 })
 
+const blueprintOptions = computed((): BlueprintOption[] => {
+  return blueprintTemplates_list.value.map(template => ({
+    value: template.id,
+    label: template.name,
+    category: template.description || undefined
+  }))
+})
+
 const canSubmit = computed(() => {
-  return (
-    formData.value.name.trim() &&
-    formData.value.type === 'recipe' &&
-    formData.value.recipe &&
-    formData.value.machine_groups.length > 0 &&
-    formData.value.machine_groups.every(group =>
-      group.number_of_machine > 0 &&
-      group.oc_value >= 0 &&
-      group.oc_value <= 250
+  if (!formData.value.name.trim()) return false
+
+  if (formData.value.type === 'recipe') {
+    return (
+      formData.value.recipe &&
+      formData.value.machine_groups.length > 0 &&
+      formData.value.machine_groups.every(group =>
+        group.number_of_machine > 0 &&
+        group.oc_value >= 0 &&
+        group.oc_value <= 250
+      )
     )
-  )
+  } else if (formData.value.type === 'blueprint') {
+    return !!formData.value.blueprint_template_id
+  }
+
+  return false
 })
 
 const getProductionLineId = (line?: ProductionLineResponse | null): string | null => {
@@ -299,6 +333,9 @@ const handleTypeChange = () => {
     formData.value.recipe = ''
     formData.value.machine_groups = []
     lastSelectedRecipe.value = null
+  } else if (formData.value.type === 'recipe') {
+    // Reset blueprint-related fields
+    formData.value.blueprint_template_id = ''
   }
 }
 
@@ -347,9 +384,22 @@ const resetForm = () => {
     description: '',
     type: 'recipe',
     recipe: '',
+    blueprint_template_id: '',
     machine_groups: []
   }
   lastSelectedRecipe.value = null
+}
+
+const fetchBlueprintTemplates = async () => {
+  loadingTemplates.value = true
+  try {
+    blueprintTemplates_list.value = await blueprintTemplates.getAll()
+  } catch (error) {
+    console.error('Failed to fetch blueprint templates:', error)
+    blueprintTemplates_list.value = []
+  } finally {
+    loadingTemplates.value = false
+  }
 }
 
 const loadProductionLine = () => {
@@ -363,6 +413,7 @@ const loadProductionLine = () => {
       description: recipe.description || '',
       type: 'recipe',
       recipe: recipe.recipe,
+      blueprint_template_id: '',
       machine_groups: [...recipe.machine_groups]
     }
     lastSelectedRecipe.value = recipe.recipe
@@ -373,6 +424,7 @@ const loadProductionLine = () => {
       description: blueprint.description || '',
       type: 'blueprint',
       recipe: '',
+      blueprint_template_id: '',
       machine_groups: []
     }
     lastSelectedRecipe.value = null
@@ -385,6 +437,21 @@ const handleSubmit = async () => {
   saving.value = true
 
   try {
+    // For blueprint type, use the template creation endpoint
+    if (formData.value.type === 'blueprint') {
+      await blueprintTemplates.createInstanceInFactory(
+        props.factoryId,
+        formData.value.blueprint_template_id,
+        {
+          name: formData.value.name.trim() || undefined,
+        }
+      )
+      emit('saved')
+      handleClose()
+      return
+    }
+
+    // For recipe type, use the standard production line endpoint
     const payload: CreateProductionLineRequest = {
       name: formData.value.name.trim(),
       description: formData.value.description?.trim() || undefined,
@@ -435,9 +502,12 @@ watch(() => props.show, (show) => {
   }
 })
 
-// Load recipes on mount
+// Load recipes and blueprint templates on mount
 onMounted(async () => {
-  await gameDataStore.fetchRecipes()
+  await Promise.all([
+    gameDataStore.fetchRecipes(),
+    fetchBlueprintTemplates()
+  ])
 })
 </script>
 
@@ -591,6 +661,13 @@ onMounted(async () => {
   font-size: var(--font-size-sm, 0.875rem);
   color: var(--color-amber-800, #92400e);
   margin: 0;
+}
+
+.helper-text {
+  margin-top: var(--spacing-xs, 0.25rem);
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-gray-500, #6b7280);
+  font-style: italic;
 }
 
 .form-actions {

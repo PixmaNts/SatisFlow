@@ -12,13 +12,28 @@
           <span class="button-icon">📥</span>
           Import Blueprint
         </Button>
-        <Button
-          variant="primary"
-          size="sm"
-          @click="showCreateModal = true"
-        >
-          Add Production Line
-        </Button>
+
+        <!-- Production Line Type Selector -->
+        <div class="production-line-type-selector">
+          <Button
+            variant="primary"
+            size="sm"
+            @click="showCreateModal = true"
+          >
+            Add Production Line
+          </Button>
+          <div class="dropdown-arrow" />
+          <div class="dropdown-menu" v-if="showDropdown">
+            <div class="dropdown-item" @click="showCreateModal = true; showDropdown = false">
+              <span class="dropdown-icon">🔧</span>
+              Recipe
+            </div>
+            <div class="dropdown-item" @click="handleBlueprintSelectorClick">
+              <span class="dropdown-icon">📋</span>
+              From Blueprint Template
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -143,6 +158,14 @@
       @import="handleConfirmImport"
     />
 
+    <!-- Blueprint Selector Modal -->
+    <BlueprintSelectorModal
+      :show="showBlueprintSelector"
+      :factory-id="factoryId"
+      @close="showBlueprintSelector = false"
+      @select="handleBlueprintSelected"
+    />
+
     <!-- Error Alert -->
     <Alert
       v-if="error"
@@ -158,13 +181,16 @@
 import { ref, computed, onMounted } from 'vue'
 import { useFactoryStore } from '@/stores/factory'
 import type { ProductionLineResponse, MachineGroup, BlueprintMetadata } from '@/api/types'
-import { blueprints } from '@/api/endpoints'
+import { blueprints, blueprintTemplates } from '@/api/endpoints'
+import { useToast } from '@/composables/useToast'
+import { useErrorHandler } from '@/composables/useErrorHandler'
 import Button from '@/components/ui/Button.vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import Modal from '@/components/ui/Modal.vue'
 import Alert from '@/components/ui/Alert.vue'
 import ProductionLineForm from './ProductionLineForm.vue'
 import BlueprintPreviewModal from './BlueprintPreviewModal.vue'
+import BlueprintSelectorModal from './BlueprintSelectorModal.vue'
 
 interface Props {
   factoryId: string
@@ -173,6 +199,10 @@ interface Props {
 const props = defineProps<Props>()
 const factoryStore = useFactoryStore()
 
+// Composables
+const { showSuccess, showError } = useToast()
+const { handleError } = useErrorHandler()
+
 // State
 const showCreateModal = ref(false)
 const showDeleteModal = ref(false)
@@ -180,6 +210,8 @@ const editingLine = ref<ProductionLineResponse | null>(null)
 const deletingLine = ref<ProductionLineResponse | null>(null)
 const deleting = ref(false)
 const error = ref<string | null>(null)
+const showDropdown = ref(false)
+const showBlueprintSelector = ref(false)
 
 // Blueprint import/export state
 const showBlueprintPreview = ref(false)
@@ -262,16 +294,8 @@ const getProductionLineName = (line: ProductionLineResponse): string => {
 }
 
 const getTotalMachines = (line: ProductionLineResponse): number => {
-  if (isProductionLineRecipe(line)) {
-    return line.ProductionLineRecipe.machine_groups.reduce(
-      (total: number, group: MachineGroup) => total + group.number_of_machine, 0
-    )
-  } else if (isProductionLineBlueprint(line)) {
-    return line.ProductionLineBlueprint.production_lines.reduce(
-      (total, subLine) => total + getTotalMachines(subLine), 0
-    )
-  }
-  return 0
+  // Use the backend-calculated total machines
+  return line.total_machines
 }
 
 const getMachineDetails = (line: ProductionLineResponse): string => {
@@ -292,20 +316,8 @@ const getMachineDetails = (line: ProductionLineResponse): string => {
 }
 
 const getPowerConsumption = (line: ProductionLineResponse): number => {
-  // This would need to be calculated based on the recipe and machine groups
-  // For now, return a placeholder value
-  if (isProductionLineRecipe(line)) {
-    // Calculate power based on machine groups and overclock
-    return line.ProductionLineRecipe.machine_groups.reduce(
-      (total: number, group: MachineGroup) => total + (group.number_of_machine * 4 * Math.pow(group.oc_value / 100, 1.321928)),
-      0
-    )
-  } else if (isProductionLineBlueprint(line)) {
-    return line.ProductionLineBlueprint.production_lines.reduce(
-      (total, subLine) => total + getPowerConsumption(subLine), 0
-    )
-  }
-  return 0
+  // Use the backend-calculated power consumption
+  return line.total_power_consumption
 }
 
 const getTotalSomersloops = (line: ProductionLineResponse): number => {
@@ -498,6 +510,32 @@ onMounted(async () => {
     await factoryStore.fetchById(props.factoryId)
   }
 })
+
+// Handle blueprint selector modal
+const handleBlueprintSelectorClick = () => {
+  showBlueprintSelector.value = true
+  showDropdown.value = false
+}
+
+// Handle blueprint selection from selector modal
+const handleBlueprintSelected = async (templateId: string, name: string) => {
+  try {
+    await blueprintTemplates.createInstanceInFactory(
+      props.factoryId,
+      templateId,
+      { name: name || undefined }
+    )
+
+    // Refresh factory data
+    await factoryStore.fetchById(props.factoryId)
+
+    showBlueprintSelector.value = false
+    showSuccess(`Blueprint '${name}' added to factory successfully`)
+  } catch (err) {
+    const appError = handleError(err, { action: 'create_blueprint_instance' })
+    showError(appError.userMessage || 'Failed to create blueprint instance')
+  }
+}
 </script>
 
 <style scoped lang="scss">
@@ -615,6 +653,51 @@ onMounted(async () => {
   justify-content: flex-end;
 }
 
+// Production Line Type Selector Styles
+.production-line-type-selector {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-arrow {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-left: 8px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid var(--color-gray-400, #9ca3af);
+  transform: translateY(2px);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 10;
+  background-color: var(--color-white, #ffffff);
+  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border-radius: var(--border-radius-md, 0.375rem);
+  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+  min-width: 200px;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 0.75rem);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: var(--color-gray-50, #f9fafb);
+}
+
+.dropdown-icon {
+  margin-right: var(--spacing-xs, 0.25rem);
+}
+
 // Responsive design
 @media (max-width: 768px) {
   .list-header {
@@ -631,6 +714,24 @@ onMounted(async () => {
   .action-buttons {
     flex-direction: column;
     gap: var(--spacing-xs, 0.25rem);
+  }
+
+  .production-line-type-selector {
+    width: 100%;
+    margin-bottom: var(--spacing-sm, 0.5rem);
+  }
+
+  .dropdown-menu {
+    position: static;
+    box-shadow: none;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs, 0.25rem);
+  }
+
+  .dropdown-arrow {
+    display: none;
   }
 }
 </style>

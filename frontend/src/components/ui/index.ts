@@ -13,6 +13,7 @@ export { default as SkeletonCard } from './SkeletonCard.vue'
 export { default as SkeletonTable } from './SkeletonTable.vue'
 export { default as ProgressIndicator } from './ProgressIndicator.vue'
 export { default as SuccessConfirmation } from './SuccessConfirmation.vue'
+export { default as ConfirmDialog } from './ConfirmDialog.vue'
 export { default as ToastContainer } from './ToastContainer.vue'
 
 // Type exports

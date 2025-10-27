@@ -325,6 +325,8 @@ export type ProductionLineResponse =
         recipe: string;
         machine_groups: MachineGroup[];
       };
+      total_power_consumption: number;
+      total_machines: number;
     }
   | {
       ProductionLineBlueprint: {
@@ -333,6 +335,8 @@ export type ProductionLineResponse =
         description: string | null;
         production_lines: ProductionLineResponse[];
       };
+      total_power_consumption: number;
+      total_machines: number;
     };
 
 // Raw input response
@@ -493,6 +497,83 @@ export interface BlueprintImportRequest {
 
 // Blueprint import response
 export interface BlueprintImportResponse {
+  message: string;
+  blueprint_id: string;
+  factory_id: string;
+}
+
+// ============================================================================
+// Blueprint Template Types
+// ============================================================================
+
+// Blueprint template response
+export interface BlueprintTemplateResponse {
+  id: string;
+  name: string;
+  description: string | null;
+  production_lines: ProductionLineRecipeInfo[];
+  total_machines: number;
+  total_power: number;
+  input_items: [Item, number][];
+  output_items: [Item, number][];
+}
+
+// Production line recipe information within a blueprint
+export interface ProductionLineRecipeInfo {
+  id: string;
+  name: string;
+  description: string | null;
+  recipe: string;
+  machine_groups: MachineGroupInfo[];
+}
+
+// Machine group information for blueprint templates
+export interface MachineGroupInfo {
+  number_of_machine: number;
+  oc_value: number;
+  somersloop: number;
+}
+
+// Create blueprint template request
+export interface CreateBlueprintTemplateRequest {
+  name: string;
+  description?: string;
+  production_lines: CreateProductionLineRequest[];
+}
+
+// Update blueprint template request (same as create)
+export type UpdateBlueprintTemplateRequest = CreateBlueprintTemplateRequest;
+
+// Import template request
+export interface ImportTemplateRequest {
+  blueprint_json: string;
+  name?: string;
+}
+
+// Export template response
+export interface ExportTemplateResponse {
+  blueprint_json: string;
+  metadata: TemplateMetadata;
+}
+
+// Template metadata for export
+export interface TemplateMetadata {
+  name: string;
+  description: string | null;
+  total_machines: number;
+  total_power: number;
+  input_items: [Item, number][];
+  output_items: [Item, number][];
+  exported_at: string;
+}
+
+// Create from template request
+export interface CreateFromTemplateRequest {
+  name?: string;
+}
+
+// Create from template response
+export interface CreateFromTemplateResponse {
   message: string;
   blueprint_id: string;
   factory_id: string;

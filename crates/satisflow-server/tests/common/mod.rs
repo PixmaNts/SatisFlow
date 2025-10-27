@@ -7,7 +7,7 @@
 //! focus on behaviour instead of JSON boilerplate.
 use axum::Router;
 use satisflow_server::{
-    handlers::{dashboard, factory, game_data, logistics},
+    handlers::{blueprint, blueprint_templates, dashboard, factory, game_data, logistics, save_load},
     state::AppState,
 };
 use std::net::SocketAddr;
@@ -36,6 +36,9 @@ pub async fn create_test_server() -> TestServer {
         .nest("/api/logistics", logistics::routes())
         .nest("/api/dashboard", dashboard::routes())
         .nest("/api/game-data", game_data::routes())
+        .nest("/api", save_load::routes())
+        .nest("/api", blueprint::routes())
+        .nest("/api", blueprint_templates::routes())
         // Health check
         .route("/health", axum::routing::get(|| async { "OK" }))
         // Global middleware

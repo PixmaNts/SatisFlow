@@ -11,6 +11,7 @@
       :size="spinnerSize"
       class="button-spinner"
     />
+    <slot v-if="!loading" name="icon" />
     <slot />
   </button>
 </template>
@@ -24,7 +25,7 @@ import LoadingSpinner from './LoadingSpinner.vue'
  */
 interface Props {
   /** Button variant style */
-  variant?: 'primary' | 'secondary' | 'danger'
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
   /** Button size */
   size?: 'sm' | 'md' | 'lg'
   /** Whether the button is disabled */
@@ -158,6 +159,21 @@ const handleClick = (event: MouseEvent) => {
 
     &:active:not(.btn-disabled):not(.btn-loading) {
       background-color: var(--color-red-800, #991b1b);
+    }
+  }
+
+  &.btn-ghost {
+    background-color: transparent;
+    color: var(--color-gray-600, #4b5563);
+    border: 1px solid transparent;
+
+    &:hover:not(.btn-disabled):not(.btn-loading) {
+      background-color: var(--color-gray-100, #f3f4f6);
+      color: var(--color-gray-900, #111827);
+    }
+
+    &:active:not(.btn-disabled):not(.btn-loading) {
+      background-color: var(--color-gray-200, #e5e7eb);
     }
   }
 }

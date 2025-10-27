@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import DashboardView from '@/views/DashboardView.vue'
 import FactoryView from '@/views/FactoryView.vue'
 import LogisticsView from '@/views/LogisticsView.vue'
+import BlueprintLibraryView from '@/views/BlueprintLibraryView.vue'
 import ValidationDemo from '@/components/forms/ValidationDemo.vue'
 
 const router = createRouter({
@@ -26,6 +27,14 @@ const router = createRouter({
       path: '/validation-demo',
       name: 'validation-demo',
       component: ValidationDemo,
+    },
+    {
+      path: '/blueprints',
+      name: 'blueprints',
+      component: BlueprintLibraryView,
+      meta: {
+        title: 'Blueprint Library',
+      },
     },
   ],
 })

@@ -10,6 +10,7 @@
         <div
           ref="modalContent"
           class="modal-container"
+          :class="[`modal-size-${props.size}`]"
           role="dialog"
           :aria-modal="show"
           :aria-labelledby="titleId"
@@ -72,12 +73,15 @@ interface Props {
   closable?: boolean
   /** Whether clicking outside closes the modal */
   closeOnOverlay?: boolean
+  /** Modal size */
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full'
 }
 
 const props = withDefaults(defineProps<Props>(), {
   title: '',
   closable: true,
   closeOnOverlay: true,
+  size: 'md',
 })
 
 /** Emit modal events */
@@ -212,10 +216,31 @@ onUnmounted(() => {
   max-width: 90vw;
   max-height: 90vh;
   width: 100%;
-  max-width: 32rem;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+// Size variants
+.modal-size-sm {
+  max-width: 24rem; // 384px
+}
+
+.modal-size-md {
+  max-width: 32rem; // 512px (default)
+}
+
+.modal-size-lg {
+  max-width: 48rem; // 768px
+}
+
+.modal-size-xl {
+  max-width: 64rem; // 1024px
+}
+
+.modal-size-full {
+  max-width: 90vw;
+  max-height: 90vh;
 }
 
 .modal-header {

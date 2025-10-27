@@ -12,7 +12,8 @@ pub mod version;
 use models::{
     factory::Factory,
     logistics::{LogisticsFlux, TransportType},
-    FactoryId, Item, LogisticsId, PowerStats,
+    production_line::ProductionLineBlueprint,
+    FactoryId, Item, LogisticsId, PowerStats, ProductionLineId,
 };
 
 pub use version::{SaveVersion, VersionError};
@@ -21,6 +22,8 @@ pub use version::{SaveVersion, VersionError};
 pub struct SatisflowEngine {
     factories: HashMap<FactoryId, Factory>,
     logistics_lines: HashMap<LogisticsId, LogisticsFlux>,
+    #[serde(default)]
+    blueprint_templates: HashMap<ProductionLineId, ProductionLineBlueprint>,
 }
 
 /// Wrapper struct for save files with versioning and metadata
@@ -49,6 +52,7 @@ impl SatisflowEngine {
         Self {
             factories: HashMap::new(),
             logistics_lines: HashMap::new(),
+            blueprint_templates: HashMap::new(),
         }
     }
 
@@ -240,6 +244,63 @@ impl SatisflowEngine {
     pub fn reset(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         self.factories.clear();
         self.logistics_lines.clear();
+        self.blueprint_templates.clear();
+        Ok(())
+    }
+
+    // ========== Blueprint Template Management ==========
+
+    /// Add a blueprint template to the library
+    ///
+    /// # Arguments
+    ///
+    /// * `blueprint` - The blueprint template to add
+    ///
+    /// # Returns
+    ///
+    /// The ID of the added blueprint template
+    pub fn add_blueprint_template(&mut self, blueprint: ProductionLineBlueprint) -> ProductionLineId {
+        let id = blueprint.id;
+        self.blueprint_templates.insert(id, blueprint);
+        id
+    }
+
+    /// Get a blueprint template by ID
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The ID of the blueprint template
+    ///
+    /// # Returns
+    ///
+    /// Reference to the blueprint template if found
+    pub fn get_blueprint_template(&self, id: ProductionLineId) -> Option<&ProductionLineBlueprint> {
+        self.blueprint_templates.get(&id)
+    }
+
+    /// Get all blueprint templates
+    ///
+    /// # Returns
+    ///
+    /// Reference to the hash map of all blueprint templates
+    pub fn get_all_blueprint_templates(&self) -> &HashMap<ProductionLineId, ProductionLineBlueprint> {
+        &self.blueprint_templates
+    }
+
+    /// Remove a blueprint template from the library
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The ID of the blueprint template to remove
+    ///
+    /// # Returns
+    ///
+    /// Result indicating success or an error if the template doesn't exist
+    pub fn remove_blueprint_template(&mut self, id: ProductionLineId) -> Result<(), Box<dyn std::error::Error>> {
+        if !self.blueprint_templates.contains_key(&id) {
+            return Err(format!("Blueprint template with id {} does not exist", id).into());
+        }
+        self.blueprint_templates.remove(&id);
         Ok(())
     }
 
@@ -394,6 +455,7 @@ impl SaveFile {
             last_modified: self.last_modified,
             factory_count: self.engine.factories.len(),
             logistics_count: self.engine.logistics_lines.len(),
+            blueprint_template_count: self.engine.blueprint_templates.len(),
         }
     }
 }
@@ -406,6 +468,7 @@ pub struct SaveFileSummary {
     pub last_modified: DateTime<Utc>,
     pub factory_count: usize,
     pub logistics_count: usize,
+    pub blueprint_template_count: usize,
 }
 
 #[cfg(test)]
