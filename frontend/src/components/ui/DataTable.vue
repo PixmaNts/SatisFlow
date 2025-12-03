@@ -35,7 +35,7 @@
 
     <!-- Table wrapper -->
     <div class="table-wrapper">
-      <table class="data-table">
+      <table class="data-table" data-test="data-table">
         <!-- Table header -->
         <thead>
           <tr>
@@ -44,6 +44,7 @@
               :key="column.key"
               :class="headerClasses(column)"
               :style="column.width ? { width: column.width } : {}"
+              :data-test="`table-header-${column.key}`"
               @click="handleSort(column)"
             >
               <span class="header-content">

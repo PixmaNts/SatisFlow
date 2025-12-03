@@ -74,7 +74,7 @@ const clearAllToasts = () => {
 
 // Handle app-error events
 const handleAppError = (event: CustomEvent) => {
-  const { id, message, severity, retryable } = event.detail
+  const { id, message, severity, retryable, retryCallback } = event.detail
 
   let type: Toast['type'] = 'info'
   if (severity === 'critical' || severity === 'high') {
@@ -87,10 +87,14 @@ const handleAppError = (event: CustomEvent) => {
     type,
     title: message,
     persistent: severity === 'critical',
-    action: retryable ? {
+    action: retryable && retryCallback ? {
       label: 'Retry',
       handler: () => {
-        // Emit retry event
+        // Execute retry callback if provided
+        if (retryCallback) {
+          retryCallback()
+        }
+        // Also emit retry event for backward compatibility
         window.dispatchEvent(new CustomEvent('toast-retry', {
           detail: { errorId: id, toastId }
         }))
@@ -99,9 +103,21 @@ const handleAppError = (event: CustomEvent) => {
   })
 }
 
+// Handle app-toast events (for success/info/warning)
+const handleAppToast = (event: CustomEvent) => {
+  const { type, title, message, duration } = event.detail
+  addToast({
+    type: type || 'info',
+    title: title || message || '',
+    message: message && title ? message : undefined,
+    duration
+  })
+}
+
 // Setup event listeners
 onMounted(() => {
   window.addEventListener('app-error', handleAppError as EventListener)
+  window.addEventListener('app-toast', handleAppToast as EventListener)
 
   // Setup auto-remove timer
   autoRemoveTimer = window.setInterval(() => {
@@ -118,6 +134,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('app-error', handleAppError as EventListener)
+  window.removeEventListener('app-toast', handleAppToast as EventListener)
   if (autoRemoveTimer) {
     clearInterval(autoRemoveTimer)
   }
@@ -146,6 +163,7 @@ defineExpose({
         <div
           v-for="toast in toasts"
           :key="toast.id"
+          :data-test="`toast-${toast.type}`"
           :class="[
             'toast',
             toastTypes[toast.type],

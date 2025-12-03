@@ -71,7 +71,7 @@
 
       <template #cell-power="{ row }">
         <div class="power-info">
-          <span class="power-value">{{ formatPower(getPowerConsumption(row as ProductionLineResponse)) }}</span>
+          <span class="power-value">{{ formatPower((row as ProductionLineResponse).total_power_consumption) }}</span>
           <span v-if="getTotalSomersloops(row as ProductionLineResponse) > 0" class="somersloop-count">
             {{ getTotalSomersloops(row as ProductionLineResponse) }}×
           </span>
@@ -315,10 +315,7 @@ const getMachineDetails = (line: ProductionLineResponse): string => {
   return 'Unknown'
 }
 
-const getPowerConsumption = (line: ProductionLineResponse): number => {
-  // Use the backend-calculated power consumption
-  return line.total_power_consumption
-}
+// Removed getPowerConsumption wrapper - use line.total_power_consumption directly
 
 const getTotalSomersloops = (line: ProductionLineResponse): number => {
   if (isProductionLineRecipe(line)) {

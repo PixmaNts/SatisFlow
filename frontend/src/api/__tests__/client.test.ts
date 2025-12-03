@@ -14,6 +14,17 @@ const setupClient = async (instanceOverrides: Partial<Record<'get' | 'post' | 'p
     ...instanceOverrides,
   }
 
+  // Create a mock AxiosError class
+  class MockAxiosError extends Error {
+    isAxiosError = true
+    response?: { status?: number; data?: { error?: string } }
+    constructor(message: string, response?: { status?: number; data?: { error?: string } }) {
+      super(message)
+      this.name = 'AxiosError'
+      this.response = response
+    }
+  }
+
   vi.doMock('axios', () => {
     return {
       default: {
@@ -21,6 +32,7 @@ const setupClient = async (instanceOverrides: Partial<Record<'get' | 'post' | 'p
         isAxiosError: (error: unknown): error is { response?: { data?: { error?: string } } } =>
           Boolean((error as any)?.isAxiosError),
       },
+      AxiosError: MockAxiosError,
     }
   })
 
@@ -57,7 +69,15 @@ describe('handleApiError', () => {
   it('returns backend error message for Axios errors', async () => {
     const { handleApiError } = await setupClient()
 
-    const message = handleApiError({ isAxiosError: true, response: { data: { error: 'Invalid payload' } } })
+    // Import the mock AxiosError
+    const axios = await import('axios')
+    const error = new (axios as any).AxiosError('Request failed')
+    error.response = {
+      status: 400,
+      data: { error: 'Invalid payload' },
+    }
+
+    const message = handleApiError(error)
     expect(message).toBe('Invalid payload')
   })
 

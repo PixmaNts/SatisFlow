@@ -14,6 +14,7 @@
           role="dialog"
           :aria-modal="show"
           :aria-labelledby="titleId"
+          data-test="modal"
           @click.stop
         >
           <div v-if="title || closable" class="modal-header">
@@ -25,6 +26,7 @@
               type="button"
               class="modal-close"
               aria-label="Close modal"
+              data-test="modal-close"
               @click="handleClose"
             >
               <svg

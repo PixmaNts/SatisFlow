@@ -2,11 +2,11 @@
 
 **Last Updated**: 2025-10-27
 
-## Phase 0: Core Engine Foundation ✅ COMPLETE
+## Phase 0: Core Engine Foundation [READY] COMPLETE
 
 ### Completed Features
 
-#### Data Models ✅
+#### Data Models [READY]
 
 - [x] Item enum with all Satisfactory items
 - [x] Recipe enum with game recipes
@@ -16,7 +16,7 @@
 - [x] LogisticsFlux with polymorphic transport system
 - [x] Transport types: Bus, Train, Truck, Drone
 
-#### Production System ✅
+#### Production System [READY]
 
 - [x] ProductionLineRecipe with machine groups
 - [x] ProductionLineBlueprint for custom recipes
@@ -25,17 +25,17 @@
 - [x] Input/output rate calculations
 - [x] Somersloop validation per machine type
 
-#### Logistics System ✅
+#### Logistics System [READY]
 
 - [x] TransportType enum (Bus, Train, Truck, Drone)
 - [x] Conveyor speeds (Mk1-Mk6: 60-1200 items/min)
-- [x] Pipeline capacities (Mk1-Mk2: 300-600 m³/min)
+- [x] Pipeline capacities (Mk1-Mk2: 300-600 m?/min)
 - [x] Train wagons (Cargo/Fluid)
 - [x] Bus with mixed conveyors/pipelines
 - [x] ItemFlow aggregation
 - [x] Transport trait for polymorphism
 
-#### Engine Core ✅
+#### Engine Core [READY]
 
 - [x] SatisflowEngine orchestrator
 - [x] Factory CRUD operations
@@ -44,7 +44,7 @@
 - [x] Global item aggregation via `update()`
 - [x] Factory item balance calculation
 
-#### Testing ✅
+#### Testing [READY]
 
 - [x] Logistics module: 30+ unit tests
 - [x] Production line module: 8+ unit tests
@@ -53,11 +53,11 @@
 - [x] Somersloop limit validation
 - [x] Overclock range validation
 
-## Phase 1: Missing Core Features ⚠️ IN PROGRESS
+## Phase 1: Missing Core Features ?? IN PROGRESS
 
 ### High Priority
 
-#### Raw Input System ✅ COMPLETE
+#### Raw Input System [READY] COMPLETE
 
 - [x] RawInput struct definition
 - [x] Purity enum (Impure, Normal, Pure)
@@ -74,7 +74,7 @@
 **Implementation**: 800+ lines with 60+ unit tests
 **Enhanced**: Resource Well Pressurizer mechanics (2025-10-15)
 
-#### Power Generator System ✅ COMPLETE
+#### Power Generator System [READY] COMPLETE
 
 - [x] PowerGenerator struct (distinct from ProductionLine)
 - [x] Generator types: Biomass, Coal, Fuel, Nuclear, Geothermal
@@ -91,7 +91,7 @@
 **Implementation**: Complete power generation system with 160+ tests
 **Features**: All 5 generator types with proper fuel consumption and waste tracking
 
-#### Persistence Layer ✅ COMPLETE
+#### Persistence Layer [READY] COMPLETE
 
 - [x] Serde Serialize/Deserialize for all types
 - [x] JSON export for entire SatisflowEngine state
@@ -101,12 +101,12 @@
 - [x] Migration system architecture (full implementation deferred - YAGNI)
 
 **Completed**: 2025-10-25
-**Implementation**: Full save/load functionality across entire stack (Engine → Server → Frontend)
+**Implementation**: Full save/load functionality across entire stack (Engine ? Server ? Frontend)
 **Features**: Semantic versioning, version compatibility checking, CLI testing tool, REST API endpoints, UI controls
 
 ### Medium Priority
 
-#### ID Management System ⚙️ IN PROGRESS
+#### ID Management System ?? IN PROGRESS
 
 - [x] Replace sequential ID generation with UUID
 - [x] Factory ID collision prevention
@@ -118,7 +118,7 @@
 **Current Status**: Runtime identifiers now use UUIDs end-to-end; frontend updated accordingly. Persistence still pending.  
 **Estimated Effort (remaining)**: 1-2 hours (persistence only)
 
-#### Validation Layer ⚠️ PARTIAL
+#### Validation Layer ?? PARTIAL
 
 - [x] Overclock range validation (0-250%)
 - [x] Somersloop limit validation
@@ -132,7 +132,7 @@
 
 ### Low Priority
 
-#### Error Handling ⚠️ BASIC
+#### Error Handling ?? BASIC
 
 - [x] Box<dyn Error> in public API
 - [ ] Custom error types (SatisflowError enum)
@@ -142,11 +142,11 @@
 
 **Estimated Effort**: 2-3 hours
 
-## Phase 2: Backend Server (REST API) ✅ COMPLETE
+## Phase 2: Backend Server (REST API) [READY] COMPLETE
 
 **Completed**: 2025-10-20
 
-### Axum Web Server ✅
+### Axum Web Server [READY]
 
 - [x] Production-ready Axum server implementation
 - [x] Application state management with Arc<RwLock<SatisflowEngine>>
@@ -157,7 +157,7 @@
 - [x] Environment-based configuration (.env support)
 - [x] Health check endpoint
 
-### API Endpoints ✅
+### API Endpoints [READY]
 
 **Factory Endpoints** (complete CRUD):
 - [x] GET /api/factories - List all factories
@@ -186,7 +186,7 @@
 - [x] GET /api/save - Save current engine state to JSON
 - [x] POST /api/load - Load engine state from JSON
 
-### Testing ✅
+### Testing [READY]
 
 - [x] Comprehensive integration test suite (484 lines)
 - [x] Test utilities and helper functions
@@ -196,7 +196,7 @@
 - [x] Concurrent request handling tests
 - [x] Performance testing framework
 
-### Deployment ✅
+### Deployment [READY]
 
 - [x] Docker configuration with multi-stage builds
 - [x] Docker Compose setup
@@ -205,11 +205,11 @@
 - [x] Health check integration
 - [x] Deployment scripts (shell + batch)
 
-## Phase 3: Frontend Foundation ✅ COMPLETE
+## Phase 3: Frontend Foundation [READY] COMPLETE
 
 **Completed**: 2025-10-20
 
-### Vue.js Project Setup ✅
+### Vue.js Project Setup [READY]
 
 - [x] Vue 3 + TypeScript + Vite scaffolding
 - [x] Project structure with proper organization
@@ -221,7 +221,7 @@
 - [x] Playwright E2E testing setup
 - [x] Pinia state management
 
-### Development Infrastructure ✅
+### Development Infrastructure [READY]
 
 - [x] Vite proxy to backend API (/api -> localhost:3000)
 - [x] TypeScript strict mode configuration
@@ -233,112 +233,112 @@
 **Status**: Project scaffolded, ready for component implementation
 **Next Step**: Implement Vue components and views
 
-## Phase 4: Frontend Implementation ✅ COMPLETE
+## Phase 4: Frontend Implementation [READY] COMPLETE
 
 ### Component Architecture
 
 **Project Structure** (Fully Implemented):
 ```
 frontend/src/
-├── components/
-│   ├── layout/
-│   │   ├── MainNav.vue          # Top navigation bar
-│   │   ├── PageHeader.vue       # Page title and actions
-│   │   └── AppLayout.vue        # Main layout wrapper
-│   │
-│   ├── ui/
-│   │   ├── Button.vue           # Reusable button component
-│   │   ├── Modal.vue            # Modal dialog
-│   │   ├── LoadingSpinner.vue   # Loading indicator
-│   │   ├── Tabs.vue             # Tab navigation
-│   │   ├── DataTable.vue        # Sortable/filterable table
-│   │   ├── ConfirmDialog.vue    # Confirmation dialog
-│   │   ├── Alert.vue            # Alert/notification
-│   │   ├── EmptyState.vue        # Empty state displays
-│   │   ├── ErrorBoundary.vue    # Error boundary component
-│   │   ├── ProgressIndicator.vue # Progress indicators
-│   │   ├── SkeletonCard.vue     # Loading skeletons
-│   │   ├── SuccessConfirmation.vue # Success confirmations
-│   │   ├── TabPanel.vue         # Tab panel component
-│   │   └── ToastContainer.vue    # Toast notifications
-│   │
-│   ├── forms/
-│   │   ├── BaseInput.vue        # Text input with validation
-│   │   ├── BaseSelect.vue       # Dropdown select
-│   │   ├── FormNumber.vue       # Number input (OC, Somersloop)
-│   │   ├── ItemSelector.vue     # Item type selector
-│   │   ├── RecipeSelector.vue   # Recipe selector
-│   │   ├── ValidationMessage.vue # Error message display
-│   │   ├── FactoryForm.vue      # Factory creation form
-│   │   ├── ProductionLineForm.vue # Production line form
-│   │   └── ValidatedForm.vue    # Form validation wrapper
-│   │
-│   ├── factory/
-│   │   ├── FactorySelector.vue       # Factory dropdown
-│   │   ├── ProductionLineList.vue    # Production line table
-│   │   ├── ProductionLineForm.vue    # Create/edit production line
-│   │   ├── MachineGroupEditor.vue    # Machine group configuration
-│   │   ├── RawInputList.vue          # Raw input table
-│   │   ├── RawInputForm.vue          # Create/edit raw input
-│   │   ├── PowerGeneratorList.vue    # Power generator table
-│   │   ├── PowerGeneratorForm.vue    # Create/edit generator
-│   │   └── RecipeAutocomplete.vue    # Enhanced recipe selector
-│   │
-│   ├── logistics/
-│   │   ├── LogisticsLineList.vue    # Logistics table
-│   │   ├── LogisticsLineForm.vue    # Create/edit logistics
-│   │   ├── TransportSelector.vue    # Transport type selector
-│   │   ├── BusEditor.vue            # Bus configuration
-│   │   ├── TrainEditor.vue          # Train configuration
-│   │   ├── TruckEditor.vue          # Truck transport editor
-│   │   └── DroneEditor.vue          # Drone transport editor
-│   │
-│   └── dashboard/
-│       ├── SummaryCards.vue         # Summary statistics
-│       ├── ItemBalanceTable.vue     # Item balance table
-│       ├── PowerStatsChart.vue      # Power statistics chart
-│       └── ItemBalanceFilters.vue   # Filter controls
-│
-├── views/
-│   ├── DashboardView.vue         # Dashboard main view
-│   ├── FactoryView.vue           # Factory main view
-│   └── LogisticsView.vue         # Logistics main view
-│
-├── composables/
-│   ├── useErrorHandler.ts        # Error handling utilities
-│   ├── useKeyboardShortcuts.ts   # Keyboard shortcut management
-│   ├── useLocalStorage.ts        # Local storage persistence
-│   ├── useTheme.ts               # Theme management
-│   ├── useValidation.ts          # Form validation logic
-│   └── useFactory.ts             # Factory operations (incomplete)
-│
-├── stores/
-│   ├── counter.ts               # Counter store (example)
-│   ├── dashboard.ts             # Dashboard data store
-│   ├── factory.ts                # Factory management store
-│   ├── gameData.ts               # Game data store
-│   ├── logistics.ts              # Logistics management store
-│   └── preferences.ts           # User preferences store
-│
-├── router/
-│   └── index.ts                 # Vue Router configuration
-│
-├── api/
-│   ├── client.ts                # Axios HTTP client
-│   ├── endpoints.ts             # API endpoint definitions
-│   ├── types.ts                 # TypeScript type definitions
-│   └── logistics-types.ts       # Logistics-specific types
-│
-└── assets/
-    └── styles/
-        ├── variables.css          # CSS custom properties
-        ├── transitions.css        # Animation transitions
-        └── micro-interactions.css # Micro-interaction styles
+??? components/
+?   ??? layout/
+?   ?   ??? MainNav.vue          # Top navigation bar
+?   ?   ??? PageHeader.vue       # Page title and actions
+?   ?   ??? AppLayout.vue        # Main layout wrapper
+?   ?
+?   ??? ui/
+?   ?   ??? Button.vue           # Reusable button component
+?   ?   ??? Modal.vue            # Modal dialog
+?   ?   ??? LoadingSpinner.vue   # Loading indicator
+?   ?   ??? Tabs.vue             # Tab navigation
+?   ?   ??? DataTable.vue        # Sortable/filterable table
+?   ?   ??? ConfirmDialog.vue    # Confirmation dialog
+?   ?   ??? Alert.vue            # Alert/notification
+?   ?   ??? EmptyState.vue        # Empty state displays
+?   ?   ??? ErrorBoundary.vue    # Error boundary component
+?   ?   ??? ProgressIndicator.vue # Progress indicators
+?   ?   ??? SkeletonCard.vue     # Loading skeletons
+?   ?   ??? SuccessConfirmation.vue # Success confirmations
+?   ?   ??? TabPanel.vue         # Tab panel component
+?   ?   ??? ToastContainer.vue    # Toast notifications
+?   ?
+?   ??? forms/
+?   ?   ??? BaseInput.vue        # Text input with validation
+?   ?   ??? BaseSelect.vue       # Dropdown select
+?   ?   ??? FormNumber.vue       # Number input (OC, Somersloop)
+?   ?   ??? ItemSelector.vue     # Item type selector
+?   ?   ??? RecipeSelector.vue   # Recipe selector
+?   ?   ??? ValidationMessage.vue # Error message display
+?   ?   ??? FactoryForm.vue      # Factory creation form
+?   ?   ??? ProductionLineForm.vue # Production line form
+?   ?   ??? ValidatedForm.vue    # Form validation wrapper
+?   ?
+?   ??? factory/
+?   ?   ??? FactorySelector.vue       # Factory dropdown
+?   ?   ??? ProductionLineList.vue    # Production line table
+?   ?   ??? ProductionLineForm.vue    # Create/edit production line
+?   ?   ??? MachineGroupEditor.vue    # Machine group configuration
+?   ?   ??? RawInputList.vue          # Raw input table
+?   ?   ??? RawInputForm.vue          # Create/edit raw input
+?   ?   ??? PowerGeneratorList.vue    # Power generator table
+?   ?   ??? PowerGeneratorForm.vue    # Create/edit generator
+?   ?   ??? RecipeAutocomplete.vue    # Enhanced recipe selector
+?   ?
+?   ??? logistics/
+?   ?   ??? LogisticsLineList.vue    # Logistics table
+?   ?   ??? LogisticsLineForm.vue    # Create/edit logistics
+?   ?   ??? TransportSelector.vue    # Transport type selector
+?   ?   ??? BusEditor.vue            # Bus configuration
+?   ?   ??? TrainEditor.vue          # Train configuration
+?   ?   ??? TruckEditor.vue          # Truck transport editor
+?   ?   ??? DroneEditor.vue          # Drone transport editor
+?   ?
+?   ??? dashboard/
+?       ??? SummaryCards.vue         # Summary statistics
+?       ??? ItemBalanceTable.vue     # Item balance table
+?       ??? PowerStatsChart.vue      # Power statistics chart
+?       ??? ItemBalanceFilters.vue   # Filter controls
+?
+??? views/
+?   ??? DashboardView.vue         # Dashboard main view
+?   ??? FactoryView.vue           # Factory main view
+?   ??? LogisticsView.vue         # Logistics main view
+?
+??? composables/
+?   ??? useErrorHandler.ts        # Error handling utilities
+?   ??? useKeyboardShortcuts.ts   # Keyboard shortcut management
+?   ??? useLocalStorage.ts        # Local storage persistence
+?   ??? useTheme.ts               # Theme management
+?   ??? useValidation.ts          # Form validation logic
+?   ??? useFactory.ts             # Factory operations (incomplete)
+?
+??? stores/
+?   ??? counter.ts               # Counter store (example)
+?   ??? dashboard.ts             # Dashboard data store
+?   ??? factory.ts                # Factory management store
+?   ??? gameData.ts               # Game data store
+?   ??? logistics.ts              # Logistics management store
+?   ??? preferences.ts           # User preferences store
+?
+??? router/
+?   ??? index.ts                 # Vue Router configuration
+?
+??? api/
+?   ??? client.ts                # Axios HTTP client
+?   ??? endpoints.ts             # API endpoint definitions
+?   ??? types.ts                 # TypeScript type definitions
+?   ??? logistics-types.ts       # Logistics-specific types
+?
+??? assets/
+    ??? styles/
+        ??? variables.css          # CSS custom properties
+        ??? transitions.css        # Animation transitions
+        ??? micro-interactions.css # Micro-interaction styles
 ```
 
 ### Implementation Status
 
-#### Phase 4.1: Foundation Layer ✅ COMPLETE
+#### Phase 4.1: Foundation Layer [READY] COMPLETE
 - [x] Vite configuration with API proxy
 - [x] TypeScript type definitions (complete ~500 lines)
 - [x] Axios API client with interceptors
@@ -346,7 +346,7 @@ frontend/src/
 - [x] Router setup with views
 - [x] Base UI components (Button, Modal, LoadingSpinner)
 
-#### Phase 4.2: Core Features ✅ COMPLETE
+#### Phase 4.2: Core Features [READY] COMPLETE
 - [x] Factory store and composables
 - [x] Dashboard view implementation
 - [x] Factory view with tabs
@@ -354,19 +354,19 @@ frontend/src/
 - [x] Raw input CRUD
 - [x] Power generator CRUD
 
-#### Phase 4.3: Logistics ✅ COMPLETE
+#### Phase 4.3: Logistics [READY] COMPLETE
 - [x] Logistics store and composables
 - [x] Logistics view implementation
 - [x] Transport type forms (Bus, Train, Truck, Drone)
 - [x] Validation system
 
-#### Phase 4.4: Polish ✅ COMPLETE
+#### Phase 4.4: Polish [READY] COMPLETE
 - [x] Error handling and user feedback
 - [x] Local storage integration
 - [x] UI/UX improvements
 - [x] Accessibility (ARIA labels, keyboard navigation)
 
-#### Phase 4.5: Testing ✅ COMPLETE
+#### Phase 4.5: Testing [READY] COMPLETE
 - [x] Vitest unit tests
 - [x] Playwright E2E tests
 - [x] Performance optimization
@@ -540,7 +540,7 @@ test('create production line', async ({ page }) => {
 | Tests | 25 | 1800 |
 | **Total** | **88** | **~14,100** |
 
-## Phase 5: WASM Integration 📅 OPTIONAL
+## Phase 5: WASM Integration ?? OPTIONAL
 
 ### Prerequisites
 
@@ -562,7 +562,7 @@ test('create production line', async ({ page }) => {
 
 ## Completed Improvements
 
-### Blueprint Library System Phase 2 ✅ (2025-10-27)
+### Blueprint Library System Phase 2 [READY] (2025-10-27)
 
 **Status**: Complete and Production Ready
 
@@ -595,13 +595,13 @@ test('create production line', async ({ page }) => {
 - [x] Works correctly for nested blueprints (recursive calculation)
 
 **Key Features**:
-- ✅ Automatic JSON validation and preview on import
-- ✅ Searchable template dropdown with 50-result limit
-- ✅ Accurate power calculations from engine (not duplicated in frontend)
-- ✅ Type-safe implementation throughout (TypeScript + Rust)
-- ✅ Consistent UX across factory and library views
-- ✅ All 52 backend tests passing
-- ✅ Frontend type-checks with 0 errors
+- [READY] Automatic JSON validation and preview on import
+- [READY] Searchable template dropdown with 50-result limit
+- [READY] Accurate power calculations from engine (not duplicated in frontend)
+- [READY] Type-safe implementation throughout (TypeScript + Rust)
+- [READY] Consistent UX across factory and library views
+- [READY] All 52 backend tests passing
+- [READY] Frontend type-checks with 0 errors
 
 **Files Created**:
 
@@ -632,7 +632,7 @@ Frontend:
 - Type-safe end-to-end implementation
 - Reusable SearchableSelect component for other features
 
-### Save/Load Functionality ✅ (2025-10-25)
+### Save/Load Functionality [READY] (2025-10-25)
 
 **Status**: Complete and Production Ready
 
@@ -669,15 +669,15 @@ Frontend:
 
 **Key Features**:
 
-- ✅ Semantic versioning with clear compatibility rules
-- ✅ Version-first approach: validate before deserializing
-- ✅ Graceful degradation for older compatible versions
-- ✅ Migration architecture designed (full implementation deferred - YAGNI)
-- ✅ Save button downloads `satisflow-save_[timestamp].json`
-- ✅ Load button validates file format and version compatibility
-- ✅ Comprehensive error handling with user-friendly messages
-- ✅ Responsive design for mobile
-- ✅ Type-safe implementation throughout
+- [READY] Semantic versioning with clear compatibility rules
+- [READY] Version-first approach: validate before deserializing
+- [READY] Graceful degradation for older compatible versions
+- [READY] Migration architecture designed (full implementation deferred - YAGNI)
+- [READY] Save button downloads `satisflow-save_[timestamp].json`
+- [READY] Load button validates file format and version compatibility
+- [READY] Comprehensive error handling with user-friendly messages
+- [READY] Responsive design for mobile
+- [READY] Type-safe implementation throughout
 
 **Files Created**:
 
@@ -698,13 +698,13 @@ Documentation:
 - `MIGRATION-STRATEGY.md` - Comprehensive migration strategy (6000+ words)
 - `SAVE-LOAD-IMPLEMENTATION.md` - Complete implementation documentation
 
-**Testing**: ✅ 217 total tests passing (200 engine + 6 server + 11 E2E)
+**Testing**: [READY] 217 total tests passing (200 engine + 6 server + 11 E2E)
 
 **User Flow**:
-1. User clicks "Save" → Engine state serialized → Browser downloads JSON file
-2. User clicks "Load" → File picker opens → JSON validated → Engine state replaced → Dashboard refreshed
+1. User clicks "Save" ? Engine state serialized ? Browser downloads JSON file
+2. User clicks "Load" ? File picker opens ? JSON validated ? Engine state replaced ? Dashboard refreshed
 
-### Comprehensive Factory Example ✅ (2025-10-24)
+### Comprehensive Factory Example [READY] (2025-10-24)
 
 **Status**: Complete and Production Ready
 
@@ -722,12 +722,12 @@ Documentation:
 
 **Key Features**:
 
-- ✅ Multi-tier production chains from raw materials to advanced products
-- ✅ Cross-factory dependencies through comprehensive logistics network
-- ✅ Realistic production ratios matching game mechanics
-- ✅ Mixed transport types demonstrating all logistics capabilities
-- ✅ Complete power management with surplus/deficit tracking
-- ✅ Type-safe implementation with comprehensive validation
+- [READY] Multi-tier production chains from raw materials to advanced products
+- [READY] Cross-factory dependencies through comprehensive logistics network
+- [READY] Realistic production ratios matching game mechanics
+- [READY] Mixed transport types demonstrating all logistics capabilities
+- [READY] Complete power management with surplus/deficit tracking
+- [READY] Type-safe implementation with comprehensive validation
 
 **Files Created**:
 
@@ -737,9 +737,9 @@ Documentation:
 - `crates/satisflow-engine/src/examples/IMPLEMENTATION_SUMMARY.md` - Implementation documentation
 - `crates/satisflow-engine/src/examples/README.md` - Usage documentation
 
-**Testing**: ✅ 10 comprehensive tests covering all aspects, 170 total tests passing
+**Testing**: [READY] 10 comprehensive tests covering all aspects, 170 total tests passing
 
-### Recipe Autocomplete Component ✅ (2025-10-24)
+### Recipe Autocomplete Component [READY] (2025-10-24)
 
 **Status**: Complete and Production Ready
 
@@ -750,18 +750,18 @@ Documentation:
 - [x] Created RecipeAutocomplete component with search-as-you-type
 - [x] Display recipe inputs, outputs, and machine type in suggestions
 - [x] Integrated with ProductionLineForm (replaced BaseSelect)
-- [x] Full keyboard navigation support (↑↓ Enter Escape Tab)
+- [x] Full keyboard navigation support (?? Enter Escape Tab)
 - [x] WCAG accessibility compliance with ARIA labels
 - [x] Performance optimized for 1000+ recipes (max 8 suggestions)
 
 **Key Features**:
 
-- ✅ Real-time filtering by recipe name OR machine type
-- ✅ Rich details in dropdown (inputs/outputs with quantities)
-- ✅ Case-insensitive substring matching
-- ✅ Clear button for quick reset
-- ✅ Mouse and keyboard support
-- ✅ Type-safe with RecipeInfo interface
+- [READY] Real-time filtering by recipe name OR machine type
+- [READY] Rich details in dropdown (inputs/outputs with quantities)
+- [READY] Case-insensitive substring matching
+- [READY] Clear button for quick reset
+- [READY] Mouse and keyboard support
+- [READY] Type-safe with RecipeInfo interface
 
 **Files Modified**:
 
@@ -769,9 +769,9 @@ Documentation:
 - `frontend/src/components/forms/ProductionLineForm.vue` - Replaced dropdown with autocomplete
 - `frontend/src/components/forms/ValidationDemo.vue` - Updated with proper recipe data
 
-**Testing**: ✅ Type-checked, verified keyboard navigation, accessibility tested
+**Testing**: [READY] Type-checked, verified keyboard navigation, accessibility tested
 
-### Frontend Implementation ✅ (2025-10-24)
+### Frontend Implementation [READY] (2025-10-24)
 
 **Status**: Complete and Production Ready
 
@@ -790,13 +790,13 @@ Documentation:
 
 **Key Features**:
 
-- ✅ Dashboard with real-time updates, filtering, and sorting
-- ✅ Factory management with tabbed interface (Production, Raw Input, Power)
-- ✅ Logistics management with all transport types (Bus, Train, Truck, Drone)
-- ✅ Advanced recipe selection with autocomplete and rich details
-- ✅ Comprehensive error handling and user feedback
-- ✅ Local storage for user preferences and settings
-- ✅ Full TypeScript type safety throughout
+- [READY] Dashboard with real-time updates, filtering, and sorting
+- [READY] Factory management with tabbed interface (Production, Raw Input, Power)
+- [READY] Logistics management with all transport types (Bus, Train, Truck, Drone)
+- [READY] Advanced recipe selection with autocomplete and rich details
+- [READY] Comprehensive error handling and user feedback
+- [READY] Local storage for user preferences and settings
+- [READY] Full TypeScript type safety throughout
 
 **Architecture**:
 
@@ -806,9 +806,9 @@ Documentation:
 - **API Layer**: Complete REST API integration with error handling
 - **Testing**: Vitest unit tests and Playwright E2E tests configured
 
-**Testing**: ✅ Comprehensive test suite with unit and E2E coverage
+**Testing**: [READY] Comprehensive test suite with unit and E2E coverage
 
-### Calculation Migration ✅ (2025-10-27)
+### Calculation Migration [READY] (2025-10-27)
 
 **Status**: Complete and Production Ready
 
@@ -836,12 +836,12 @@ Documentation:
 - [x] Created regression guardrails: `calculation-violations.test.ts` and `calculation-accuracy.spec.ts`
 
 **Key Features**:
-- ✅ **Single Source of Truth**: All calculations now originate in the Rust engine
-- ✅ **Live Previews**: Forms show real-time calculations as users edit (production lines, power generators, raw inputs)
-- ✅ **Zero Frontend Math**: No gameplay formulas remain in Vue/TypeScript code
-- ✅ **Automated Guards**: Static analysis and E2E tests prevent regression to frontend calculations
-- ✅ **Type Safety**: Full TypeScript integration with backend-calculated values
-- ✅ **Performance**: Debounced API calls prevent excessive server requests
+- [READY] **Single Source of Truth**: All calculations now originate in the Rust engine
+- [READY] **Live Previews**: Forms show real-time calculations as users edit (production lines, power generators, raw inputs)
+- [READY] **Zero Frontend Math**: No gameplay formulas remain in Vue/TypeScript code
+- [READY] **Automated Guards**: Static analysis and E2E tests prevent regression to frontend calculations
+- [READY] **Type Safety**: Full TypeScript integration with backend-calculated values
+- [READY] **Performance**: Debounced API calls prevent excessive server requests
 
 **Files Modified**:
 
@@ -861,11 +861,11 @@ Frontend:
 - `frontend/e2e/calculation-accuracy.spec.ts` - End-to-end calculation validation
 
 **Quality Assurance**:
-- ✅ Engine unit tests verify all calculation methods
-- ✅ API integration tests confirm calculated field accuracy
-- ✅ Frontend static analysis prevents math reintroduction
-- ✅ E2E tests validate UI displays match engine values
-- ✅ Manual verification of power/fuel calculations across all scenarios
+- [READY] Engine unit tests verify all calculation methods
+- [READY] API integration tests confirm calculated field accuracy
+- [READY] Frontend static analysis prevents math reintroduction
+- [READY] E2E tests validate UI displays match engine values
+- [READY] Manual verification of power/fuel calculations across all scenarios
 
 **Technical Achievements**:
 - **DRY Principle**: Calculations exist in ONE place only (Rust engine)
@@ -919,22 +919,22 @@ Frontend:
 
 ### P0 - Critical Gaps (Blocking Features)
 
-#### 1. Blueprint System ✅ PHASE 2 COMPLETE
+#### 1. Blueprint System [READY] PHASE 2 COMPLETE
 
 **Phase 1 Complete** (2025-10-26):
-- ✅ Backend: Export, import, preview endpoints
-- ✅ Frontend: Import/export UI with preview modal
-- ✅ 14 passing backend tests
-- ✅ 3 example blueprint files with documentation
+- [READY] Backend: Export, import, preview endpoints
+- [READY] Frontend: Import/export UI with preview modal
+- [READY] 14 passing backend tests
+- [READY] 3 example blueprint files with documentation
 
 **Phase 2 Complete** (2025-10-27):
-- ✅ Engine: `blueprint_templates` storage in memory + save/load
-- ✅ Backend: Template CRUD API endpoints (8 endpoints)
-- ✅ Frontend: Blueprint Library view with management UI
-- ✅ Frontend: Blueprint creation modal (from scratch)
-- ✅ Frontend: Template selector in factory view (SearchableSelect component)
-- ✅ **Bonus**: Blueprint import uses preview modal with backend metadata
-- ✅ **Bonus**: Power consumption display fix (backend-calculated values)
+- [READY] Engine: `blueprint_templates` storage in memory + save/load
+- [READY] Backend: Template CRUD API endpoints (8 endpoints)
+- [READY] Frontend: Blueprint Library view with management UI
+- [READY] Frontend: Blueprint creation modal (from scratch)
+- [READY] Frontend: Template selector in factory view (SearchableSelect component)
+- [READY] **Bonus**: Blueprint import uses preview modal with backend metadata
+- [READY] **Bonus**: Power consumption display fix (backend-calculated values)
 
 **Completed**: 2025-10-27
 **Status**: Fully functional and production-ready
@@ -946,12 +946,12 @@ Frontend:
 
 ---
 
-#### 2. Logistics Update Flow ⚠️ PARTIAL
+#### 2. Logistics Update Flow ?? PARTIAL
 
 **Status**:
-- ✅ Backend: `PUT /api/logistics/:id` exists in routes
-- ⚠️ Frontend: `LogisticsLineForm.vue` may duplicate lines instead of updating
-- ❌ Testing: Not verified if update flow works correctly
+- [READY] Backend: `PUT /api/logistics/:id` exists in routes
+- ?? Frontend: `LogisticsLineForm.vue` may duplicate lines instead of updating
+- ? Testing: Not verified if update flow works correctly
 
 **Action Required**:
 - Test logistics edit flow end-to-end
@@ -962,7 +962,7 @@ Frontend:
 
 ---
 
-#### 3. Transport Item Sources (Hard-coded) ❌
+#### 3. Transport Item Sources (Hard-coded) ?
 
 **Problem**:
 - `BusEditor.vue`, `TrainEditor.vue`, `TruckEditor.vue`, `DroneEditor.vue` contain inline "Sample items..." lists
@@ -978,15 +978,15 @@ Frontend:
 
 ---
 
-#### 4. Dashboard Filter Parity ⚠️ PARTIAL
+#### 4. Dashboard Filter Parity ?? PARTIAL
 
 **Current State**:
-- ✅ Has: Balance state filter (overflow/underflow/balanced)
-- ✅ Has: Name search filter
-- ❌ Missing: Factory dropdown filter (from `/api/factories`)
-- ❌ Missing: Production group taxonomy filter
-- ❌ Missing: Quantity range filter
-- ❌ Missing: Numeric sorting (currently stringifies all values)
+- [READY] Has: Balance state filter (overflow/underflow/balanced)
+- [READY] Has: Name search filter
+- ? Missing: Factory dropdown filter (from `/api/factories`)
+- ? Missing: Production group taxonomy filter
+- ? Missing: Quantity range filter
+- ? Missing: Numeric sorting (currently stringifies all values)
 
 **Required**:
 - Add factory filter dropdown fed by `useFactoryStore.factories`
@@ -1000,7 +1000,7 @@ Frontend:
 
 ### P1 - High Priority Enhancements
 
-#### 5. DataTable Component Limitations ❌
+#### 5. DataTable Component Limitations ?
 
 **Issues**:
 - Stringifies all values (breaks numeric sorting)
@@ -1018,7 +1018,7 @@ Frontend:
 
 ---
 
-#### 6. Error Handling Inconsistency ⚠️
+#### 6. Error Handling Inconsistency ??
 
 **Problems**:
 - Repeated error handling code in components (not DRY)
@@ -1035,15 +1035,15 @@ Frontend:
 
 ---
 
-#### 7. Enhanced Validation Layer ⚠️ PARTIAL
+#### 7. Enhanced Validation Layer ?? PARTIAL
 
 **Backend Missing**:
-- ❌ Factory name uniqueness validation
-- ❌ Circular logistics detection (A→B→A)
-- ❌ Item flow balance warnings (underflow > threshold)
-- ❌ Production line recipe compatibility checks
-- ✅ Has: Overclock range (0-250%)
-- ✅ Has: Somersloop limits per machine type
+- ? Factory name uniqueness validation
+- ? Circular logistics detection (A?B?A)
+- ? Item flow balance warnings (underflow > threshold)
+- ? Production line recipe compatibility checks
+- [READY] Has: Overclock range (0-250%)
+- [READY] Has: Somersloop limits per machine type
 
 **Required**:
 - Add factory name uniqueness check on create/update
@@ -1055,14 +1055,14 @@ Frontend:
 
 ---
 
-#### 8. Audit Logging & Telemetry ⚠️ PARTIAL
+#### 8. Audit Logging & Telemetry ?? PARTIAL
 
 **Current State**:
-- ✅ Has: Structured logging with `tracing` crate
-- ✅ Has: Request/response logging
-- ❌ Missing: Rate-limited audit logs for CRUD operations
-- ❌ Missing: Metrics collection (Prometheus/StatsD)
-- ❌ Missing: Performance tracking
+- [READY] Has: Structured logging with `tracing` crate
+- [READY] Has: Request/response logging
+- ? Missing: Rate-limited audit logs for CRUD operations
+- ? Missing: Metrics collection (Prometheus/StatsD)
+- ? Missing: Performance tracking
 
 **Required**:
 - Add audit log entries for create/update/delete actions
@@ -1126,29 +1126,29 @@ Frontend:
 
 ## Known Issues
 
-### Critical 🔴
+### Critical ??
 
 None currently
 
-### Major 🟠
+### Major ??
 
-1. ~~**No persistence**~~: ✅ **FIXED** - Full save/load functionality implemented (2025-10-25)
+1. ~~**No persistence**~~: [READY] **FIXED** - Full save/load functionality implemented (2025-10-25)
 2. **Sequential IDs**: Risk of collisions in distributed scenarios
 3. **Factory deletion cascade**: Logistics lines are deleted but no UI confirmation
 
-### Minor 🟡
+### Minor ??
 
 1. **Limited error messages**: Errors lack context for debugging
 2. **No overflow warnings**: System doesn't warn about item imbalances
 3. **Limited real-time updates**: Dashboard polling interval could be configurable
-4. ~~**No data export**~~: ✅ **FIXED** - Save/load allows exporting and sharing configurations (2025-10-25)
+4. ~~**No data export**~~: [READY] **FIXED** - Save/load allows exporting and sharing configurations (2025-10-25)
 
 ## Technical Debt
 
 1. **Documentation**: Some inline docs missing for complex functions
 2. **Benchmarks**: No performance benchmarks established
 3. **CI/CD**: No automated testing pipeline
-4. ~~**Persistence**~~: ✅ **FIXED** - Full file I/O and JSON save/load implemented (2025-10-25)
+4. ~~**Persistence**~~: [READY] **FIXED** - Full file I/O and JSON save/load implemented (2025-10-25)
 
 **Note**: Blueprint UI, validation enhancements, and testing gaps are now tracked in **"Missing Features & Implementation Gaps"** section above.
 
@@ -1158,7 +1158,7 @@ None currently
 
 **Quick Summary by Priority**:
 
-1. ~~**Add persistence layer**~~ - ✅ **COMPLETE** (2025-10-25)
+1. ~~**Add persistence layer**~~ - [READY] **COMPLETE** (2025-10-25)
 
 2. **P0 - Critical (13-18h total)**:
    - Blueprint import/export (Backend + Frontend)
@@ -1185,14 +1185,14 @@ None currently
 
 ## Success Metrics
 
-### Phase 0 (Complete) ✅
+### Phase 0 (Complete) [READY]
 
-- ✅ All core data models implemented
-- ✅ 30+ passing unit tests
-- ✅ Type-safe logistics system
-- ✅ Working item calculation
+- [READY] All core data models implemented
+- [READY] 30+ passing unit tests
+- [READY] Type-safe logistics system
+- [READY] Working item calculation
 
-### Phase 1 (Complete) ✅
+### Phase 1 (Complete) [READY]
 
 - [x] 100% serializable state
 - [x] Complete game mechanics coverage
@@ -1200,17 +1200,41 @@ None currently
 - [x] Zero compiler warnings
 - [x] Save/load with version management
 
-### Phase 2 (Backend - Complete) ✅
+### Phase 2 (Backend - Complete) [READY]
 
-- ✅ API calls functional
-- ✅ No panics in production (comprehensive error handling)
-- ✅ CORS configured
-- ✅ Docker deployment ready
+- [READY] API calls functional
+- [READY] No panics in production (comprehensive error handling)
+- [READY] CORS configured
+- [READY] Docker deployment ready
 
-### Phase 3 (Frontend - Complete) ✅
+### Phase 3 (Frontend - Complete) [READY]
 
 - [x] Full CRUD UI for all entities
 - [x] Responsive UI (< 100ms interactions)
 - [x] Playwright E2E test coverage
 - [x] Local storage for preferences
 - [x] Real-time dashboard updates
+## Phase 5: Frontend Refactoring Readiness [READY]
+
+**Last Updated**: 2025-10-27
+
+The feature briefs derived from `FRONTEND-REFACTORING-PLAN.md` are prepared under `features/` to guide upcoming refactors. Each document outlines objectives, implementation steps, affected files, testing strategy, dependencies, and alignment with existing architecture and coding rules.
+
+### Feature Brief Index
+- [x] Design System and Theming Modernization - `features/design-system-and-theming.md`
+- [x] Information Architecture and Navigation Refresh - `features/information-architecture-and-navigation.md`
+- [x] DataTable Overhaul - `features/datatable-overhaul.md`
+- [x] Standardized Form Validation and Preview Flow - `features/form-validation-and-previews.md`
+- [x] Centralized Error Notification Platform - `features/centralized-error-notification-platform.md`
+- [x] Modal Focus and Keyboard Control Standardization - `features/modal-focus-and-keyboard-control.md`
+- [x] Logistics Transport Editors Cleanup - `features/transport-editors-cleanup.md`
+- [x] State Management Hardening (Pinia) - `features/state-management-hardening.md`
+- [x] API Layer and DTO Alignment - `features/api-layer-and-dto-alignment.md`
+- [x] Accessibility Compliance Pass - `features/accessibility-compliance-pass.md`
+- [x] Frontend Performance Strategy - `features/frontend-performance-strategy.md`
+- [x] Testing Expansion Roadmap - `features/testing-expansion-roadmap.md`
+- [x] Developer Experience and CI Enhancements - `features/developer-experience-and-ci-enhancements.md`
+
+### Next Actions
+- Use the above briefs to plan sprint execution (see Section 13 of the refactoring plan).
+- Update this log with progress per brief (e.g., `IN PROGRESS`, `COMPLETE`) as implementation begins.

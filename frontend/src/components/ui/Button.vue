@@ -4,6 +4,7 @@
     :disabled="disabled || loading"
     :aria-disabled="disabled || loading"
     :aria-busy="loading"
+    :data-test="`button-${variant}`"
     @click="handleClick"
   >
     <LoadingSpinner

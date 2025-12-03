@@ -1,6 +1,18 @@
-# Testing Guide
+# Testing Guide (Simplified)
+
+> **Note:** This project uses a simplified testing approach. See `README-TESTING.md` for the current strategy.
 
 This document provides an overview of the testing infrastructure and guidelines for the Satisflow frontend application.
+
+## Quick Start
+
+```bash
+npm run test          # Run all tests
+npm run test:watch    # Watch mode
+npm run test:coverage # With coverage
+```
+
+**Philosophy:** Backend is the source of truth. Frontend tests are minimal - just composables/stores and calculation violation checks.
 
 ## Table of Contents
 

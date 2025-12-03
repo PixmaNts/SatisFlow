@@ -45,7 +45,7 @@
 
       <template #cell-power="{ row }">
         <div class="power-info">
-          <span class="power-value">{{ formatPower(getPowerConsumption(row as unknown as RawInputResponse)) }}</span>
+          <span class="power-value">{{ formatPower((row as unknown as RawInputResponse).power_consumption) }}</span>
           <span v-if="(row as unknown as RawInputResponse).extractors && (row as unknown as RawInputResponse).extractors.length > 1" class="extractor-count">
             {{ (row as unknown as RawInputResponse).extractors.length }} nodes
           </span>
@@ -219,10 +219,7 @@ const formatRate = (rate: number): string => {
   return rate.toFixed(0)
 }
 
-const getPowerConsumption = (input: RawInputResponse): number => {
-  // Use backend-calculated power consumption
-  return input.power_consumption
-}
+// Removed getPowerConsumption wrapper - use input.power_consumption directly
 
 const formatPower = (power: number): string => {
   if (power < 1) {

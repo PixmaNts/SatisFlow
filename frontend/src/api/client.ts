@@ -1,6 +1,7 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import type { ErrorResponse } from './types';
+import { errorNotification } from '@/composables/useErrorNotification';
 
 /**
  * API Client Configuration
@@ -70,43 +71,11 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error: AxiosError<ErrorResponse>) => {
-    // Handle different types of errors
-    if (error.response) {
-      // Server responded with error status
-      const { status, data } = error.response;
-      const errorMessage = data?.error || `HTTP ${status} Error`;
+    // Use centralized error notification
+    // The error will be normalized and shown as a toast notification
+    errorNotification.handleApiError(error);
 
-      console.error(`API Error ${status}:`, errorMessage);
-
-      // You could add specific handling for different status codes
-      switch (status) {
-        case 401:
-          // Handle unauthorized access
-          console.error('Unauthorized access - please log in');
-          break;
-        case 403:
-          // Handle forbidden access
-          console.error('Forbidden - insufficient permissions');
-          break;
-        case 404:
-          // Handle not found
-          console.error('Resource not found');
-          break;
-        case 500:
-          // Handle server error
-          console.error('Server error - please try again later');
-          break;
-        default:
-          console.error('API Error:', errorMessage);
-      }
-    } else if (error.request) {
-      // Request was made but no response received
-      console.error('Network error - no response received:', error.message);
-    } else {
-      // Something else happened while setting up the request
-      console.error('Request setup error:', error.message);
-    }
-
+    // Still reject the promise so calling code can handle it if needed
     return Promise.reject(error);
   }
 );
@@ -177,18 +146,12 @@ export const api = {
 /**
  * Utility function to handle API errors consistently
  * @param error - The error object from Axios
- * @returns Formatted error message
+ * @returns Normalized error with message and metadata
+ * @deprecated Use errorNotification.handleError() or errorNotification.handleApiError() instead
  */
 export const handleApiError = (error: unknown): string => {
-  if (axios.isAxiosError(error) && error.response?.data?.error) {
-    return error.response.data.error;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return 'An unexpected error occurred';
+  const normalized = errorNotification.normalizeError(error);
+  return normalized.message;
 };
 
 /**

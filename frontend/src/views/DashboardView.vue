@@ -1,7 +1,7 @@
 <template>
-  <div class="dashboard-view">
+  <div class="dashboard-view" data-test="dashboard-view">
     <!-- Header -->
-    <div class="dashboard-header">
+    <div class="dashboard-header" data-test="dashboard-header">
       <div class="header-content">
         <h1 class="dashboard-title">Dashboard</h1>
         <p class="dashboard-subtitle">Global overview of all production</p>
@@ -16,6 +16,7 @@
           variant="secondary"
           size="sm"
           :loading="loading"
+          data-test="dashboard-refresh"
           @click="handleRefresh"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

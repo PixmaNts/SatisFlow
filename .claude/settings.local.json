@@ -12,7 +12,8 @@
       "Bash(find:*)",
       "Bash(cargo build:*)",
       "Bash(npm run build:*)",
-      "Bash(timeout 5 npm run dev:*)"
+      "Bash(timeout 5 npm run dev:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

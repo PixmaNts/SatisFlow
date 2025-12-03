@@ -69,7 +69,6 @@
       <div v-if="showPurity" class="form-group">
         <label class="form-label">
           Purity
-          <span v-if="formData.extractor_type === 'OilExtractor'" class="purity-note">(m³/min: Impure 60, Normal 120, Pure 240)</span>
         </label>
         <div class="radio-group">
           <label class="radio-option">
@@ -248,6 +247,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useGameDataStore } from '@/stores/gameData'
 import { useFactoryStore } from '@/stores/factory'
+import { factories } from '@/api/endpoints'
 import type {
   RawInputResponse,
   ExtractorType,
@@ -351,23 +351,62 @@ const showPressurizer = computed(() => {
   return formData.value.extractor_type === 'ResourceWellExtractor'
 })
 
-const calculatedRate = computed(() => {
-  if (!formData.value.purity || !selectedExtractor.value) return 0
+// Preview data from backend
+const previewData = ref<{ quantity_per_min: number; power_consumption: number } | null>(null)
+const previewLoading = ref(false)
 
-  // Base rates for different extractors and purities
-  const baseRates: Record<string, Record<Purity, number>> = {
-    MinerMk1: { Impure: 30, Normal: 60, Pure: 120 },
-    MinerMk2: { Impure: 60, Normal: 120, Pure: 240 },
-    MinerMk3: { Impure: 120, Normal: 240, Pure: 480 },
-    WaterExtractor: { Impure: 0, Normal: 120, Pure: 0 },
-    OilExtractor: { Impure: 60, Normal: 120, Pure: 240 },
-    ResourceWellExtractor: { Impure: 30, Normal: 60, Pure: 120 }
+// Fetch preview from backend when form changes
+const fetchPreview = async () => {
+  if (!props.factoryId || !formData.value.extractor_type || !formData.value.item) {
+    previewData.value = null
+    return
   }
 
-  const extractorRates = baseRates[formData.value.extractor_type]
-  if (!extractorRates || !extractorRates[formData.value.purity]) return 0
+  // For WaterExtractor, purity is not used, but we still need to call preview
+  if (formData.value.extractor_type === 'WaterExtractor') {
+    // Water extractor always extracts 120 m³/min, no purity
+    previewData.value = { quantity_per_min: 120, power_consumption: 20 }
+    return
+  }
 
-  return extractorRates[formData.value.purity]
+  // For other extractors, we need purity
+  if (!formData.value.purity) {
+    previewData.value = null
+    return
+  }
+
+  previewLoading.value = true
+  try {
+    const request: any = {
+      extractor_type: formData.value.extractor_type,
+      item: formData.value.item,
+      purity: formData.value.purity,
+    }
+
+    if (showPressurizer.value && usePressurizer.value && formData.value.pressurizer) {
+      request.pressurizer = {
+        clock_speed: formData.value.pressurizer.clock_speed,
+      }
+      request.extractors = formData.value.extractors.map(ext => ({
+        purity: ext.purity,
+      }))
+    }
+
+    const preview = await factories.rawInputs.rawInput(props.factoryId, request)
+    previewData.value = {
+      quantity_per_min: preview.quantity_per_min,
+      power_consumption: preview.power_consumption,
+    }
+  } catch (error) {
+    console.error('Failed to fetch raw input preview:', error)
+    previewData.value = null
+  } finally {
+    previewLoading.value = false
+  }
+}
+
+const calculatedRate = computed(() => {
+  return previewData.value?.quantity_per_min || 0
 })
 
 const canSubmit = computed(() => {
@@ -394,14 +433,7 @@ const getRateUnit = (): string => {
   return 'items/min'
 }
 
-const getExtractorRate = (purity: Purity): number => {
-  const rates: Record<Purity, number> = {
-    Impure: 30,
-    Normal: 60,
-    Pure: 120
-  }
-  return rates[purity] || 0
-}
+// Removed getExtractorRate - use backend preview instead
 
 const handleResourceChange = () => {
   // Reset extractor when resource changes
@@ -577,12 +609,16 @@ watch(() => props.show, (show) => {
   }
 })
 
-// Watch for extractor changes to update rates
-watch(() => formData.value.extractors, (extractors) => {
-  // Update calculated rates for each extractor
-  extractors.forEach(extractor => {
-    extractor.quantity_per_min = getExtractorRate(extractor.purity)
-  })
+// Watch for extractor changes to fetch preview
+watch(() => formData.value.extractors, () => {
+  if (showPressurizer.value && usePressurizer.value) {
+    fetchPreview()
+  }
+}, { deep: true })
+
+// Watch form changes to fetch preview
+watch([() => formData.value.extractor_type, () => formData.value.item, () => formData.value.purity, () => formData.value.pressurizer?.clock_speed], () => {
+  fetchPreview()
 }, { deep: true })
 
 // Load items on mount
