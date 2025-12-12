@@ -68,22 +68,45 @@ impl ExtractorType {
             ExtractorType::MinerMk1 | ExtractorType::MinerMk2 | ExtractorType::MinerMk3 => {
                 matches!(
                     item,
-                    Item::IronOre
-                        | Item::CopperOre
-                        | Item::Limestone
-                        | Item::Coal
+                    Item::Bauxite
                         | Item::CateriumOre
+                        | Item::Coal
+                        | Item::CopperOre
+                        | Item::IronOre
+                        | Item::Limestone
                         | Item::RawQuartz
                         | Item::Sulfur
-                        | Item::Bauxite
                         | Item::Uranium
-                        | Item::Sam
                 )
             }
             ExtractorType::WaterExtractor => matches!(item, Item::Water),
             ExtractorType::OilExtractor => matches!(item, Item::CrudeOil),
             ExtractorType::ResourceWellExtractor => {
                 matches!(item, Item::NitrogenGas | Item::CrudeOil | Item::Water)
+            }
+        }
+    }
+
+    /// Get all items compatible with this extractor type
+    pub fn compatible_items(&self) -> Vec<Item> {
+        match self {
+            ExtractorType::MinerMk1 | ExtractorType::MinerMk2 | ExtractorType::MinerMk3 => {
+                vec![
+                    Item::Bauxite,
+                    Item::CateriumOre,
+                    Item::Coal,
+                    Item::CopperOre,
+                    Item::IronOre,
+                    Item::Limestone,
+                    Item::RawQuartz,
+                    Item::Sulfur,
+                    Item::Uranium,
+                ]
+            }
+            ExtractorType::WaterExtractor => vec![Item::Water],
+            ExtractorType::OilExtractor => vec![Item::CrudeOil],
+            ExtractorType::ResourceWellExtractor => {
+                vec![Item::NitrogenGas, Item::CrudeOil, Item::Water]
             }
         }
     }
@@ -482,10 +505,10 @@ mod tests {
         assert!(ExtractorType::MinerMk1.is_compatible_with(&Item::Sulfur));
         assert!(ExtractorType::MinerMk2.is_compatible_with(&Item::Bauxite));
         assert!(ExtractorType::MinerMk3.is_compatible_with(&Item::Uranium));
-        assert!(ExtractorType::MinerMk3.is_compatible_with(&Item::Sam));
         // Test incompatible items
         assert!(!ExtractorType::MinerMk1.is_compatible_with(&Item::Water));
         assert!(!ExtractorType::MinerMk2.is_compatible_with(&Item::CrudeOil));
+        assert!(!ExtractorType::MinerMk3.is_compatible_with(&Item::Sam)); // Sam is not compatible with miners
     }
 
     #[test]
@@ -788,14 +811,14 @@ mod tests {
     #[test]
     fn test_all_ore_types_with_mk3_miner() {
         let ores = vec![
-            Item::IronOre,
-            Item::CopperOre,
-            Item::Limestone,
-            Item::Coal,
+            Item::Bauxite,
             Item::CateriumOre,
+            Item::Coal,
+            Item::CopperOre,
+            Item::IronOre,
+            Item::Limestone,
             Item::RawQuartz,
             Item::Sulfur,
-            Item::Bauxite,
             Item::Uranium,
         ];
 

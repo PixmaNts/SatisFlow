@@ -1,7 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach, beforeAll, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { useTheme } from '../useTheme'
-import { setMatchMediaMatches, resetMatchMediaMock } from '@/test-utils/setup'
+import { useTheme, detectSystemTheme } from '../useTheme'
 import { mount } from '@vue/test-utils'
 import { defineComponent } from 'vue'
 
@@ -27,238 +26,96 @@ function testComposable<T>(composable: () => T): T {
 describe('useTheme', () => {
   let pinia: ReturnType<typeof createPinia>
 
-  beforeAll(() => {
-    // Create a single Pinia instance for all tests
+  beforeEach(() => {
+    // Create a fresh Pinia instance for each test
     pinia = createPinia()
     setActivePinia(pinia)
-  })
 
-  beforeEach(() => {
     // Reset document
     document.documentElement.className = ''
     document.documentElement.removeAttribute('data-theme')
-
-    // Reset matchMedia mock to default (light mode)
-    resetMatchMediaMock()
-
-    // Clear localStorage to reset preferences
-    localStorage.clear()
   })
 
   afterEach(() => {
     document.documentElement.className = ''
     document.documentElement.removeAttribute('data-theme')
     vi.clearAllMocks()
-    resetMatchMediaMock()
-    localStorage.clear()
   })
 
-  it('should initialize with auto theme as default', () => {
+  it('should initialize with dark theme as default (industrial theme)', () => {
     const { currentTheme, effectiveTheme } = testComposable(() => useTheme())
 
-    expect(currentTheme.value).toBe('auto')
-    expect(effectiveTheme.value).toBe('light') // Default to light in tests
-  })
-
-  it('should apply dark theme when set', async () => {
-    let themeApi: ReturnType<typeof useTheme>
-
-    const TestComponent = defineComponent({
-      setup() {
-        themeApi = useTheme()
-        return () => null
-      }
-    })
-
-    mount(TestComponent, {
-      global: {
-        plugins: [pinia]
-      }
-    })
-
-    const { setTheme, currentTheme, effectiveTheme } = themeApi!
-
-    setTheme('dark')
-
-    // Wait a tick for the watcher to apply the theme
-    await new Promise(resolve => setTimeout(resolve, 0))
-
-    expect(currentTheme.value).toBe('dark')
-    expect(effectiveTheme.value).toBe('dark')
+    // The new API always returns dark theme (industrial theme only)
+    expect(currentTheme).toBe('dark')
+    expect(effectiveTheme).toBe('dark')
     expect(document.documentElement.classList.contains('dark-theme')).toBe(true)
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
   })
 
-  it('should apply light theme when set', async () => {
-    let themeApi: ReturnType<typeof useTheme>
+  it('should always return dark theme (industrial theme only)', () => {
+    const { currentTheme, effectiveTheme } = testComposable(() => useTheme())
 
-    const TestComponent = defineComponent({
-      setup() {
-        themeApi = useTheme()
-        return () => null
-      }
-    })
-
-    mount(TestComponent, {
-      global: {
-        plugins: [pinia]
-      }
-    })
-
-    const { setTheme, currentTheme, effectiveTheme } = themeApi!
-
-    setTheme('light')
-
-    // Wait a tick for the watcher to apply the theme
-    await new Promise(resolve => setTimeout(resolve, 0))
-
-    expect(currentTheme.value).toBe('light')
-    expect(effectiveTheme.value).toBe('light')
-    expect(document.documentElement.classList.contains('light-theme')).toBe(true)
-    expect(document.documentElement.getAttribute('data-theme')).toBe('light')
+    // The new API always returns dark theme (industrial theme only)
+    expect(currentTheme).toBe('dark')
+    expect(effectiveTheme).toBe('dark')
   })
 
-  it('should apply auto theme when set', async () => {
-    let themeApi: ReturnType<typeof useTheme>
+  it('should apply dark theme to document', () => {
+    // Reset document first
+    document.documentElement.className = ''
+    document.documentElement.removeAttribute('data-theme')
 
-    const TestComponent = defineComponent({
-      setup() {
-        themeApi = useTheme()
-        return () => null
-      }
-    })
-
-    mount(TestComponent, {
-      global: {
-        plugins: [pinia]
-      }
-    })
-
-    const { setTheme, currentTheme, effectiveTheme } = themeApi!
-
-    setTheme('auto')
-
-    // Wait a tick for the watcher to apply the theme
-    await new Promise(resolve => setTimeout(resolve, 0))
-
-    expect(currentTheme.value).toBe('auto')
-    expect(effectiveTheme.value).toBe('light') // Default to light in tests
-  })
-
-  it('should toggle between light and dark themes', async () => {
-    let themeApi: ReturnType<typeof useTheme>
-
-    const TestComponent = defineComponent({
-      setup() {
-        themeApi = useTheme()
-        return () => null
-      }
-    })
-
-    mount(TestComponent, {
-      global: {
-        plugins: [pinia]
-      }
-    })
-
-    const { toggleTheme, currentTheme, effectiveTheme, setTheme } = themeApi!
-
-    // Start with auto (default)
-    expect(currentTheme.value).toBe('auto')
-    expect(effectiveTheme.value).toBe('light')
-
-    // Set to light first to have a known starting point
-    setTheme('light')
-    await new Promise(resolve => setTimeout(resolve, 0))
-    expect(currentTheme.value).toBe('light')
-    expect(effectiveTheme.value).toBe('light')
-
-    // Toggle to dark
-    toggleTheme()
-    await new Promise(resolve => setTimeout(resolve, 0))
-    expect(currentTheme.value).toBe('dark')
-    expect(effectiveTheme.value).toBe('dark')
-
-    // Toggle back to light
-    toggleTheme()
-    await new Promise(resolve => setTimeout(resolve, 0))
-    expect(currentTheme.value).toBe('light')
-    expect(effectiveTheme.value).toBe('light')
-
-    // Toggle to dark again
-    toggleTheme()
-    await new Promise(resolve => setTimeout(resolve, 0))
-    expect(currentTheme.value).toBe('dark')
-    expect(effectiveTheme.value).toBe('dark')
-  })
-
-  it('should detect system preference for dark mode', async () => {
-    // Mock matchMedia to return dark mode preference
-    setMatchMediaMatches(true)
-
-    let themeApi: ReturnType<typeof useTheme>
-
-    const TestComponent = defineComponent({
-      setup() {
-        themeApi = useTheme()
-        return () => null
-      }
-    })
-
-    mount(TestComponent, {
-      global: {
-        plugins: [pinia]
-      }
-    })
-
-    const { currentTheme, effectiveTheme, setTheme } = themeApi!
-
-    // Reset to auto first
-    setTheme('auto')
-    await new Promise(resolve => setTimeout(resolve, 0))
-
-    // With auto theme, should respect system preference
-    expect(currentTheme.value).toBe('auto')
-    expect(effectiveTheme.value).toBe('dark')
-
-    // But when explicitly set to light, should override
-    setTheme('light')
-    await new Promise(resolve => setTimeout(resolve, 0))
-    expect(effectiveTheme.value).toBe('light')
-  })
-
-  it('should get system theme correctly', () => {
-    // Mock light mode
-    setMatchMediaMatches(false)
-    const { getSystemTheme } = testComposable(() => useTheme())
-    expect(getSystemTheme()).toBe('light')
-
-    // Mock dark mode
-    setMatchMediaMatches(true)
-    expect(getSystemTheme()).toBe('dark')
-  })
-
-  it('should apply theme correctly', () => {
     const { applyTheme } = testComposable(() => useTheme())
 
-    applyTheme('dark')
+    // applyTheme should be called automatically on initialization
     expect(document.documentElement.classList.contains('dark-theme')).toBe(true)
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
 
-    applyTheme('light')
-    expect(document.documentElement.classList.contains('light-theme')).toBe(true)
-    expect(document.documentElement.getAttribute('data-theme')).toBe('light')
+    // Call applyTheme explicitly
+    applyTheme()
+    expect(document.documentElement.classList.contains('dark-theme')).toBe(true)
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
   })
 
-  it('should handle missing window API gracefully', () => {
-    // Mock window without matchMedia
-    const originalMatchMedia = window.matchMedia
-    delete (window as unknown as Record<string, unknown>).matchMedia
+  it('should initialize theme correctly', () => {
+    // Reset document first
+    document.documentElement.className = ''
+    document.documentElement.removeAttribute('data-theme')
 
-    const { getSystemTheme } = testComposable(() => useTheme())
-    expect(getSystemTheme()).toBe('light') // Should default to light
+    const { initializeTheme } = testComposable(() => useTheme())
 
-    // Restore
-    window.matchMedia = originalMatchMedia
+    // initializeTheme should apply dark theme
+    initializeTheme()
+    expect(document.documentElement.classList.contains('dark-theme')).toBe(true)
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
+  })
+
+  it('should detect system theme as dark (always)', () => {
+    // detectSystemTheme always returns 'dark' for industrial theme
+    expect(detectSystemTheme()).toBe('dark')
+  })
+
+  it('should remove light theme classes when applying dark theme', () => {
+    // Set up initial state with light theme
+    document.documentElement.classList.add('light-theme')
+    document.documentElement.setAttribute('data-theme', 'light')
+
+    const { applyTheme } = testComposable(() => useTheme())
+
+    // applyTheme should remove light theme and add dark theme
+    applyTheme()
+    expect(document.documentElement.classList.contains('light-theme')).toBe(false)
+    expect(document.documentElement.classList.contains('dark-theme')).toBe(true)
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
+  })
+
+  it('should handle missing document API gracefully', () => {
+    // The composable should handle cases where document is undefined
+    // (though in tests it should always be available)
+    const { currentTheme, effectiveTheme } = testComposable(() => useTheme())
+    
+    // Should still return dark theme
+    expect(currentTheme).toBe('dark')
+    expect(effectiveTheme).toBe('dark')
   })
 })

@@ -34,6 +34,7 @@ export type Item =
   | "AluminumScrap"
   | "AluminumIngot"
   | "AluminumCasing"
+  | "Bauxite"
   | "Silica"
   | "Plastic"
   | "Rubber"
@@ -453,6 +454,12 @@ export interface MachineInfo {
 
 // Item info response
 export type ItemInfo = Item;
+
+// Extractor compatible items response
+export interface ExtractorCompatibleItemsResponse {
+  extractor_type: ExtractorType;
+  compatible_items: Item[];
+}
 
 // Health check response
 export interface HealthCheckResponse {

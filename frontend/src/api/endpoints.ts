@@ -41,6 +41,7 @@ import type {
    PowerGeneratorPreviewResponse,
    RawInputPreviewRequest,
    RawInputPreviewResponse,
+   ExtractorCompatibleItemsResponse,
 } from './types';
 
 /**
@@ -345,6 +346,14 @@ export const gameData = {
    */
   getMachines: async (): Promise<MachineInfo[]> => {
     return api.get<MachineInfo[]>('/game-data/machines');
+  },
+
+  /**
+   * Get compatible items for each extractor type
+   * @returns Promise resolving to array of extractor compatible items
+   */
+  getExtractorCompatibleItems: async (): Promise<ExtractorCompatibleItemsResponse[]> => {
+    return api.get<ExtractorCompatibleItemsResponse[]>('/game-data/extractor-compatible-items');
   },
 };
 

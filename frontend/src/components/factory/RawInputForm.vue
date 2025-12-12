@@ -15,33 +15,13 @@
           @change="handleResourceChange"
         >
           <option value="">Select a resource...</option>
-          <optgroup label="Solid Resources">
-            <option
-              v-for="resource in solidResources"
-              :key="resource"
-              :value="resource"
-            >
-              {{ formatItemName(resource) }}
-            </option>
-          </optgroup>
-          <optgroup label="Liquid Resources">
-            <option
-              v-for="resource in liquidResources"
-              :key="resource"
-              :value="resource"
-            >
-              {{ formatItemName(resource) }}
-            </option>
-          </optgroup>
-          <optgroup label="Gas Resources">
-            <option
-              v-for="resource in gasResources"
-              :key="resource"
-              :value="resource"
-            >
-              {{ formatItemName(resource) }}
-            </option>
-          </optgroup>
+          <option
+            v-for="resource in availableItems"
+            :key="resource"
+            :value="resource"
+          >
+            {{ formatItemName(resource) }}
+          </option>
         </select>
       </div>
 
@@ -141,7 +121,7 @@
                       class="form-select"
                     >
                       <option
-                        v-for="resource in gasResources"
+                        v-for="resource in getCompatibleItems('ResourceWellExtractor').filter((item: Item) => items.includes(item))"
                         :key="resource"
                         :value="resource"
                       >
@@ -173,7 +153,7 @@
                       step="0.1"
                       class="form-input"
                       readonly
-                      :title="`Calculated based on purity: ${getExtractorRate(extractor.purity)} m³/min`"
+                      :title="`Calculated based on purity and clock speed`"
                     />
                   </div>
                 </div>
@@ -218,7 +198,7 @@
           required
         />
         <div v-if="calculatedRate > 0" class="rate-hint">
-          Calculated rate for {{ formData.purity || 'selected' }} purity: {{ calculatedRate }} {{ getRateUnit() }}
+          Calculated rate{{ formData.purity ? ` for ${formData.purity}` : '' }}: {{ calculatedRate }} {{ getRateUnit() }}
         </div>
       </div>
 
@@ -247,7 +227,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useGameDataStore } from '@/stores/gameData'
 import { useFactoryStore } from '@/stores/factory'
-import { factories } from '@/api/endpoints'
+import { factories, gameData } from '@/api/endpoints'
 import type {
   RawInputResponse,
   ExtractorType,
@@ -256,6 +236,7 @@ import type {
   ResourceWellPressurizer,
   ResourceWellExtractor,
   CreateRawInputRequest,
+  ExtractorCompatibleItemsResponse,
 } from '@/api/types'
 import Button from '@/components/ui/Button.vue'
 import Modal from '@/components/ui/Modal.vue'
@@ -304,22 +285,46 @@ const extractorConfigs = [
 const isEditing = computed(() => !!props.rawInput)
 const items = computed(() => gameDataStore.items)
 
-const solidResources = computed(() => {
-  return items.value.filter(item =>
-    ['Ore', 'Ingot', 'Plate', 'Sheet', 'Rod', 'Pipe', 'Beam'].some(type => item.includes(type))
-  )
-})
+// Extractor compatible items loaded from backend (source of truth: engine)
+const extractorCompatibleItems = ref<Map<ExtractorType, Item[]>>(new Map())
+const loadingCompatibleItems = ref(false)
 
-const liquidResources = computed(() => {
-  return items.value.filter(item =>
-    ['CrudeOil', 'Water', 'HeavyOilResidue', 'LiquidBiofuel', 'NitricAcid'].some(type => item.includes(type))
-  )
-})
+// Load extractor compatible items from backend
+const loadExtractorCompatibleItems = async () => {
+  loadingCompatibleItems.value = true
+  try {
+    const response = await gameData.getExtractorCompatibleItems()
+    const itemsMap = new Map<ExtractorType, Item[]>()
+    response.forEach((item: ExtractorCompatibleItemsResponse) => {
+      itemsMap.set(item.extractor_type, item.compatible_items)
+    })
+    extractorCompatibleItems.value = itemsMap
+  } catch (error) {
+    console.error('Failed to load extractor compatible items:', error)
+  } finally {
+    loadingCompatibleItems.value = false
+  }
+}
 
-const gasResources = computed(() => {
-  return items.value.filter(item =>
-    ['Gas', 'Nitrogen'].some(type => item.includes(type))
-  )
+// Helper to get compatible items for an extractor type
+const getCompatibleItems = (extractorType: ExtractorType | ''): Item[] => {
+  if (!extractorType) return []
+  return extractorCompatibleItems.value.get(extractorType) || []
+}
+
+// Available items based on selected extractor type (from backend/engine)
+const availableItems = computed(() => {
+  if (!formData.value.extractor_type) {
+    // If no extractor selected, show all compatible items from all extractors
+    const allCompatible = new Set<Item>()
+    extractorCompatibleItems.value.forEach((items) => {
+      items.forEach(item => allCompatible.add(item))
+    })
+    return Array.from(allCompatible).filter(item => items.value.includes(item))
+  }
+
+  const compatibleItems = getCompatibleItems(formData.value.extractor_type)
+  return compatibleItems.filter(item => items.value.includes(item))
 })
 
 const selectedExtractor = computed(() => {
@@ -329,15 +334,13 @@ const selectedExtractor = computed(() => {
 const availableExtractors = computed(() => {
   if (!formData.value.item) return extractorConfigs
 
-  // Determine resource type based on selected item
-  let resourceType = 'solid'
-  if (liquidResources.value.includes(formData.value.item as Item)) {
-    resourceType = 'liquid'
-  } else if (gasResources.value.includes(formData.value.item as Item)) {
-    resourceType = 'gas'
-  }
+  const selectedItem = formData.value.item as Item
 
-  return extractorConfigs.filter(config => config.resources === resourceType)
+  // Determine which extractors are compatible with the selected item (from backend/engine)
+  return extractorConfigs.filter(config => {
+    const compatibleItems = getCompatibleItems(config.type)
+    return compatibleItems.includes(selectedItem)
+  })
 })
 
 const showPurity = computed(() => {
@@ -393,7 +396,7 @@ const fetchPreview = async () => {
       }))
     }
 
-    const preview = await factories.rawInputs.rawInput(props.factoryId, request)
+    const preview = await factories.preview.rawInput(props.factoryId, request)
     previewData.value = {
       quantity_per_min: preview.quantity_per_min,
       power_consumption: preview.power_consumption,
@@ -439,9 +442,10 @@ const handleResourceChange = () => {
   formData.value.extractor_type = '' as ExtractorType
   formData.value.purity = null
   formData.value.quantity_per_min = 0
+  previewData.value = null
 }
 
-const handleExtractorChange = () => {
+const handleExtractorChange = async () => {
   // Set default purity for solid resources, oil, and water extractors
   if (!formData.value.purity) {
     if (selectedExtractor.value?.resources === 'solid') {
@@ -451,18 +455,16 @@ const handleExtractorChange = () => {
       // Oil Extractor: default to Normal
       formData.value.purity = 'Normal'
     } else if (formData.value.extractor_type === 'WaterExtractor') {
-      // Water Extractor: internally use Normal (no purity concept in UI)
-      formData.value.purity = 'Normal'
+      // Water Extractor: no purity needed
+      formData.value.purity = null
     } else if (formData.value.extractor_type === 'ResourceWellExtractor') {
       // Resource Well Extractor: default to Normal
       formData.value.purity = 'Normal'
     }
   }
 
-  // Set default rate
-  if (calculatedRate.value > 0) {
-    formData.value.quantity_per_min = calculatedRate.value
-  }
+  // Fetch preview to get calculated rate (will auto-fill via watch)
+  await fetchPreview()
 }
 
 const handlePressurizerToggle = () => {
@@ -615,14 +617,29 @@ watch(() => formData.value.extractors, () => {
   }
 }, { deep: true })
 
-// Watch form changes to fetch preview
-watch([() => formData.value.extractor_type, () => formData.value.item, () => formData.value.purity, () => formData.value.pressurizer?.clock_speed], () => {
-  fetchPreview()
+// Watch form changes to fetch preview and auto-fill quantity
+watch([() => formData.value.extractor_type, () => formData.value.item, () => formData.value.purity, () => formData.value.pressurizer?.clock_speed], async () => {
+  await fetchPreview()
+  // Auto-fill quantity_per_min when preview is available (only when creating, not editing)
+  if (!isEditing.value && previewData.value?.quantity_per_min && previewData.value.quantity_per_min > 0) {
+    formData.value.quantity_per_min = previewData.value.quantity_per_min
+  }
 }, { deep: true })
 
-// Load items on mount
+// Watch preview data changes to update quantity
+watch(() => previewData.value?.quantity_per_min, (newQuantity) => {
+  if (newQuantity && newQuantity > 0 && !isEditing.value) {
+    // Only auto-fill when creating (not editing) to avoid overwriting user input
+    formData.value.quantity_per_min = newQuantity
+  }
+})
+
+// Load items and extractor compatible items on mount
 onMounted(async () => {
-  await gameDataStore.fetchItems()
+  await Promise.all([
+    gameDataStore.fetchItems(),
+    loadExtractorCompatibleItems()
+  ])
 })
 </script>
 

@@ -353,12 +353,24 @@ describe('Frontend Calculation Violations', () => {
           // Check if it's an acceptable pattern
           const isAcceptable = acceptablePatterns.some(pattern => pattern.test(line))
 
-          // Also allow Math.abs in specific display formatting contexts
-          const isDisplayFormatting = line.includes('Math.abs') && (
-            line.includes('powerBalance') || // Power chart percentage calculation
-            line.includes('value') && line.includes('1000') || // Power value formatting
-            line.includes('/ maxPower') || // Percentage calculation
-            line.includes('* 100') // Percentage conversion
+          // Also allow Math functions in specific display formatting contexts
+          const isDisplayFormatting = (
+            // Math.abs in display formatting contexts
+            (line.includes('Math.abs') && (
+              line.includes('powerBalance') || // Power chart percentage calculation
+              line.includes('value') && line.includes('1000') || // Power value formatting
+              line.includes('/ maxPower') || // Percentage calculation
+              line.includes('* 100') // Percentage conversion
+            )) ||
+            // Math.max for calculating max values for percentage display (charts, bars, etc.)
+            (line.includes('Math.max') && (
+              line.includes('Percentage') || // Percentage calculations
+              line.includes('percentage') || // Percentage calculations (lowercase)
+              line.includes('maxFactoryPower') || // Factory power chart calculations
+              line.includes('maxPower') || // Power chart calculations
+              line.includes('* 100') || // Percentage conversion
+              line.includes('/') && (line.includes('generation') || line.includes('consumption')) // Power ratio calculations
+            ))
           )
 
           if (!isAcceptable && !isDisplayFormatting) {

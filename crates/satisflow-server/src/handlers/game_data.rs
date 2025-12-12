@@ -4,6 +4,7 @@ use serde::Serialize;
 
 use crate::{error::Result, state::AppState};
 use satisflow_engine::models::game_data::MachineType;
+use satisflow_engine::models::raw_input::ExtractorType;
 use satisflow_engine::models::{all_items, all_recipes, Item};
 
 #[derive(Serialize)]
@@ -85,9 +86,39 @@ pub async fn get_machines(State(_state): State<AppState>) -> Result<Json<Vec<Mac
     Ok(Json(machines))
 }
 
+#[derive(Serialize)]
+pub struct ExtractorCompatibleItemsResponse {
+    pub extractor_type: ExtractorType,
+    pub compatible_items: Vec<Item>,
+}
+
+pub async fn get_extractor_compatible_items(
+    State(_state): State<AppState>,
+) -> Result<Json<Vec<ExtractorCompatibleItemsResponse>>> {
+    let extractor_types = vec![
+        ExtractorType::MinerMk1,
+        ExtractorType::MinerMk2,
+        ExtractorType::MinerMk3,
+        ExtractorType::WaterExtractor,
+        ExtractorType::OilExtractor,
+        ExtractorType::ResourceWellExtractor,
+    ];
+
+    let responses: Vec<ExtractorCompatibleItemsResponse> = extractor_types
+        .iter()
+        .map(|extractor_type| ExtractorCompatibleItemsResponse {
+            extractor_type: *extractor_type,
+            compatible_items: extractor_type.compatible_items(),
+        })
+        .collect();
+
+    Ok(Json(responses))
+}
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/recipes", get(get_recipes))
         .route("/items", get(get_items))
         .route("/machines", get(get_machines))
+        .route("/extractor-compatible-items", get(get_extractor_compatible_items))
 }
