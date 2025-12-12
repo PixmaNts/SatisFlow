@@ -153,34 +153,35 @@ onUnmounted(() => {
   align-items: flex-start;
   gap: var(--spacing-sm, 0.5rem);
   padding: var(--spacing-md, 0.75rem);
-  border-radius: var(--border-radius-md, 0.375rem);
+  border-radius: var(--border-radius-sm, 3px);
   font-family: var(--font-family-sans, system-ui, sans-serif);
   font-size: var(--font-size-sm, 0.875rem);
   line-height: 1.5;
   position: relative;
+  border: 1px solid;
 
   &.alert-info {
-    background-color: var(--color-blue-50, #eff6ff);
-    color: var(--color-blue-800, #1e40af);
-    border: 1px solid var(--color-blue-200, #bfdbfe);
+    background-color: rgba(74, 144, 164, 0.1);
+    color: var(--color-info-blue, #4a90a4);
+    border-color: var(--color-info-blue, #4a90a4);
   }
 
   &.alert-success {
-    background-color: var(--color-green-50, #f0fdf4);
-    color: var(--color-green-800, #166534);
-    border: 1px solid var(--color-green-200, #bbf7d0);
+    background-color: rgba(34, 197, 94, 0.1);
+    color: var(--color-success, #22c55e);
+    border-color: var(--color-success, #22c55e);
   }
 
   &.alert-warning {
-    background-color: var(--color-yellow-50, #fffbeb);
-    color: var(--color-yellow-800, #92400e);
-    border: 1px solid var(--color-yellow-200, #fde68a);
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--color-warning, #f59e0b);
+    border-color: var(--color-warning, #f59e0b);
   }
 
   &.alert-error {
-    background-color: var(--color-red-50, #fef2f2);
-    color: var(--color-red-800, #991b1b);
-    border: 1px solid var(--color-red-200, #fecaca);
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--color-error, #ef4444);
+    border-color: var(--color-error, #ef4444);
   }
 
   &.alert-dismissible {
@@ -213,7 +214,7 @@ onUnmounted(() => {
   background: none;
   color: inherit;
   opacity: 0.7;
-  border-radius: var(--border-radius-sm, 0.25rem);
+  border-radius: var(--border-radius-sm, 3px);
   cursor: pointer;
   transition: opacity 0.2s ease-in-out;
 

@@ -1,16 +1,5 @@
 <template>
   <div class="raw-input-list">
-    <div class="list-header">
-      <h3 class="list-title">Raw Inputs</h3>
-      <Button
-        variant="primary"
-        size="sm"
-        @click="showCreateModal = true"
-      >
-        Add Raw Input
-      </Button>
-    </div>
-
     <DataTable
       :columns="columns"
       :data="rawInputs"
@@ -20,7 +9,7 @@
     >
       <template #cell-resource="{ row }">
         <div class="resource-info">
-          <span class="resource-name">{{ row.item }}</span>
+          <ItemDisplay :item="String(row.item)" size="sm" />
           <span v-if="getExtractorDisplayName((row as unknown as RawInputResponse).extractor_type)" class="extractor-type">
             {{ getExtractorDisplayName((row as unknown as RawInputResponse).extractor_type) }}
           </span>
@@ -132,6 +121,7 @@ import Button from '@/components/ui/Button.vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import Modal from '@/components/ui/Modal.vue'
 import Alert from '@/components/ui/Alert.vue'
+import ItemDisplay from '@/components/ui/ItemDisplay.vue'
 import RawInputForm from './RawInputForm.vue'
 
 interface Props {
@@ -283,29 +273,20 @@ onMounted(async () => {
     await factoryStore.fetchById(props.factoryId)
   }
 })
+
+// Expose methods for parent components
+defineExpose({
+  openCreateModal: () => {
+    showCreateModal.value = true
+  }
+})
 </script>
 
 <style scoped lang="scss">
 .raw-input-list {
-  background-color: var(--color-white, #ffffff);
+  background-color: transparent;
   border-radius: var(--border-radius-lg, 0.5rem);
-  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
   overflow: hidden;
-}
-
-.list-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-lg, 1rem);
-  border-bottom: 1px solid var(--color-gray-200, #e5e7eb);
-}
-
-.list-title {
-  font-size: var(--font-size-lg, 1.125rem);
-  font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-gray-900, #111827);
-  margin: 0;
 }
 
 .resource-info {
@@ -316,12 +297,12 @@ onMounted(async () => {
 
 .resource-name {
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 .extractor-type {
   font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-gray-500, #6b7280);
+  color: var(--color-text-secondary, #b8b8b8);
   font-style: italic;
 }
 
@@ -334,23 +315,26 @@ onMounted(async () => {
   text-transform: uppercase;
 
   &.purity-impure {
-    background-color: var(--color-red-100, #fee2e2);
-    color: var(--color-red-800, #991b1b);
+    background-color: rgba(239, 68, 68, 0.2);
+    color: var(--color-error, #ef4444);
+    border: 1px solid var(--color-error, #ef4444);
   }
 
   &.purity-normal {
-    background-color: var(--color-gray-100, #f3f4f6);
-    color: var(--color-gray-800, #1f2937);
+    background-color: rgba(184, 184, 184, 0.2);
+    color: var(--color-text-secondary, #b8b8b8);
+    border: 1px solid var(--color-border, #404040);
   }
 
   &.purity-pure {
-    background-color: var(--color-green-100, #d1fae5);
-    color: var(--color-green-800, #065f46);
+    background-color: rgba(34, 197, 94, 0.2);
+    color: var(--color-success, #22c55e);
+    border: 1px solid var(--color-success, #22c55e);
   }
 }
 
 .purity-none {
-  color: var(--color-gray-500, #6b7280);
+  color: var(--color-text-secondary, #b8b8b8);
   font-style: italic;
 }
 
@@ -362,7 +346,7 @@ onMounted(async () => {
 
 .rate-value {
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 .pressurized-indicator {
@@ -378,12 +362,12 @@ onMounted(async () => {
 
 .power-value {
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 .extractor-count {
   font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-gray-500, #6b7280);
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .action-buttons {
@@ -398,7 +382,7 @@ onMounted(async () => {
 
 .input-name {
   margin: var(--spacing-sm, 0.5rem) 0;
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 .warning-text {

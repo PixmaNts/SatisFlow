@@ -1,5 +1,12 @@
 import { ref } from 'vue'
 
+// Toast action button interface
+export interface ToastAction {
+  label: string
+  action: () => void
+  variant?: 'primary' | 'secondary' | 'danger'
+}
+
 // Toast message interface
 export interface ToastMessage {
   id: string
@@ -7,6 +14,8 @@ export interface ToastMessage {
   type: 'success' | 'error' | 'warning' | 'info'
   duration?: number
   persistent?: boolean
+  actions?: ToastAction[]
+  groupId?: string // For grouping related toasts
 }
 
 // Toast state
@@ -27,13 +36,29 @@ export function useToast() {
   /**
    * Add a new toast message
    */
-  const addToast = (message: string, type: ToastMessage['type'], options?: { duration?: number; persistent?: boolean }) => {
+  const addToast = (
+    message: string,
+    type: ToastMessage['type'],
+    options?: {
+      duration?: number
+      persistent?: boolean
+      actions?: ToastAction[]
+      groupId?: string
+    }
+  ) => {
     const toast: ToastMessage = {
       id: generateId(),
       message,
       type,
       duration: options?.duration || (type === 'error' ? 5000 : 3000),
       persistent: options?.persistent || false,
+      actions: options?.actions,
+      groupId: options?.groupId,
+    }
+
+    // If groupId is provided, remove other toasts in the same group
+    if (options?.groupId) {
+      toasts.value = toasts.value.filter(t => t.groupId !== options.groupId)
     }
 
     toasts.value.push(toast)
@@ -61,28 +86,40 @@ export function useToast() {
   /**
    * Show success message
    */
-  const showSuccess = (message: string, options?: { duration?: number }) => {
+  const showSuccess = (
+    message: string,
+    options?: { duration?: number; actions?: ToastAction[]; groupId?: string }
+  ) => {
     return addToast(message, 'success', options)
   }
 
   /**
    * Show error message
    */
-  const showError = (message: string, options?: { duration?: number }) => {
+  const showError = (
+    message: string,
+    options?: { duration?: number; actions?: ToastAction[]; groupId?: string }
+  ) => {
     return addToast(message, 'error', options)
   }
 
   /**
    * Show warning message
    */
-  const showWarning = (message: string, options?: { duration?: number }) => {
+  const showWarning = (
+    message: string,
+    options?: { duration?: number; actions?: ToastAction[]; groupId?: string }
+  ) => {
     return addToast(message, 'warning', options)
   }
 
   /**
    * Show info message
    */
-  const showInfo = (message: string, options?: { duration?: number }) => {
+  const showInfo = (
+    message: string,
+    options?: { duration?: number; actions?: ToastAction[]; groupId?: string }
+  ) => {
     return addToast(message, 'info', options)
   }
 

@@ -125,9 +125,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import type { TrainConfig, WagonConfig } from '@/api/logistics-types'
 import type { Item } from '@/api/types'
+import { useGameDataStore } from '@/stores/gameData'
+import { useItemIcon } from '@/composables/useItemIcon'
 
 interface Props {
   modelValue: TrainConfig
@@ -141,27 +143,18 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const trainConfig = ref<TrainConfig>({ ...props.modelValue })
+const gameDataStore = useGameDataStore()
 
-// Sample items - in a real app, these would come from the API
-const solidItems: Item[] = [
-  'IronOre', 'IronIngot', 'IronPlate', 'IronRod', 'Screw',
-  'CopperOre', 'CopperIngot', 'CopperSheet', 'Wire', 'Cable',
-  'Coal', 'Biomass', 'Concrete', 'Limestone',
-  'SteelBeam', 'SteelPipe', 'ModularFrame', 'Rotor', 'Stator'
-]
+// Get all items from game data - backend will validate solid vs fluid
+const allItems = computed(() => {
+  return gameDataStore.itemNames
+})
 
-const fluidItems: Item[] = [
-  'Water', 'CrudeOil', 'HeavyOilResidue', 'Fuel', 'Turbofuel',
-  'LiquidBiofuel', 'NitrogenGas', 'PackagedWater', 'PackagedOil',
-  'PackagedFuel', 'PackagedTurbofuel'
-]
+const { formatItemName } = useItemIcon()
 
-const formatItemName = (item: Item): string => {
-  return item.replace(/([A-Z])/g, ' $1').trim()
-}
-
+// Show all items - backend will validate compatibility
 const availableItems = (wagonType: 'Cargo' | 'Fluid'): Item[] => {
-  return wagonType === 'Cargo' ? solidItems : fluidItems
+  return allItems.value
 }
 
 const cargoWagonCount = computed(() =>
@@ -205,6 +198,13 @@ const updateConfig = () => {
 watch(() => props.modelValue, (newValue) => {
   trainConfig.value = { ...newValue }
 }, { deep: true })
+
+// Fetch game data on mount
+onMounted(async () => {
+  if (gameDataStore.itemNames.length === 0) {
+    await gameDataStore.fetchItems()
+  }
+})
 </script>
 
 <style scoped lang="scss">

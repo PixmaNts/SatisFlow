@@ -1,16 +1,5 @@
 <template>
   <div class="power-generator-list">
-    <div class="list-header">
-      <h3 class="list-title">Power Generation</h3>
-      <Button
-        variant="primary"
-        size="sm"
-        @click="showCreateModal = true"
-      >
-        Add Power Generator
-      </Button>
-    </div>
-
     <DataTable
       :columns="columns"
       :data="powerGenerators"
@@ -21,9 +10,11 @@
       <template #cell-type="{ row }">
         <div class="generator-info">
           <span class="generator-type">{{ getGeneratorDisplayName((row as unknown as PowerGeneratorResponse).generator_type) }}</span>
-          <span v-if="(row as unknown as PowerGeneratorResponse).fuel_type" class="fuel-type">
-            {{ formatItemName((row as unknown as PowerGeneratorResponse).fuel_type || '') }}
-          </span>
+          <ItemDisplay
+            v-if="(row as unknown as PowerGeneratorResponse).fuel_type"
+            :item="(row as unknown as PowerGeneratorResponse).fuel_type || ''"
+            size="sm"
+          />
         </div>
       </template>
 
@@ -125,6 +116,7 @@ import Button from '@/components/ui/Button.vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import Modal from '@/components/ui/Modal.vue'
 import Alert from '@/components/ui/Alert.vue'
+import ItemDisplay from '@/components/ui/ItemDisplay.vue'
 import PowerGeneratorForm from './PowerGeneratorForm.vue'
 
 interface Props {
@@ -195,9 +187,6 @@ const getGeneratorDisplayName = (type: GeneratorType): string => {
   return displayNames[type] || type
 }
 
-const formatItemName = (item: string): string => {
-  return item.replace(/([A-Z])/g, ' $1').trim()
-}
 
 const getTotalGenerators = (generator: PowerGeneratorResponse): number => {
   return generator.groups.reduce((total, group) => total + group.number_of_generators, 0)
@@ -286,29 +275,20 @@ onMounted(async () => {
     await factoryStore.fetchById(props.factoryId)
   }
 })
+
+// Expose methods for parent components
+defineExpose({
+  openCreateModal: () => {
+    showCreateModal.value = true
+  }
+})
 </script>
 
 <style scoped lang="scss">
 .power-generator-list {
-  background-color: var(--color-white, #ffffff);
+  background-color: transparent;
   border-radius: var(--border-radius-lg, 0.5rem);
-  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
   overflow: hidden;
-}
-
-.list-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-lg, 1rem);
-  border-bottom: 1px solid var(--color-gray-200, #e5e7eb);
-}
-
-.list-title {
-  font-size: var(--font-size-lg, 1.125rem);
-  font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-gray-900, #111827);
-  margin: 0;
 }
 
 .generator-info {
@@ -319,12 +299,12 @@ onMounted(async () => {
 
 .generator-type {
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 .fuel-type {
   font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-gray-500, #6b7280);
+  color: var(--color-text-secondary, #b8b8b8);
   font-style: italic;
 }
 
@@ -336,12 +316,12 @@ onMounted(async () => {
 
 .generator-count {
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 .group-count {
   font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-gray-500, #6b7280);
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .power-info {
@@ -352,12 +332,12 @@ onMounted(async () => {
 
 .power-value {
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 .fuel-rate {
   font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-gray-500, #6b7280);
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .action-buttons {
@@ -372,7 +352,7 @@ onMounted(async () => {
 
 .generator-name {
   margin: var(--spacing-sm, 0.5rem) 0;
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 .warning-text {

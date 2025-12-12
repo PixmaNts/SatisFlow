@@ -120,6 +120,7 @@
 import { ref, watch } from 'vue'
 import type { TruckConfig } from '@/api/logistics-types'
 import type { Item } from '@/api/types'
+import { useItemIcon } from '@/composables/useItemIcon'
 
 interface Props {
   modelValue: TruckConfig
@@ -151,9 +152,7 @@ const allItems: Item[] = [
   'LiquidBiofuel', 'NitrogenGas', 'PackagedWater', 'PackagedOil'
 ]
 
-const formatItemName = (item: Item): string => {
-  return item.replace(/([A-Z])/g, ' $1').trim()
-}
+const { formatItemName } = useItemIcon()
 
 // Truck specifications (simplified for demo)
 const TRUCK_MAX_CAPACITY = 120 // items per minute

@@ -1,45 +1,23 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, h } from 'vue'
 import { useFactoryStore } from '@/stores/factory'
 import { useLogisticsStore } from '@/stores/logistics'
-import { usePreferencesStore } from '@/stores/preferences'
 import LogisticsList from '@/components/logistics/LogisticsList.vue'
 import LogisticsLineForm from '@/components/logistics/LogisticsLineForm.vue'
 import Modal from '@/components/ui/Modal.vue'
 import Button from '@/components/ui/Button.vue'
+import FloatingActionButton, { type FabAction } from '@/components/ui/FloatingActionButton.vue'
 import type { LogisticsResponse } from '@/api/types'
 
 // Store
 const factoryStore = useFactoryStore()
 const logisticsStore = useLogisticsStore()
-const preferencesStore = usePreferencesStore()
 
 // State
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const selectedLogistics = ref<LogisticsResponse | null>(null)
 const refreshTrigger = ref(0)
-
-// Use preferences for logistics filters
-const transportTypeFilter = computed({
-  get: () => preferencesStore.logisticsFilters.transportType,
-  set: (value) => preferencesStore.updateLogisticsFilters({ transportType: value })
-})
-
-const sourceFactoryFilter = computed({
-  get: () => preferencesStore.logisticsFilters.sourceFactory,
-  set: (value) => preferencesStore.updateLogisticsFilters({ sourceFactory: value })
-})
-
-const destinationFactoryFilter = computed({
-  get: () => preferencesStore.logisticsFilters.destinationFactory,
-  set: (value) => preferencesStore.updateLogisticsFilters({ destinationFactory: value })
-})
-
-const searchFilter = computed({
-  get: () => preferencesStore.logisticsFilters.searchText,
-  set: (value) => preferencesStore.updateLogisticsFilters({ searchText: value })
-})
 
 // Methods
 const handleCreateLogistics = () => {
@@ -76,6 +54,35 @@ const handleLogisticsUpdated = (logistics: LogisticsResponse) => {
   refreshTrigger.value++
 }
 
+// FAB actions - using h() for icon rendering
+const fabActions = computed((): FabAction[] => [
+  {
+    id: 'create-logistics',
+    label: 'Create Logistics Line',
+    onClick: handleCreateLogistics,
+    icon: h('svg', {
+      width: '20',
+      height: '20',
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      xmlns: 'http://www.w3.org/2000/svg'
+    }, [
+      h('path', {
+        d: 'M8 7H16M8 12H16M8 17H13',
+        stroke: 'currentColor',
+        'stroke-width': '2',
+        'stroke-linecap': 'round',
+        'stroke-linejoin': 'round'
+      }),
+      h('path', {
+        d: 'M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z',
+        stroke: 'currentColor',
+        'stroke-width': '2'
+      })
+    ])
+  }
+])
+
 const handleCloseCreateModal = () => {
   showCreateModal.value = false
 }
@@ -85,8 +92,9 @@ const handleCloseEditModal = () => {
   selectedLogistics.value = null
 }
 
-const resetFilters = () => {
-  preferencesStore.resetLogisticsFilters()
+// Keyboard shortcuts
+const handleCreateNew = () => {
+  handleCreateLogistics()
 }
 
 // Lifecycle
@@ -96,6 +104,13 @@ onMounted(async () => {
     factoryStore.fetchAll(),
     logisticsStore.fetchAll()
   ])
+
+  // Register keyboard shortcuts
+  document.addEventListener('app-create-new', handleCreateNew)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('app-create-new', handleCreateNew)
 })
 </script>
 
@@ -135,64 +150,10 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- Filters -->
-    <div class="logistics-filters">
-      <div class="filter-group">
-        <label class="filter-label">Transport Type</label>
-        <select v-model="transportTypeFilter" class="filter-select">
-          <option value="all">All Types</option>
-          <option value="bus">Bus</option>
-          <option value="train">Train</option>
-          <option value="truck">Truck</option>
-          <option value="drone">Drone</option>
-        </select>
-      </div>
-
-      <div class="filter-group">
-        <label class="filter-label">Source Factory</label>
-        <select v-model="sourceFactoryFilter" class="filter-select">
-          <option value="all">All Factories</option>
-          <option v-for="factory in factoryStore.factories" :key="factory.id" :value="factory.id">
-            {{ factory.name }}
-          </option>
-        </select>
-      </div>
-
-      <div class="filter-group">
-        <label class="filter-label">Destination Factory</label>
-        <select v-model="destinationFactoryFilter" class="filter-select">
-          <option value="all">All Factories</option>
-          <option v-for="factory in factoryStore.factories" :key="factory.id" :value="factory.id">
-            {{ factory.name }}
-          </option>
-        </select>
-      </div>
-
-      <div class="filter-group">
-        <label class="filter-label">Search</label>
-        <input
-          v-model="searchFilter"
-          type="text"
-          placeholder="Search logistics..."
-          class="filter-input"
-        />
-      </div>
-
-      <div class="filter-actions">
-        <Button variant="secondary" @click="resetFilters">
-          Reset Filters
-        </Button>
-      </div>
-    </div>
-
     <!-- Main Content -->
     <div class="logistics-content">
       <LogisticsList
         :refresh-trigger="refreshTrigger"
-        :transport-type-filter="transportTypeFilter"
-        :source-factory-filter="sourceFactoryFilter"
-        :destination-factory-filter="destinationFactoryFilter"
-        :search-filter="searchFilter"
         @select-logistics="handleSelectLogistics"
         @edit-logistics="handleEditLogistics"
         @delete-logistics="handleDeleteLogistics"
@@ -224,6 +185,13 @@ onMounted(async () => {
         @updated="handleLogisticsUpdated"
       />
     </Modal>
+
+    <!-- Floating Action Button -->
+    <FloatingActionButton
+      :actions="fabActions"
+      main-button-label="Quick actions"
+      position="bottom-right"
+    />
   </div>
 </template>
 
@@ -239,9 +207,10 @@ onMounted(async () => {
 }
 
 .logistics-header {
-  background-color: var(--color-surface, #ffffff);
-  border-radius: var(--border-radius-lg, 0.5rem);
-  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+  background-color: var(--color-surface, #252525);
+  border-radius: var(--border-radius-sm, 3px);
+  box-shadow: var(--shadow-inset);
+  border: 1px solid var(--color-border, #404040);
   padding: var(--spacing-lg, 1rem);
   margin-bottom: var(--spacing-md, 0.75rem);
 }
@@ -262,64 +231,15 @@ onMounted(async () => {
 .header-title h1 {
   font-size: var(--font-size-2xl, 1.5rem);
   font-weight: var(--font-weight-bold, 700);
-  color: var(--color-text-primary, #111827);
+  color: var(--color-ficsit-orange, #f58b00);
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .header-subtitle {
   font-size: var(--font-size-base, 1rem);
-  color: var(--color-text-secondary, #6b7280);
+  color: var(--color-text-secondary, #b8b8b8);
   margin: 0;
-}
-
-.logistics-filters {
-  background-color: var(--color-surface, #ffffff);
-  border-radius: var(--border-radius-lg, 0.5rem);
-  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
-  padding: var(--spacing-lg, 1rem);
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-md, 0.75rem);
-  align-items: end;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs, 0.25rem);
-  min-width: 150px;
-}
-
-.filter-label {
-  font-size: var(--font-size-sm, 0.875rem);
-  font-weight: var(--font-weight-medium, 500);
-  color: var(--color-text-secondary, #6b7280);
-}
-
-.filter-select,
-.filter-input {
-  padding: var(--spacing-sm, 0.5rem);
-  border: 1px solid var(--color-border, #e5e7eb);
-  border-radius: var(--border-radius-md, 0.375rem);
-  background-color: var(--color-surface-secondary, #f9fafb);
-  color: var(--color-text-primary, #111827);
-  font-size: var(--font-size-sm, 0.875rem);
-
-  &:focus {
-    outline: none;
-    border-color: var(--color-primary-500, #3b82f6);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-}
-
-.filter-input {
-  min-width: 200px;
-}
-
-.filter-actions {
-  display: flex;
-  align-items: center;
-  margin-left: auto;
 }
 
 .logistics-content {
@@ -341,42 +261,7 @@ onMounted(async () => {
   .header-title h1 {
     font-size: var(--font-size-xl, 1.25rem);
   }
-
-  .logistics-filters {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .filter-group {
-    min-width: auto;
-  }
-
-  .filter-input {
-    min-width: auto;
-  }
-
-  .filter-actions {
-    margin-left: 0;
-    margin-top: var(--spacing-sm, 0.5rem);
-  }
 }
 
-// Dark theme adjustments
-:root.dark {
-  .logistics-header,
-  .logistics-filters {
-    background-color: var(--color-surface, #1e293b);
-  }
-
-  .filter-select,
-  .filter-input {
-    background-color: var(--color-surface-secondary, #334155);
-    color: var(--color-text-primary, #f1f5f9);
-    border-color: var(--color-border, #475569);
-
-    &:focus {
-      border-color: var(--color-primary-500, #3b82f6);
-    }
-  }
-}
+// Industrial theme is always dark - no separate dark theme needed
 </style>

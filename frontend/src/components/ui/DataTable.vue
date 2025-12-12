@@ -434,9 +434,10 @@ watch(() => props.data, () => {
 <style scoped lang="scss">
 .data-table-container {
   width: 100%;
-  background-color: var(--color-white, #ffffff);
-  border-radius: var(--border-radius-lg, 0.5rem);
-  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+  background-color: var(--color-surface, #252525);
+  border-radius: var(--border-radius-sm, 3px);
+  border: 1px solid var(--color-border, #404040);
+  box-shadow: var(--shadow-inset);
   overflow: hidden;
 }
 
@@ -445,7 +446,8 @@ watch(() => props.data, () => {
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-md, 0.75rem) var(--spacing-lg, 1rem);
-  border-bottom: 1px solid var(--color-gray-200, #e5e7eb);
+  border-bottom: 1px solid var(--color-border, #404040);
+  background-color: var(--color-surface-inset, #1f1f1f);
   gap: var(--spacing-md, 0.75rem);
 }
 
@@ -463,22 +465,29 @@ watch(() => props.data, () => {
   left: var(--spacing-sm, 0.5rem);
   top: 50%;
   transform: translateY(-50%);
-  color: var(--color-gray-400, #9ca3af);
+  color: var(--color-text-muted, #8a8a8a);
   pointer-events: none;
 }
 
 .filter-input {
   width: 100%;
   padding: var(--spacing-sm, 0.5rem) var(--spacing-sm, 0.5rem) var(--spacing-sm, 0.5rem) 2rem;
-  border: 1px solid var(--color-gray-300, #d1d5db);
-  border-radius: var(--border-radius-md, 0.375rem);
+  border: 1px solid var(--color-border, #404040);
+  border-radius: var(--border-radius-sm, 3px);
   font-size: var(--font-size-sm, 0.875rem);
-  transition: border-color 0.2s ease-in-out;
+  background-color: var(--color-surface, #252525);
+  color: var(--color-text-primary, #e5e5e5);
+  transition: all var(--transition-normal, 200ms);
+
+  &::placeholder {
+    color: var(--color-text-muted, #8a8a8a);
+  }
 
   &:focus {
     outline: none;
-    border-color: var(--color-primary-500, #3b82f6);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--color-ficsit-orange, #f58b00);
+    box-shadow: var(--shadow-glow-orange);
+    background-color: var(--color-surface-hover, #2a2a2a);
   }
 }
 
@@ -500,26 +509,29 @@ watch(() => props.data, () => {
 }
 
 .table-header {
-  background-color: var(--color-gray-50, #f9fafb);
+  background-color: var(--color-surface-inset, #1f1f1f);
   padding: var(--spacing-md, 0.75rem) var(--spacing-lg, 1rem);
   text-align: left;
   font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-gray-900, #111827);
-  border-bottom: 1px solid var(--color-gray-200, #e5e7eb);
+  color: var(--color-text-primary, #e5e5e5);
+  border-bottom: 1px solid var(--color-border, #404040);
   white-space: nowrap;
+  font-family: var(--font-family-sans);
 
   &.table-header-sortable {
     cursor: pointer;
     user-select: none;
-    transition: background-color 0.2s ease-in-out;
+    transition: all var(--transition-normal, 200ms);
 
     &:hover {
-      background-color: var(--color-gray-100, #f3f4f6);
+      background-color: var(--color-surface-hover, #2a2a2a);
+      color: var(--color-ficsit-orange, #f58b00);
     }
   }
 
   &.table-header-sorted {
-    color: var(--color-primary-600, #2563eb);
+    color: var(--color-ficsit-orange, #f58b00);
+    background-color: var(--color-surface-hover, #2a2a2a);
   }
 }
 
@@ -537,11 +549,13 @@ watch(() => props.data, () => {
 }
 
 .table-row {
-  border-bottom: 1px solid var(--color-gray-100, #f3f4f6);
-  transition: background-color 0.2s ease-in-out;
+  border-bottom: 1px solid var(--color-border-dark, #2a2a2a);
+  transition: all var(--transition-normal, 200ms);
+  background-color: var(--color-surface, #252525);
 
   &:hover {
-    background-color: var(--color-gray-50, #f9fafb);
+    background-color: var(--color-surface-hover, #2a2a2a);
+    border-left: 2px solid var(--color-ficsit-orange, #f58b00);
   }
 
   &:last-child {
@@ -551,8 +565,17 @@ watch(() => props.data, () => {
 
 .table-cell {
   padding: var(--spacing-md, 0.75rem) var(--spacing-lg, 1rem);
-  color: var(--color-gray-700, #374151);
+  color: var(--color-text-primary, #e5e5e5);
   vertical-align: middle;
+  
+  /* Use monospace for numbers */
+  &[data-type="number"],
+  .mono,
+  .rate,
+  .number {
+    font-family: var(--font-family-mono);
+    color: var(--color-text-primary, #e5e5e5);
+  }
 }
 
 .loading-overlay {
@@ -565,13 +588,13 @@ watch(() => props.data, () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(26, 26, 26, 0.9);
   gap: var(--spacing-md, 0.75rem);
 }
 
 .loading-text {
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .empty-state {
@@ -581,7 +604,7 @@ watch(() => props.data, () => {
   justify-content: center;
   padding: var(--spacing-xl, 1.25rem) var(--spacing-lg, 1rem);
   gap: var(--spacing-md, 0.75rem);
-  color: var(--color-gray-500, #6b7280);
+  color: var(--color-text-muted, #8a8a8a);
 }
 
 .empty-icon {
@@ -598,32 +621,37 @@ watch(() => props.data, () => {
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-md, 0.75rem) var(--spacing-lg, 1rem);
-  border-top: 1px solid var(--color-gray-200, #e5e7eb);
+  border-top: 1px solid var(--color-border, #404040);
+  background-color: var(--color-surface-inset, #1f1f1f);
 }
 
 .pagination-button {
   padding: var(--spacing-xs, 0.25rem) var(--spacing-sm, 0.5rem);
-  border: 1px solid var(--color-gray-300, #d1d5db);
-  border-radius: var(--border-radius-md, 0.375rem);
-  background-color: var(--color-white, #ffffff);
-  color: var(--color-gray-700, #374151);
+  border: 1px solid var(--color-border, #404040);
+  border-radius: var(--border-radius-sm, 3px);
+  background-color: var(--color-surface, #252525);
+  color: var(--color-text-primary, #e5e5e5);
   font-size: var(--font-size-sm, 0.875rem);
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all var(--transition-normal, 200ms);
 
   &:hover:not(:disabled) {
-    background-color: var(--color-gray-50, #f9fafb);
+    background-color: var(--color-surface-hover, #2a2a2a);
+    border-color: var(--color-ficsit-orange, #f58b00);
+    color: var(--color-ficsit-orange, #f58b00);
   }
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
+    color: var(--color-text-disabled, #5a5a5a);
   }
 }
 
 .pagination-info {
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-secondary, #b8b8b8);
+  font-family: var(--font-family-mono);
 }
 
 // Responsive design

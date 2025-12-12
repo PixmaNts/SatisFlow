@@ -142,6 +142,7 @@
 import { ref, watch } from 'vue'
 import type { DroneConfig } from '@/api/logistics-types'
 import type { Item } from '@/api/types'
+import { useItemIcon } from '@/composables/useItemIcon'
 
 interface Props {
   modelValue: DroneConfig
@@ -180,9 +181,7 @@ const DRONE_SPEED = 65 // km/h
 const DRONE_BATTERY_LIFE = 10 // minutes
 const DRONE_ITEMS_PER_TRIP = 5 // items per trip
 
-const formatItemName = (item: Item): string => {
-  return item.replace(/([A-Z])/g, ' $1').trim()
-}
+const { formatItemName } = useItemIcon()
 
 const getEfficiency = (): number => {
   if (droneConfig.value.quantity_per_min === 0) return 0

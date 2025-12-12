@@ -34,19 +34,63 @@
         :tabs="tabs"
         class="factory-tabs"
       >
+        <template #actions>
+          <!-- Production Lines Actions -->
+          <template v-if="activeTab === 'production'">
+            <Button
+              variant="secondary"
+              size="sm"
+              @click="handleImportBlueprint"
+              title="Import a blueprint from JSON file"
+            >
+              <span class="button-icon">📥</span>
+              Import Blueprint
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              @click="handleAddProductionLine"
+            >
+              Add Production Line
+            </Button>
+          </template>
+
+          <!-- Raw Inputs Actions -->
+          <template v-if="activeTab === 'raw-inputs'">
+            <Button
+              variant="primary"
+              size="sm"
+              @click="handleAddRawInput"
+            >
+              Add Raw Input
+            </Button>
+          </template>
+
+          <!-- Power Generation Actions -->
+          <template v-if="activeTab === 'power-generation'">
+            <Button
+              variant="primary"
+              size="sm"
+              @click="handleAddPowerGenerator"
+            >
+              Add Power Generator
+            </Button>
+          </template>
+        </template>
+
         <!-- Production Lines Tab -->
         <TabPanel tab-id="production">
-          <ProductionLineList :factory-id="currentFactory.id" />
+          <ProductionLineList ref="productionLineListRef" :factory-id="currentFactory.id" />
         </TabPanel>
 
         <!-- Raw Inputs Tab -->
         <TabPanel tab-id="raw-inputs">
-          <RawInputList :factory-id="currentFactory.id" />
+          <RawInputList ref="rawInputListRef" :factory-id="currentFactory.id" />
         </TabPanel>
 
         <!-- Power Generation Tab -->
         <TabPanel tab-id="power-generation">
-          <PowerGeneratorList :factory-id="currentFactory.id" />
+          <PowerGeneratorList ref="powerGeneratorListRef" :factory-id="currentFactory.id" />
         </TabPanel>
       </Tabs>
     </div>
@@ -82,11 +126,12 @@
         Select a factory from the dropdown above or create a new factory to get started.
       </p>
     </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, watch, ref } from 'vue'
 import { useFactoryStore } from '@/stores/factory'
 import { usePreferencesStore } from '@/stores/preferences'
 import FactorySelector from '@/components/factory/FactorySelector.vue'
@@ -95,9 +140,15 @@ import RawInputList from '@/components/factory/RawInputList.vue'
 import PowerGeneratorList from '@/components/factory/PowerGeneratorList.vue'
 import Tabs from '@/components/ui/Tabs.vue'
 import TabPanel from '@/components/ui/TabPanel.vue'
+import Button from '@/components/ui/Button.vue'
 
 const factoryStore = useFactoryStore()
 const preferencesStore = usePreferencesStore()
+
+// Component refs
+const productionLineListRef = ref<InstanceType<typeof ProductionLineList> | null>(null)
+const rawInputListRef = ref<InstanceType<typeof RawInputList> | null>(null)
+const powerGeneratorListRef = ref<InstanceType<typeof PowerGeneratorList> | null>(null)
 
 // State
 const activeTab = computed({
@@ -124,6 +175,7 @@ const powerBalanceClass = computed(() => {
   return 'power-balanced'
 })
 
+
 // Methods
 const formatPower = (power: number): string => {
   if (power < 0) {
@@ -133,6 +185,30 @@ const formatPower = (power: number): string => {
     return `${(power * 1000).toFixed(0)} kW`
   }
   return `${power.toFixed(1)} MW`
+}
+
+const handleImportBlueprint = () => {
+  if (productionLineListRef.value) {
+    productionLineListRef.value.handleImportButtonClick()
+  }
+}
+
+const handleAddProductionLine = () => {
+  if (productionLineListRef.value) {
+    productionLineListRef.value.openCreateModal()
+  }
+}
+
+const handleAddRawInput = () => {
+  if (rawInputListRef.value) {
+    rawInputListRef.value.openCreateModal()
+  }
+}
+
+const handleAddPowerGenerator = () => {
+  if (powerGeneratorListRef.value) {
+    powerGeneratorListRef.value.openCreateModal()
+  }
 }
 
 // Watch for factory changes to refresh data
@@ -165,9 +241,10 @@ if (preferencesStore.selectedFactoryId && !currentFactory.value) {
 }
 
 .factory-overview {
-  background-color: var(--color-white, #ffffff);
-  border-radius: var(--border-radius-lg, 0.5rem);
-  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+  background-color: var(--color-surface, #252525);
+  border-radius: var(--border-radius-sm, 3px);
+  box-shadow: var(--shadow-inset);
+  border: 1px solid var(--color-border, #404040);
   padding: var(--spacing-lg, 1rem);
 }
 
@@ -183,7 +260,7 @@ if (preferencesStore.selectedFactoryId && !currentFactory.value) {
 .factory-name {
   font-size: var(--font-size-xl, 1.25rem);
   font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
   margin: 0;
 }
 
@@ -201,7 +278,7 @@ if (preferencesStore.selectedFactoryId && !currentFactory.value) {
 
 .stat-label {
   font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-gray-500, #6b7280);
+  color: var(--color-text-secondary, #b8b8b8);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -209,30 +286,32 @@ if (preferencesStore.selectedFactoryId && !currentFactory.value) {
 .stat-value {
   font-size: var(--font-size-lg, 1.125rem);
   font-weight: var(--font-weight-semibold, 600);
+  font-family: var(--font-family-mono);
 
   &.power-surplus {
-    color: var(--color-green-600, #059669);
+    color: var(--color-success, #22c55e);
   }
 
   &.power-deficit {
-    color: var(--color-red-600, #dc2626);
+    color: var(--color-error, #ef4444);
   }
 
   &.power-balanced {
-    color: var(--color-blue-600, #2563eb);
+    color: var(--color-info-blue, #4a90a4);
   }
 }
 
 .factory-description {
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-secondary, #b8b8b8);
   margin: 0;
   line-height: 1.5;
 }
 
 .factory-tabs {
-  background-color: var(--color-white, #ffffff);
-  border-radius: var(--border-radius-lg, 0.5rem);
-  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+  background-color: var(--color-surface, #252525);
+  border-radius: var(--border-radius-sm, 3px);
+  box-shadow: var(--shadow-inset);
+  border: 1px solid var(--color-border, #404040);
   overflow: hidden;
 }
 
@@ -243,28 +322,40 @@ if (preferencesStore.selectedFactoryId && !currentFactory.value) {
   justify-content: center;
   padding: var(--spacing-xl, 1.25rem);
   text-align: center;
-  background-color: var(--color-white, #ffffff);
-  border-radius: var(--border-radius-lg, 0.5rem);
-  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+  background-color: var(--color-surface, #252525);
+  border-radius: var(--border-radius-sm, 3px);
+  box-shadow: var(--shadow-inset);
+  border: 1px solid var(--color-border, #404040);
   min-height: 300px;
 }
 
 .empty-icon {
-  color: var(--color-gray-400, #9ca3af);
+  color: var(--color-text-muted, #8a8a8a);
   margin-bottom: var(--spacing-md, 0.75rem);
+  opacity: 0.4;
 }
 
 .empty-title {
   font-size: var(--font-size-lg, 1.125rem);
   font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
   margin: 0 0 var(--spacing-sm, 0.5rem) 0;
 }
 
 .empty-description {
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-secondary, #b8b8b8);
   margin: 0;
   max-width: 500px;
+}
+
+.button-icon {
+  margin-right: var(--spacing-xs, 0.25rem);
+}
+
+@media (max-width: 768px) {
+  .button-icon {
+    display: none;
+  }
 }
 
 // Responsive design

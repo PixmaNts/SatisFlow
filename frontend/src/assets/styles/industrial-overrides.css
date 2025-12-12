@@ -1,0 +1,49 @@
+/* Global Industrial Theme Overrides */
+
+/* Force dark industrial theme globally */
+* {
+  /* Override any remaining light backgrounds */
+  &[style*="background-color: #ffffff"],
+  &[style*="background-color:#ffffff"],
+  &[style*="background: #ffffff"],
+  &[style*="background:#ffffff"] {
+    background-color: var(--color-surface, #252525) !important;
+  }
+}
+
+/* Global form input overrides */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+select,
+textarea {
+  background-color: var(--color-surface-inset, #1f1f1f) !important;
+  color: var(--color-text-primary, #e5e5e5) !important;
+  border-color: var(--color-border, #404040) !important;
+  
+  &::placeholder {
+    color: var(--color-text-muted, #8a8a8a) !important;
+  }
+  
+  &:focus {
+    border-color: var(--color-ficsit-orange, #f58b00) !important;
+    box-shadow: var(--shadow-glow-orange) !important;
+  }
+}
+
+/* Global card/panel overrides */
+.card,
+.panel,
+.surface {
+  background-color: var(--color-surface, #252525) !important;
+  border-color: var(--color-border, #404040) !important;
+  color: var(--color-text-primary, #e5e5e5) !important;
+}
+
+/* Ensure all text is readable on dark background */
+body {
+  background-color: var(--color-bg-primary, #1a1a1a) !important;
+  color: var(--color-text-primary, #e5e5e5) !important;
+}
+

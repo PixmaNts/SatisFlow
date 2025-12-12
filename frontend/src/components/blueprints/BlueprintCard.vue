@@ -101,7 +101,8 @@
             :key="item"
             class="item-tag input-item"
           >
-            {{ item }}: {{ quantity.toFixed(1) }}/min
+            <ItemDisplay :item="item" size="sm" />
+            <span>{{ quantity.toFixed(1) }}/min</span>
           </div>
         </div>
       </div>
@@ -114,7 +115,8 @@
             :key="item"
             class="item-tag output-item"
           >
-            {{ item }}: {{ quantity.toFixed(1) }}/min
+            <ItemDisplay :item="item" size="sm" />
+            <span>{{ quantity.toFixed(1) }}/min</span>
           </div>
         </div>
       </div>
@@ -125,6 +127,7 @@
 <script setup lang="ts">
 import type { BlueprintTemplateResponse } from '@/api/types';
 import Button from '@/components/ui/Button.vue';
+import ItemDisplay from '@/components/ui/ItemDisplay.vue';
 
 interface Props {
   /** Blueprint template data */
@@ -203,7 +206,7 @@ defineEmits<{
 }
 
 .item-tag {
-  @apply px-2 py-1 text-xs rounded-full font-medium;
+  @apply px-2 py-1 text-xs rounded-full font-medium flex items-center gap-1;
 }
 
 .input-item {

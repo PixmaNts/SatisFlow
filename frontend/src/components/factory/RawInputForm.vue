@@ -259,6 +259,7 @@ import type {
 } from '@/api/types'
 import Button from '@/components/ui/Button.vue'
 import Modal from '@/components/ui/Modal.vue'
+import { useItemIcon } from '@/composables/useItemIcon'
 
 interface Props {
   show: boolean
@@ -420,9 +421,7 @@ const canSubmit = computed(() => {
 })
 
 // Methods
-const formatItemName = (item: string): string => {
-  return item.replace(/([A-Z])/g, ' $1').trim()
-}
+const { formatItemName } = useItemIcon()
 
 const getRateUnit = (): string => {
   if (formData.value.extractor_type === 'WaterExtractor' ||

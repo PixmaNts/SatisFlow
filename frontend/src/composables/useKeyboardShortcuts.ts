@@ -230,21 +230,14 @@ export const commonShortcuts = {
     key: '?',
     shiftKey: true,
     description: 'Show keyboard shortcuts help',
+    preventDefault: true,
+    stopPropagation: true,
     handler: () => {
       // Show help modal
       window.dispatchEvent(new CustomEvent('app-show-help'))
     }
   },
 
-  // Settings
-  openSettings: {
-    key: ',',
-    description: 'Open Settings',
-    handler: () => {
-      // Open settings modal
-      window.dispatchEvent(new CustomEvent('app-open-settings'))
-    }
-  },
 
   // Escape
   escape: {
@@ -253,6 +246,38 @@ export const commonShortcuts = {
     handler: () => {
       // Close modal or cancel action
       window.dispatchEvent(new CustomEvent('app-escape'))
+    }
+  },
+
+  // Command Palette
+  openCommandPalette: {
+    key: 'k',
+    ctrlKey: true,
+    description: 'Open command palette',
+    preventDefault: true,
+    stopPropagation: true,
+    handler: () => {
+      window.dispatchEvent(new CustomEvent('app-open-command-palette'))
+    }
+  },
+
+  // Quick Create (context-aware)
+  createNew: {
+    key: 'n',
+    ctrlKey: true,
+    description: 'Create new item (context-aware)',
+    handler: () => {
+      window.dispatchEvent(new CustomEvent('app-create-new'))
+    }
+  },
+
+  // Search/Focus
+  focusSearch: {
+    key: '/',
+    ctrlKey: true,
+    description: 'Focus search input',
+    handler: () => {
+      window.dispatchEvent(new CustomEvent('app-focus-search'))
     }
   }
 }

@@ -18,6 +18,12 @@
             :title="`Generation: ${formatPower(totalGeneration)}`"
           ></div>
           <div
+            v-if="totalConsumption > 0"
+            class="power-segment consumption"
+            :style="{ width: consumptionPercentage + '%' }"
+            :title="`Consumption: ${formatPower(totalConsumption)}`"
+          ></div>
+          <div
             v-if="hasDeficit"
             class="power-segment deficit"
             :style="{ width: deficitPercentage + '%' }"
@@ -41,10 +47,6 @@
         <div class="legend-color consumption"></div>
         <span class="legend-text">Consumption: {{ formatPower(totalConsumption) }}</span>
       </div>
-      <div v-if="hasSurplus" class="legend-item">
-        <div class="legend-color surplus"></div>
-        <span class="legend-text">Surplus: {{ formatPower(powerBalance) }}</span>
-      </div>
       <div v-if="hasDeficit" class="legend-item">
         <div class="legend-color deficit"></div>
         <span class="legend-text">Deficit: {{ formatPower(Math.abs(powerBalance)) }}</span>
@@ -53,8 +55,36 @@
 
     <!-- Factory Power Breakdown -->
     <div v-if="factoryStats.length > 0" class="factory-breakdown">
-      <h3 class="breakdown-title">Factory Power Breakdown</h3>
-      <div class="factory-list">
+      <div class="breakdown-header" @click="toggleBreakdown">
+        <h3 class="breakdown-title">Factory Power Breakdown</h3>
+        <button
+          type="button"
+          class="toggle-button"
+          :aria-expanded="isBreakdownExpanded"
+          :aria-label="isBreakdownExpanded ? 'Collapse factory breakdown' : 'Expand factory breakdown'"
+          @click.stop="toggleBreakdown"
+        >
+          <svg
+            class="chevron-icon"
+            :class="{ 'expanded': isBreakdownExpanded }"
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M6 8L10 12L14 8"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
+      <Transition name="slide-fade">
+        <div v-show="isBreakdownExpanded" class="factory-list">
         <div
           v-for="factory in factoryStats"
           :key="factory.factory_id"
@@ -73,26 +103,24 @@
                 <div
                   class="power-segment-small generation"
                   :style="{ width: getFactoryGenerationPercentage(factory) + '%' }"
+                  :title="`Generation: ${formatPower(factory.generation)}`"
+                ></div>
+                <div
+                  v-if="factory.consumption > 0"
+                  class="power-segment-small consumption"
+                  :style="{ width: getFactoryConsumptionPercentage(factory) + '%' }"
+                  :title="`Consumption: ${formatPower(factory.consumption)}`"
                 ></div>
               </div>
             </div>
             <div class="power-numbers">
               <span class="generation-text">{{ formatPower(factory.generation) }}</span>
               <span class="consumption-text">{{ formatPower(factory.consumption) }}</span>
-              <span
-                class="balance-text"
-                :class="{
-                  'surplus': factory.balance > 0,
-                  'deficit': factory.balance < 0,
-                  'balanced': factory.balance === 0
-                }"
-              >
-                {{ formatPower(factory.balance) }}
-              </span>
             </div>
           </div>
         </div>
       </div>
+      </Transition>
     </div>
 
     <!-- Loading State -->
@@ -114,7 +142,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import type { PowerStats } from '@/api/types'
 
@@ -126,6 +154,13 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
 })
+
+// Factory breakdown collapse state (default: folded)
+const isBreakdownExpanded = ref(false)
+
+const toggleBreakdown = () => {
+  isBreakdownExpanded.value = !isBreakdownExpanded.value
+}
 
 // Computed properties
 const totalGeneration = computed(() => props.powerStats?.total_generation || 0)
@@ -147,6 +182,10 @@ const maxPower = computed(() => {
 
 const generationPercentage = computed(() => {
   return (totalGeneration.value / maxPower.value) * 100
+})
+
+const consumptionPercentage = computed(() => {
+  return (totalConsumption.value / maxPower.value) * 100
 })
 
 const deficitPercentage = computed(() => {
@@ -178,14 +217,20 @@ const getFactoryGenerationPercentage = (factory: { generation: number; consumpti
   const maxFactoryPower = Math.max(factory.generation, factory.consumption, 1)
   return (factory.generation / maxFactoryPower) * 100
 }
+
+const getFactoryConsumptionPercentage = (factory: { generation: number; consumption: number }): number => {
+  const maxFactoryPower = Math.max(factory.generation, factory.consumption, 1)
+  return (factory.consumption / maxFactoryPower) * 100
+}
 </script>
 
 <style scoped lang="scss">
 .power-stats-chart {
-  background-color: var(--color-white, #ffffff);
-  border-radius: var(--border-radius-lg, 0.5rem);
-  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
-  padding: var(--spacing-lg, 1rem);
+  background: var(--color-surface, #252525);
+  border-radius: var(--border-radius-sm, 3px);
+  box-shadow: var(--shadow-inset);
+  border: 1px solid var(--color-border, #404040);
+  padding: var(--spacing-xl, 1.25rem);
   margin-bottom: var(--spacing-xl, 1.25rem);
 }
 
@@ -199,8 +244,9 @@ const getFactoryGenerationPercentage = (factory: { generation: number; consumpti
 .chart-title {
   font-size: var(--font-size-xl, 1.25rem);
   font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .power-status {
@@ -208,23 +254,26 @@ const getFactoryGenerationPercentage = (factory: { generation: number; consumpti
   align-items: center;
   gap: var(--spacing-xs, 0.25rem);
   padding: var(--spacing-xs, 0.25rem) var(--spacing-sm, 0.5rem);
-  border-radius: var(--border-radius-full, 9999px);
+  border-radius: var(--border-radius-sm, 3px);
   font-size: var(--font-size-sm, 0.875rem);
   font-weight: var(--font-weight-medium, 500);
 
   &.surplus {
-    background-color: var(--color-success-100, #d1fae5);
-    color: var(--color-success-800, #065f46);
+    background-color: rgba(34, 197, 94, 0.1);
+    color: var(--color-success, #22c55e);
+    border: 1px solid var(--color-success, #22c55e);
   }
 
   &.deficit {
-    background-color: var(--color-error-100, #fee2e2);
-    color: var(--color-error-800, #991b1b);
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--color-error, #ef4444);
+    border: 1px solid var(--color-error, #ef4444);
   }
 
   &.balanced {
-    background-color: var(--color-warning-100, #fef3c7);
-    color: var(--color-warning-800, #92400e);
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--color-warning, #f59e0b);
+    border: 1px solid var(--color-warning, #f59e0b);
   }
 }
 
@@ -255,24 +304,43 @@ const getFactoryGenerationPercentage = (factory: { generation: number; consumpti
 
 .power-bar {
   width: 100%;
-  height: 32px;
-  background-color: var(--color-gray-200, #e5e7eb);
-  border-radius: var(--border-radius-md, 0.375rem);
+  height: 40px;
+  background: linear-gradient(135deg, #e5e7eb 0%, #f3f4f6 100%);
+  border-radius: var(--border-radius-lg, 0.5rem);
   overflow: hidden;
   display: flex;
   margin-bottom: var(--spacing-sm, 0.5rem);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .power-segment {
   height: 100%;
-  transition: width 0.3s ease-in-out;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  
+  &:not(:last-child) {
+    border-right: 2px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  &:hover {
+    filter: brightness(1.1);
+    z-index: 1;
+  }
 
   &.generation {
-    background-color: var(--color-success-500, #10b981);
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: inset 0 2px 4px rgba(16, 185, 129, 0.2);
+  }
+
+  &.consumption {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    box-shadow: inset 0 2px 4px rgba(249, 115, 22, 0.2);
   }
 
   &.deficit {
-    background-color: var(--color-error-500, #ef4444);
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    box-shadow: inset 0 2px 4px rgba(239, 68, 68, 0.2);
   }
 }
 
@@ -280,7 +348,7 @@ const getFactoryGenerationPercentage = (factory: { generation: number; consumpti
   display: flex;
   justify-content: space-between;
   font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .power-legend {
@@ -289,7 +357,7 @@ const getFactoryGenerationPercentage = (factory: { generation: number; consumpti
   gap: var(--spacing-md, 0.75rem);
   margin-bottom: var(--spacing-lg, 1rem);
   padding-bottom: var(--spacing-lg, 1rem);
-  border-bottom: 1px solid var(--color-gray-200, #e5e7eb);
+  border-bottom: 1px solid var(--color-border, #404040);
 }
 
 .legend-item {
@@ -297,7 +365,7 @@ const getFactoryGenerationPercentage = (factory: { generation: number; consumpti
   align-items: center;
   gap: var(--spacing-xs, 0.25rem);
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-gray-700, #374151);
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .legend-color {
@@ -324,29 +392,108 @@ const getFactoryGenerationPercentage = (factory: { generation: number; consumpti
 
 .factory-breakdown {
   margin-top: var(--spacing-lg, 1rem);
+  padding-top: var(--spacing-lg, 1rem);
+  border-top: 1px solid var(--color-border, #404040);
+}
+
+.breakdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  padding: var(--spacing-sm, 0.5rem);
+  margin: calc(var(--spacing-sm, 0.5rem) * -1);
+  border-radius: var(--border-radius-md, 0.375rem);
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: var(--color-surface-hover, #2a2a2a);
+  }
 }
 
 .breakdown-title {
-  font-size: var(--font-size-lg, 1.125rem);
-  font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-gray-900, #111827);
-  margin: 0 0 var(--spacing-md, 0.75rem) 0;
+  font-size: var(--font-size-xl, 1.25rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-text-primary, #e5e5e5);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.toggle-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: var(--border-radius-md, 0.375rem);
+  cursor: pointer;
+  color: var(--color-text-secondary, #b8b8b8);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: var(--color-surface-hover, #2a2a2a);
+    color: var(--color-text-primary, #e5e5e5);
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(245, 139, 0, 0.2);
+  }
+}
+
+.chevron-icon {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.expanded {
+    transform: rotate(180deg);
+  }
 }
 
 .factory-list {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md, 0.75rem);
+  margin-top: var(--spacing-lg, 1rem);
+}
+
+// Slide-fade transition for factory breakdown
+.slide-fade-enter-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-fade-leave-active {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-fade-enter-from {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
 .factory-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-md, 0.75rem);
-  background-color: var(--color-gray-50, #f9fafb);
-  border-radius: var(--border-radius-md, 0.375rem);
-  border: 1px solid var(--color-gray-200, #e5e7eb);
+  padding: var(--spacing-lg, 1rem);
+  background: var(--color-surface, #252525);
+  border-radius: var(--border-radius-sm, 3px);
+  border: 1px solid var(--color-border, #404040);
+  box-shadow: var(--shadow-inset-light);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+    border-color: rgba(59, 130, 246, 0.2);
+  }
 }
 
 .factory-info {
@@ -357,7 +504,7 @@ const getFactoryGenerationPercentage = (factory: { generation: number; consumpti
 .factory-name {
   font-size: var(--font-size-base, 1rem);
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
   margin: 0 0 var(--spacing-xs, 0.25rem) 0;
 }
 
@@ -366,15 +513,15 @@ const getFactoryGenerationPercentage = (factory: { generation: number; consumpti
   flex-direction: column;
   gap: var(--spacing-xs, 0.25rem);
   font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .factory-power {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: var(--spacing-xs, 0.25rem);
-  min-width: 120px;
+  gap: var(--spacing-sm, 0.5rem);
+  min-width: 200px;
 }
 
 .power-bars {
@@ -384,49 +531,77 @@ const getFactoryGenerationPercentage = (factory: { generation: number; consumpti
 
 .power-bar-small {
   width: 100%;
-  height: 8px;
-  background-color: var(--color-gray-200, #e5e7eb);
-  border-radius: var(--border-radius-sm, 0.25rem);
+  height: 12px;
+  background: linear-gradient(135deg, #e5e7eb 0%, #f3f4f6 100%);
+  border-radius: var(--border-radius-md, 0.375rem);
   overflow: hidden;
+  display: flex;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .power-segment-small {
   height: 100%;
-  transition: width 0.3s ease-in-out;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+
+  &:not(:last-child) {
+    border-right: 2px solid rgba(255, 255, 255, 0.3);
+  }
+
+  &:hover {
+    filter: brightness(1.1);
+    z-index: 1;
+  }
 
   &.generation {
-    background-color: var(--color-success-500, #10b981);
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  }
+
+  &.consumption {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
   }
 }
 
 .power-numbers {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--spacing-xs, 0.25rem);
-  font-size: var(--font-size-xs, 0.75rem);
-  font-weight: var(--font-weight-medium, 500);
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-md, 0.75rem);
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-semibold, 600);
+  margin-top: var(--spacing-xs, 0.25rem);
 }
 
 .generation-text {
-  color: var(--color-success-700, #047857);
+  color: var(--color-success, #22c55e);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 0.25rem);
+
+  &::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+  }
 }
 
 .consumption-text {
-  color: var(--color-orange-700, #c2410c);
-}
+  color: var(--color-warning, #f59e0b);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 0.25rem);
 
-.balance-text {
-  &.surplus {
-    color: var(--color-blue-700, #1d4ed8);
-  }
-
-  &.deficit {
-    color: var(--color-error-700, #b91c1c);
-  }
-
-  &.balanced {
-    color: var(--color-warning-700, #a16207);
+  &::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.3);
   }
 }
 
@@ -437,7 +612,7 @@ const getFactoryGenerationPercentage = (factory: { generation: number; consumpti
   justify-content: center;
   padding: var(--spacing-xl, 1.25rem);
   gap: var(--spacing-md, 0.75rem);
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .loading-text {
@@ -452,7 +627,7 @@ const getFactoryGenerationPercentage = (factory: { generation: number; consumpti
   justify-content: center;
   padding: var(--spacing-xl, 1.25rem);
   gap: var(--spacing-md, 0.75rem);
-  color: var(--color-gray-500, #6b7280);
+  color: var(--color-text-muted, #8a8a8a);
 }
 
 .empty-icon {

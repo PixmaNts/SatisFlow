@@ -1,42 +1,5 @@
 <template>
   <div class="production-line-list">
-    <div class="list-header">
-      <h3 class="list-title">Production Lines</h3>
-      <div class="header-actions">
-        <Button
-          variant="secondary"
-          size="sm"
-          @click="handleImportButtonClick"
-          title="Import a blueprint from JSON file"
-        >
-          <span class="button-icon">📥</span>
-          Import Blueprint
-        </Button>
-
-        <!-- Production Line Type Selector -->
-        <div class="production-line-type-selector">
-          <Button
-            variant="primary"
-            size="sm"
-            @click="showCreateModal = true"
-          >
-            Add Production Line
-          </Button>
-          <div class="dropdown-arrow" />
-          <div class="dropdown-menu" v-if="showDropdown">
-            <div class="dropdown-item" @click="showCreateModal = true; showDropdown = false">
-              <span class="dropdown-icon">🔧</span>
-              Recipe
-            </div>
-            <div class="dropdown-item" @click="handleBlueprintSelectorClick">
-              <span class="dropdown-icon">📋</span>
-              From Blueprint Template
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <DataTable
       :columns="columns"
       :data="productionLines"
@@ -533,38 +496,21 @@ const handleBlueprintSelected = async (templateId: string, name: string) => {
     showError(appError.userMessage || 'Failed to create blueprint instance')
   }
 }
+
+// Expose methods for parent components
+defineExpose({
+  openCreateModal: () => {
+    showCreateModal.value = true
+  },
+  handleImportButtonClick
+})
 </script>
 
 <style scoped lang="scss">
 .production-line-list {
-  background-color: var(--color-white, #ffffff);
+  background-color: transparent;
   border-radius: var(--border-radius-lg, 0.5rem);
-  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
   overflow: hidden;
-}
-
-.list-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-lg, 1rem);
-  border-bottom: 1px solid var(--color-gray-200, #e5e7eb);
-}
-
-.list-title {
-  font-size: var(--font-size-lg, 1.125rem);
-  font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-gray-900, #111827);
-  margin: 0;
-}
-
-.header-actions {
-  display: flex;
-  gap: var(--spacing-sm, 0.5rem);
-}
-
-.button-icon {
-  margin-right: var(--spacing-xs, 0.25rem);
 }
 
 .production-line-name {
@@ -575,19 +521,19 @@ const handleBlueprintSelected = async (templateId: string, name: string) => {
 
 .name {
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 .description {
   font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-gray-500, #6b7280);
+  color: var(--color-text-secondary, #b8b8b8);
   font-style: italic;
 }
 
 .recipe-name {
   font-family: var(--font-family-mono, 'Courier New', monospace);
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-gray-700, #374151);
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .machine-info {
@@ -598,12 +544,12 @@ const handleBlueprintSelected = async (templateId: string, name: string) => {
 
 .machine-count {
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 .machine-details {
   font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-gray-500, #6b7280);
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .power-info {
@@ -614,7 +560,7 @@ const handleBlueprintSelected = async (templateId: string, name: string) => {
 
 .power-value {
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 .somersloop-count {
@@ -635,7 +581,7 @@ const handleBlueprintSelected = async (templateId: string, name: string) => {
 
 .line-name {
   margin: var(--spacing-sm, 0.5rem) 0;
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 .warning-text {

@@ -52,7 +52,7 @@
         <h3 class="section-title">Inputs</h3>
         <div class="items-list">
           <div v-for="[item, rate] in metadata.input_items" :key="item" class="item-row">
-            <span class="item-name">{{ formatItemName(item) }}</span>
+            <ItemDisplay :item="item" size="sm" />
             <span class="item-rate">{{ rate.toFixed(2) }}/min</span>
           </div>
         </div>
@@ -63,7 +63,7 @@
         <h3 class="section-title">Outputs</h3>
         <div class="items-list">
           <div v-for="[item, rate] in metadata.output_items" :key="item" class="item-row">
-            <span class="item-name">{{ formatItemName(item) }}</span>
+            <ItemDisplay :item="item" size="sm" />
             <span class="item-rate">{{ rate.toFixed(2) }}/min</span>
           </div>
         </div>
@@ -102,6 +102,7 @@
 import { ref } from 'vue'
 import Modal from '../ui/Modal.vue'
 import Button from '../ui/Button.vue'
+import ItemDisplay from '../ui/ItemDisplay.vue'
 import type { BlueprintMetadata } from '@/api/types'
 
 /**
@@ -144,15 +145,6 @@ const formatPower = (power: number): string => {
   return `${power.toFixed(2)} MW`
 }
 
-/**
- * Format item name (convert from PascalCase to readable)
- */
-const formatItemName = (item: string): string => {
-  return item
-    .replace(/([A-Z])/g, ' $1')
-    .trim()
-    .replace(/^./, (str) => str.toUpperCase())
-}
 
 /**
  * Format date string
@@ -284,12 +276,6 @@ const formatDate = (dateString: string): string => {
   background-color: var(--color-gray-50, #f9fafb);
   border-radius: var(--border-radius-md, 0.375rem);
   border: 1px solid var(--color-gray-200, #e5e7eb);
-}
-
-.item-name {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-gray-700, #374151);
 }
 
 .item-rate {

@@ -12,18 +12,6 @@
           @loaded="handleLoaded"
           @reset="handleReset"
         />
-        <Button
-          variant="secondary"
-          size="sm"
-          :loading="loading"
-          data-test="dashboard-refresh"
-          @click="handleRefresh"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 4V9H4.58152M19.4185 9H20V4M19.4185 9C17.9187 6.46188 15.4182 4.61053 12.4926 4.13102M4.58152 9C6.08134 11.5381 8.58184 13.3895 11.5074 13.869M11.5074 13.869C14.9171 14.4332 18.4185 12.8084 20 9.63102M11.5074 13.869V19.869M11.5074 19.869H16.5074M11.5074 19.869H6.50744" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Refresh
-        </Button>
         <div class="refresh-info">
           <span v-if="lastUpdated" class="last-updated">
             Last updated: {{ formatTime(lastUpdated) }}
@@ -59,15 +47,6 @@
 
     <!-- Dashboard Content -->
     <div v-else-if="hasData" class="dashboard-content">
-      <!-- Summary Cards Section -->
-      <section class="dashboard-section">
-        <SummaryCards
-          :summary="summary"
-          :power-stats="powerStats"
-          :loading="loading"
-        />
-      </section>
-
       <!-- Power Statistics Section -->
       <section class="dashboard-section">
         <PowerStatsChart
@@ -169,7 +148,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useDashboardStore, useFactoryStore, useLogisticsStore, useGameDataStore } from '@/stores'
 import { usePreferencesStore } from '@/stores/preferences'
 import { Button, Alert, LoadingSpinner, DataTable } from '@/components/ui'
-import { SummaryCards, PowerStatsChart, SaveLoadControls } from '@/components/dashboard'
+import { PowerStatsChart, SaveLoadControls } from '@/components/dashboard'
 import type { Column } from '@/components/ui/DataTable.vue'
 
 // Stores
@@ -416,13 +395,14 @@ watch([autoRefreshEnabled, refreshInterval], () => {
 .dashboard-title {
   font-size: var(--font-size-2xl, 1.5rem);
   font-weight: var(--font-weight-bold, 700);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-ficsit-orange, #f58b00);
   margin: 0 0 var(--spacing-xs, 0.25rem) 0;
+  letter-spacing: -0.01em;
 }
 
 .dashboard-subtitle {
   font-size: var(--font-size-base, 1rem);
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-secondary, #b8b8b8);
   margin: 0;
 }
 
@@ -439,7 +419,8 @@ watch([autoRefreshEnabled, refreshInterval], () => {
   align-items: flex-end;
   gap: var(--spacing-xs, 0.25rem);
   font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-gray-500, #6b7280);
+  color: var(--color-text-muted, #8a8a8a);
+  font-family: var(--font-family-mono);
 }
 
 .error-banner {
@@ -465,7 +446,7 @@ watch([autoRefreshEnabled, refreshInterval], () => {
   justify-content: center;
   padding: var(--spacing-2xl, 2rem);
   gap: var(--spacing-lg, 1rem);
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .loading-text {
@@ -495,7 +476,7 @@ watch([autoRefreshEnabled, refreshInterval], () => {
 .section-title {
   font-size: var(--font-size-xl, 1.25rem);
   font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
   margin: 0;
 }
 
@@ -546,42 +527,47 @@ watch([autoRefreshEnabled, refreshInterval], () => {
 
 .balance-value {
   font-weight: var(--font-weight-semibold, 600);
+  font-family: var(--font-family-mono);
 
   &.overflow {
-    color: var(--color-success-600, #059669);
+    color: var(--color-success, #22c55e);
   }
 
   &.underflow {
-    color: var(--color-error-600, #dc2626);
+    color: var(--color-error, #ef4444);
   }
 
   &.balanced {
-    color: var(--color-warning-600, #d97706);
+    color: var(--color-warning, #f59e0b);
   }
 }
 
 .state-badge {
   display: inline-block;
   padding: 2px 8px;
-  border-radius: var(--border-radius-full, 9999px);
+  border-radius: var(--border-radius-sm, 3px);
   font-size: var(--font-size-xs, 0.75rem);
   font-weight: var(--font-weight-medium, 500);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  border: 1px solid;
 
   &.overflow {
-    background-color: var(--color-success-100, #d1fae5);
-    color: var(--color-success-800, #065f46);
+    background-color: rgba(34, 197, 94, 0.1);
+    color: var(--color-success, #22c55e);
+    border-color: var(--color-success, #22c55e);
   }
 
   &.underflow {
-    background-color: var(--color-error-100, #fee2e2);
-    color: var(--color-error-800, #991b1b);
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--color-error, #ef4444);
+    border-color: var(--color-error, #ef4444);
   }
 
   &.balanced {
-    background-color: var(--color-warning-100, #fef3c7);
-    color: var(--color-warning-800, #92400e);
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--color-warning, #f59e0b);
+    border-color: var(--color-warning, #f59e0b);
   }
 }
 
@@ -592,18 +578,19 @@ watch([autoRefreshEnabled, refreshInterval], () => {
   justify-content: center;
   padding: var(--spacing-3xl, 3rem) var(--spacing-lg, 1rem);
   text-align: center;
-  color: var(--color-gray-500, #6b7280);
+  color: var(--color-text-muted, #8a8a8a);
 }
 
 .empty-icon {
-  opacity: 0.3;
+  opacity: 0.4;
   margin-bottom: var(--spacing-lg, 1rem);
+  color: var(--color-text-muted, #8a8a8a);
 }
 
 .empty-title {
   font-size: var(--font-size-xl, 1.25rem);
   font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-gray-700, #374151);
+  color: var(--color-text-primary, #e5e5e5);
   margin: 0 0 var(--spacing-sm, 0.5rem) 0;
 }
 
@@ -611,6 +598,7 @@ watch([autoRefreshEnabled, refreshInterval], () => {
   font-size: var(--font-size-base, 1rem);
   margin: 0 0 var(--spacing-lg, 1rem) 0;
   max-width: 400px;
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 // Responsive design

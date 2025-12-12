@@ -80,17 +80,17 @@ const handleClick = (event: MouseEvent) => {
   justify-content: center;
   gap: var(--spacing-sm, 0.5rem);
   border: none;
-  border-radius: var(--border-radius-md, 0.375rem);
+  border-radius: var(--border-radius-sm, 3px);
   font-family: var(--font-family-sans, system-ui, sans-serif);
   font-weight: var(--font-weight-medium, 500);
   text-decoration: none;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all var(--transition-normal, 200ms) cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   white-space: nowrap;
 
   &:focus-visible {
-    outline: 2px solid var(--color-primary-500, #3b82f6);
+    outline: 2px solid var(--color-ficsit-orange);
     outline-offset: 2px;
   }
 
@@ -122,59 +122,102 @@ const handleClick = (event: MouseEvent) => {
     min-height: 3rem;
   }
 
-  // Style variants
+  // Style variants - Industrial FICSIT theme
   &.btn-primary {
-    background-color: var(--color-primary-600, #2563eb);
-    color: var(--color-white, #ffffff);
+    background: var(--color-ficsit-orange);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-ficsit-orange-dark);
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--border-radius-sm, 3px);
 
     &:hover:not(.btn-disabled):not(.btn-loading) {
-      background-color: var(--color-primary-700, #1d4ed8);
+      background: var(--color-ficsit-orange-light);
+      border-color: var(--color-ficsit-orange);
+      box-shadow: var(--shadow-glow-orange);
+      transform: translateY(-1px);
     }
 
     &:active:not(.btn-disabled):not(.btn-loading) {
-      background-color: var(--color-primary-800, #1e40af);
+      transform: translateY(0);
+      box-shadow: var(--shadow-inset-light);
+      background: var(--color-ficsit-orange-dark);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-ficsit-orange);
+      outline-offset: 2px;
     }
   }
 
   &.btn-secondary {
-    background-color: var(--color-gray-100, #f3f4f6);
-    color: var(--color-gray-900, #111827);
-    border: 1px solid var(--color-gray-300, #d1d5db);
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-inset-light);
+    border-radius: var(--border-radius-sm, 3px);
 
     &:hover:not(.btn-disabled):not(.btn-loading) {
-      background-color: var(--color-gray-200, #e5e7eb);
+      background: var(--color-surface-hover);
+      border-color: var(--color-ficsit-orange);
+      box-shadow: var(--shadow-inset);
+      transform: translateY(-1px);
     }
 
     &:active:not(.btn-disabled):not(.btn-loading) {
-      background-color: var(--color-gray-300, #d1d5db);
+      transform: translateY(0);
+      box-shadow: var(--shadow-inset);
+      background: var(--color-surface-active);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-ficsit-orange);
+      outline-offset: 2px;
     }
   }
 
   &.btn-danger {
-    background-color: var(--color-red-600, #dc2626);
-    color: var(--color-white, #ffffff);
+    background: var(--color-error);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-error-dark);
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--border-radius-sm, 3px);
 
     &:hover:not(.btn-disabled):not(.btn-loading) {
-      background-color: var(--color-red-700, #b91c1c);
+      background: var(--color-error-dark);
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+      transform: translateY(-1px);
     }
 
     &:active:not(.btn-disabled):not(.btn-loading) {
-      background-color: var(--color-red-800, #991b1b);
+      transform: translateY(0);
+      box-shadow: var(--shadow-inset-light);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-error);
+      outline-offset: 2px;
     }
   }
 
   &.btn-ghost {
     background-color: transparent;
-    color: var(--color-gray-600, #4b5563);
+    color: var(--color-text-secondary);
     border: 1px solid transparent;
+    border-radius: var(--border-radius-sm, 3px);
 
     &:hover:not(.btn-disabled):not(.btn-loading) {
-      background-color: var(--color-gray-100, #f3f4f6);
-      color: var(--color-gray-900, #111827);
+      background-color: var(--color-surface);
+      color: var(--color-text-primary);
+      border-color: var(--color-border);
     }
 
     &:active:not(.btn-disabled):not(.btn-loading) {
-      background-color: var(--color-gray-200, #e5e7eb);
+      background-color: var(--color-surface-active);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-ficsit-orange);
+      outline-offset: 2px;
     }
   }
 }

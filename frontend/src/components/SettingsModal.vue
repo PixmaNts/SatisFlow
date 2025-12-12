@@ -7,26 +7,6 @@
   >
     <div class="settings-content">
       <div class="settings-section">
-        <h3 class="section-title">Appearance</h3>
-
-        <div class="setting-group">
-          <label class="setting-label">Theme</label>
-          <div class="theme-options">
-            <button
-              v-for="theme in themeOptions"
-              :key="theme.value"
-              class="theme-button"
-              :class="{ active: currentTheme === theme.value }"
-              @click="handleThemeChange(theme.value)"
-            >
-              <span class="theme-icon">{{ theme.icon }}</span>
-              <span class="theme-label">{{ theme.label }}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="settings-section">
         <h3 class="section-title">Language</h3>
 
         <div class="setting-group">
@@ -160,12 +140,6 @@ import { ref, computed, watch } from 'vue'
 import { usePreferencesStore } from '@/stores/preferences'
 import Modal from '@/components/ui/Modal.vue'
 
-interface ThemeOption {
-  value: 'light' | 'dark' | 'auto'
-  label: string
-  icon: string
-}
-
 // Props
 interface Props {
   open: boolean
@@ -185,19 +159,7 @@ const preferencesStore = usePreferencesStore()
 const fileInput = ref<HTMLInputElement>()
 const lastSaved = ref<Date | null>(null)
 
-// Theme options
-const themeOptions: ThemeOption[] = [
-  { value: 'light', label: 'Light', icon: '☀️' },
-  { value: 'dark', label: 'Dark', icon: '🌙' },
-  { value: 'auto', label: 'Auto', icon: '🌗' }
-]
-
 // Current values
-const currentTheme = computed({
-  get: () => preferencesStore.uiPreferences.theme,
-  set: (value) => preferencesStore.setTheme(value)
-})
-
 const currentLanguage = computed({
   get: () => preferencesStore.uiPreferences.language,
   set: (value) => preferencesStore.setLanguage(value)
@@ -214,11 +176,6 @@ const refreshInterval = computed({
 })
 
 // Methods
-const handleThemeChange = (theme: 'light' | 'dark' | 'auto') => {
-  preferencesStore.setTheme(theme)
-  updateLastSaved()
-}
-
 const handleLanguageChange = () => {
   updateLastSaved()
 }
@@ -315,6 +272,7 @@ watch(
   gap: var(--spacing-xl, 1.25rem);
   max-height: 70vh;
   overflow-y: auto;
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 .settings-section {
@@ -326,10 +284,10 @@ watch(
 .section-title {
   font-size: var(--font-size-lg, 1.125rem);
   font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-text-primary, #111827);
+  color: var(--color-text-primary, #e5e5e5);
   margin: 0;
   padding-bottom: var(--spacing-sm, 0.5rem);
-  border-bottom: 1px solid var(--color-border, #e5e7eb);
+  border-bottom: 1px solid var(--color-border, #404040);
 }
 
 .setting-group {
@@ -341,60 +299,32 @@ watch(
 .setting-label {
   font-size: var(--font-size-sm, 0.875rem);
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-text-secondary, #6b7280);
+  color: var(--color-text-secondary, #b8b8b8);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.theme-options {
-  display: flex;
-  gap: var(--spacing-sm, 0.5rem);
-}
-
-.theme-button {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-xs, 0.25rem);
-  padding: var(--spacing-md, 0.75rem);
-  border: 2px solid var(--color-border, #e5e7eb);
-  border-radius: var(--border-radius-lg, 0.5rem);
-  background-color: var(--color-surface, #ffffff);
-  cursor: pointer;
-  transition: all var(--transition-normal, 300ms ease-in-out);
-  min-width: 80px;
-
-  &:hover {
-    border-color: var(--color-primary-300, #93c5fd);
-    background-color: var(--color-surface-secondary, #f9fafb);
-  }
-
-  &.active {
-    border-color: var(--color-primary-500, #3b82f6);
-    background-color: var(--color-primary-50, #eff6ff);
-  }
-}
-
-.theme-icon {
-  font-size: 1.5rem;
-}
-
-.theme-label {
-  font-size: var(--font-size-xs, 0.75rem);
-  font-weight: var(--font-weight-medium, 500);
-  color: var(--color-text-secondary, #6b7280);
-}
 
 .language-select {
-  padding: var(--spacing-sm, 0.5rem);
-  border: 1px solid var(--color-border, #e5e7eb);
-  border-radius: var(--border-radius-md, 0.375rem);
-  background-color: var(--color-surface, #ffffff);
-  color: var(--color-text-primary, #111827);
+  padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 0.75rem);
+  border: 1px solid var(--color-border, #404040);
+  border-radius: var(--border-radius-sm, 3px);
+  background-color: var(--color-surface-inset, #1f1f1f);
+  color: var(--color-text-primary, #e5e5e5);
   font-size: var(--font-size-sm, 0.875rem);
+  transition: all var(--transition-normal, 200ms);
+  box-shadow: var(--shadow-inset-light);
 
   &:focus {
     outline: none;
-    border-color: var(--color-primary-500, #3b82f6);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--color-ficsit-orange, #f58b00);
+    box-shadow: var(--shadow-glow-orange);
+    background-color: var(--color-surface, #252525);
+  }
+
+  &:hover {
+    border-color: var(--color-border-light, #4a4a4a);
+    background-color: var(--color-surface, #252525);
   }
 }
 
@@ -435,24 +365,25 @@ watch(
     width: 18px;
     left: 3px;
     bottom: 3px;
-    background-color: var(--color-white, #ffffff);
-    transition: var(--transition-normal, 300ms ease-in-out);
-    border-radius: var(--border-radius-full, 9999px);
-    box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+    background-color: var(--color-text-primary, #e5e5e5);
+    transition: var(--transition-normal, 200ms);
+    border-radius: 50%;
   }
 }
 
 .toggle input:checked + .toggle-slider {
-  background-color: var(--color-primary-500, #3b82f6);
+  background-color: var(--color-ficsit-orange, #f58b00);
+  border-color: var(--color-ficsit-orange, #f58b00);
 }
 
 .toggle input:checked + .toggle-slider:before {
   transform: translateX(24px);
+  background-color: var(--color-text-primary, #e5e5e5);
 }
 
 .toggle-description {
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-text-secondary, #6b7280);
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .interval-container {
@@ -463,23 +394,33 @@ watch(
 
 .interval-input {
   width: 80px;
-  padding: var(--spacing-sm, 0.5rem);
-  border: 1px solid var(--color-border, #e5e7eb);
-  border-radius: var(--border-radius-md, 0.375rem);
-  background-color: var(--color-surface, #ffffff);
-  color: var(--color-text-primary, #111827);
+  padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 0.75rem);
+  border: 1px solid var(--color-border, #404040);
+  border-radius: var(--border-radius-sm, 3px);
+  background-color: var(--color-surface-inset, #1f1f1f);
+  color: var(--color-text-primary, #e5e5e5);
   font-size: var(--font-size-sm, 0.875rem);
+  font-family: var(--font-family-mono);
+  transition: all var(--transition-normal, 200ms);
+  box-shadow: var(--shadow-inset-light);
 
   &:focus {
     outline: none;
-    border-color: var(--color-primary-500, #3b82f6);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--color-ficsit-orange, #f58b00);
+    box-shadow: var(--shadow-glow-orange);
+    background-color: var(--color-surface, #252525);
+  }
+
+  &:hover {
+    border-color: var(--color-border-light, #4a4a4a);
+    background-color: var(--color-surface, #252525);
   }
 }
 
 .interval-unit {
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-text-secondary, #6b7280);
+  color: var(--color-text-secondary, #b8b8b8);
+  font-family: var(--font-family-mono);
 }
 
 .button {
@@ -488,29 +429,33 @@ watch(
   gap: var(--spacing-xs, 0.25rem);
   padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 0.75rem);
   border: 1px solid transparent;
-  border-radius: var(--border-radius-md, 0.375rem);
+  border-radius: var(--border-radius-sm, 3px);
   font-size: var(--font-size-sm, 0.875rem);
   font-weight: var(--font-weight-medium, 500);
   cursor: pointer;
-  transition: all var(--transition-normal, 300ms ease-in-out);
+  transition: all var(--transition-normal, 200ms);
 
   &.button-secondary {
-    background-color: var(--color-gray-100, #f3f4f6);
-    color: var(--color-gray-700, #374151);
-    border-color: var(--color-gray-300, #d1d5db);
+    background-color: var(--color-surface, #252525);
+    color: var(--color-text-primary, #e5e5e5);
+    border-color: var(--color-border, #404040);
+    box-shadow: var(--shadow-inset-light);
 
     &:hover {
-      background-color: var(--color-gray-200, #e5e7eb);
+      background-color: var(--color-surface-hover, #2a2a2a);
+      border-color: var(--color-ficsit-orange, #f58b00);
+      color: var(--color-ficsit-orange, #f58b00);
     }
   }
 
   &.button-danger {
-    background-color: var(--color-red-100, #fee2e2);
-    color: var(--color-red-700, #b91c1c);
-    border-color: var(--color-red-300, #fca5a5);
+    background-color: var(--color-error, #ef4444);
+    color: var(--color-text-primary, #e5e5e5);
+    border-color: var(--color-error-dark, #dc2626);
 
     &:hover {
-      background-color: var(--color-red-200, #fecaca);
+      background-color: var(--color-error-dark, #dc2626);
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
     }
   }
 }
@@ -536,38 +481,5 @@ watch(
   gap: var(--spacing-sm, 0.5rem);
 }
 
-// Dark theme adjustments
-:root.dark {
-  .theme-button {
-    background-color: var(--color-surface, #1e293b);
-
-    &:hover {
-      background-color: var(--color-surface-secondary, #334155);
-    }
-
-    &.active {
-      background-color: rgba(59, 130, 246, 0.1);
-    }
-  }
-
-  .language-select {
-    background-color: var(--color-surface, #1e293b);
-    color: var(--color-text-primary, #f1f5f9);
-  }
-
-  .interval-input {
-    background-color: var(--color-surface, #1e293b);
-    color: var(--color-text-primary, #f1f5f9);
-  }
-
-  .button.button-secondary {
-    background-color: var(--color-gray-800, #1f2937);
-    color: var(--color-gray-200, #e5e7eb);
-    border-color: var(--color-gray-600, #4b5563);
-
-    &:hover {
-      background-color: var(--color-gray-700, #374151);
-    }
-  }
-}
+// Industrial theme is always dark - no theme switching needed
 </style>

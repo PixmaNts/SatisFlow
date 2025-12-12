@@ -76,38 +76,6 @@
           </select>
         </div>
 
-        <div class="filter-field">
-          <label for="search-filter">Search</label>
-          <div class="search-input-wrapper">
-            <input
-              id="search-filter"
-              v-model="filters.search"
-              type="text"
-              class="search-input"
-              placeholder="Search logistics..."
-              @input="applyFilters"
-            />
-            <svg
-              class="search-icon"
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="currentColor"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M10.442 10.442a1 1 0 011.415 0l3.85 3.85a1 1 0 01-1.414 1.415l-3.85-3.85a1 1 0 010-1.415z"
-                clip-rule="evenodd"
-              />
-              <path
-                fill-rule="evenodd"
-                d="M6.5 2a4.5 4.5 0 100 9 4.5 4.5 0 000-9zM1 6.5a5.5 5.5 0 1111 0 5.5 5.5 0 01-11 0z"
-                clip-rule="evenodd"
-              />
-            </svg>
-          </div>
-        </div>
       </div>
 
       <div class="filter-actions">
@@ -124,8 +92,8 @@
 
     <!-- Logistics Lines -->
     <div class="logistics-content">
-      <!-- Empty State -->
-      <div v-if="filteredLogistics.length === 0 && !loading" class="empty-state">
+      <!-- Empty State (only when no filters active and no data at all) -->
+      <div v-if="logistics.length === 0 && !hasActiveFilters && !loading" class="empty-state">
         <svg
           class="empty-icon"
           width="48"
@@ -151,10 +119,9 @@
         </svg>
         <h3 class="empty-title">No logistics lines found</h3>
         <p class="empty-description">
-          {{ hasActiveFilters ? 'Try adjusting your filters' : 'Create your first logistics line to get started' }}
+          Create your first logistics line to get started
         </p>
         <button
-          v-if="!hasActiveFilters"
           type="button"
           class="create-button"
           @click="$emit('create-logistics')"
@@ -163,7 +130,7 @@
         </button>
       </div>
 
-      <!-- Grouped Logistics Lines -->
+      <!-- Grouped Logistics Lines (always show, even if empty) -->
       <div v-else class="logistics-groups">
         <div
           v-for="(group, transportType) in groupedLogistics"
@@ -171,13 +138,19 @@
           class="logistics-group"
         >
           <div class="group-header">
-            <div class="group-icon">
-              <component :is="getTransportIcon(transportType)" />
-            </div>
-            <h3 class="group-title">{{ transportType }} ({{ group.length }})</h3>
+            <img
+              :src="getTransportIconPath(transportType)"
+              :alt="transportType"
+              class="group-icon"
+            />
+            <h3 class="group-title">{{ transportType }}</h3>
+            <span v-if="group.length > 0" class="group-badge">{{ group.length }}</span>
           </div>
 
           <div class="group-content">
+            <div v-if="group.length === 0" class="empty-group-message">
+              No logistics lines found for this transport type
+            </div>
             <div
               v-for="logistics in group"
               :key="logistics.id"
@@ -192,14 +165,15 @@
                     width="16"
                     height="16"
                     viewBox="0 0 16 16"
-                    fill="currentColor"
+                    fill="none"
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path
-                      d="M1 8h14M8 1v14"
+                      d="M6 12l4-4-4-4"
                       stroke="currentColor"
                       stroke-width="2"
                       stroke-linecap="round"
+                      stroke-linejoin="round"
                     />
                   </svg>
                   <span class="factory-name">{{ getFactoryName(logistics.to_factory) }}</span>
@@ -236,7 +210,7 @@
                     :key="item.item"
                     class="item-flow"
                   >
-                    <span class="item-name">{{ formatItemName(item.item) }}</span>
+                    <ItemDisplay :item="item.item" size="sm" />
                     <span class="item-quantity">{{ item.quantity_per_min }}/min</span>
                   </div>
                 </div>
@@ -244,7 +218,7 @@
                 <div class="logistics-meta">
                   <div class="meta-item">
                     <span class="meta-label">ID:</span>
-                    <span class="meta-value">{{ logistics.transport_id }}</span>
+                    <span class="meta-value id">{{ logistics.transport_id }}</span>
                   </div>
                   <div class="meta-item">
                     <span class="meta-label">Total:</span>
@@ -271,6 +245,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useFactoryStore } from '@/stores/factory'
 import { useLogisticsStore } from '@/stores/logistics'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
+import ItemDisplay from '@/components/ui/ItemDisplay.vue'
+import { useItemIcon } from '@/composables/useItemIcon'
 import type { LogisticsResponse, Item } from '@/api/types'
 
 interface Props {
@@ -298,8 +274,7 @@ const filters = ref({
   transportType: '',
   fromFactory: '',
   toFactory: '',
-  item: '',
-  search: ''
+  item: ''
 })
 
 // Computed properties
@@ -320,8 +295,7 @@ const hasActiveFilters = computed(() => {
   return filters.value.transportType !== '' ||
          filters.value.fromFactory !== '' ||
          filters.value.toFactory !== '' ||
-         filters.value.item !== '' ||
-         filters.value.search !== ''
+         filters.value.item !== ''
 })
 
 const filteredLogistics = computed(() => {
@@ -349,22 +323,6 @@ const filteredLogistics = computed(() => {
     )
   }
 
-  // Search filter
-  if (filters.value.search) {
-    const search = filters.value.search.toLowerCase()
-    filtered = filtered.filter(line => {
-      return (
-        line.transport_id.toLowerCase().includes(search) ||
-        line.transport_name?.toLowerCase().includes(search) ||
-        getFactoryName(line.from_factory).toLowerCase().includes(search) ||
-        getFactoryName(line.to_factory).toLowerCase().includes(search) ||
-        line.items.some(itemFlow =>
-          itemFlow.item.toLowerCase().includes(search)
-        )
-      )
-    })
-  }
-
   return filtered
 })
 
@@ -384,28 +342,27 @@ const groupedLogistics = computed(() => {
 })
 
 // Methods
-const formatItemName = (item: Item): string => {
-  return item.replace(/([A-Z])/g, ' $1').trim()
-}
+const { formatItemName } = useItemIcon()
 
 const getFactoryName = (factoryId: string): string => {
   const factory = factories.value.find(f => f.id === factoryId)
   return factory ? factory.name : `Factory ${factoryId}`
 }
 
-const getTransportIcon = (transportType: string) => {
-  // Return appropriate icon component based on transport type
+const getTransportIconPath = (transportType: string): string => {
+  // Return appropriate icon path based on transport type
   switch (transportType) {
     case 'Bus':
-      return 'BusIcon'
+      // Using Conveyor Belt Mk.5 as a placeholder for Bus/Conveyor transport
+      return '/icons/Conveyor_Belt_Mk.5.png'
     case 'Train':
-      return 'TrainIcon'
+      return '/icons/Electric_Locomotive.webp'
     case 'Truck':
-      return 'TruckIcon'
+      return '/icons/Truck.webp'
     case 'Drone':
-      return 'DroneIcon'
+      return '/icons/Drone.webp'
     default:
-      return 'DefaultIcon'
+      return '/icons/Conveyor_Belt_Mk.5.png'
   }
 }
 
@@ -418,8 +375,7 @@ const clearFilters = () => {
     transportType: '',
     fromFactory: '',
     toFactory: '',
-    item: '',
-    search: ''
+    item: ''
   }
 }
 
@@ -461,8 +417,8 @@ watch(() => props.refreshTrigger, () => {
 }
 
 .filters-section {
-  background-color: var(--color-white, #ffffff);
-  border: 1px solid var(--color-gray-200, #e5e7eb);
+  background-color: var(--color-surface, #252525);
+  border: 1px solid var(--color-border, #404040);
   border-radius: var(--border-radius-md, 0.375rem);
   padding: var(--spacing-md, 0.75rem);
 }
@@ -482,52 +438,25 @@ watch(() => props.refreshTrigger, () => {
   label {
     font-size: var(--font-size-sm, 0.875rem);
     font-weight: var(--font-weight-medium, 500);
-    color: var(--color-gray-700, #374151);
+    color: var(--color-text-secondary, #b8b8b8);
   }
 }
 
 .filter-select {
   padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 0.75rem);
-  border: 1px solid var(--color-gray-300, #d1d5db);
+  border: 1px solid var(--color-border, #404040);
   border-radius: var(--border-radius-sm, 0.25rem);
   font-size: var(--font-size-sm, 0.875rem);
-  background-color: var(--color-white, #ffffff);
-  transition: border-color 0.2s ease-in-out;
+  background-color: var(--color-surface-inset, #1f1f1f);
+  color: var(--color-text-primary, #e5e5e5);
+  transition: all var(--transition-normal, 200ms);
 
   &:focus {
     outline: none;
-    border-color: var(--color-primary-500, #3b82f6);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--color-ficsit-orange, #f58b00);
+    box-shadow: var(--shadow-glow-orange);
+    background-color: var(--color-surface, #252525);
   }
-}
-
-.search-input-wrapper {
-  position: relative;
-}
-
-.search-input {
-  width: 100%;
-  padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 0.75rem) var(--spacing-sm, 0.5rem) 2.5rem;
-  border: 1px solid var(--color-gray-300, #d1d5db);
-  border-radius: var(--border-radius-sm, 0.25rem);
-  font-size: var(--font-size-sm, 0.875rem);
-  background-color: var(--color-white, #ffffff);
-  transition: border-color 0.2s ease-in-out;
-
-  &:focus {
-    outline: none;
-    border-color: var(--color-primary-500, #3b82f6);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-}
-
-.search-icon {
-  position: absolute;
-  left: var(--spacing-sm, 0.5rem);
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-gray-400, #9ca3af);
-  pointer-events: none;
 }
 
 .filter-actions {
@@ -537,16 +466,17 @@ watch(() => props.refreshTrigger, () => {
 
 .clear-filters-button {
   padding: var(--spacing-xs, 0.25rem) var(--spacing-sm, 0.5rem);
-  border: 1px solid var(--color-gray-300, #d1d5db);
-  background-color: var(--color-white, #ffffff);
-  color: var(--color-gray-700, #374151);
+  border: 1px solid var(--color-border, #404040);
+  background-color: var(--color-surface-inset, #1f1f1f);
+  color: var(--color-text-primary, #e5e5e5);
   border-radius: var(--border-radius-sm, 0.25rem);
   font-size: var(--font-size-sm, 0.875rem);
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all var(--transition-normal, 200ms);
 
   &:hover:not(:disabled) {
-    background-color: var(--color-gray-50, #f9fafb);
+    background-color: var(--color-surface, #252525);
+    border-color: var(--color-border-light, #4a4a4a);
   }
 
   &:disabled {
@@ -566,7 +496,7 @@ watch(() => props.refreshTrigger, () => {
   justify-content: center;
   padding: var(--spacing-xl, 1.25rem);
   text-align: center;
-  color: var(--color-gray-500, #6b7280);
+  color: var(--color-text-muted, #8a8a8a);
 }
 
 .empty-icon {
@@ -579,13 +509,14 @@ watch(() => props.refreshTrigger, () => {
 .empty-title {
   font-size: var(--font-size-lg, 1.125rem);
   font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
   margin: 0 0 var(--spacing-sm, 0.5rem) 0;
 }
 
 .empty-description {
   font-size: var(--font-size-base, 1rem);
   margin: 0 0 var(--spacing-lg, 1rem) 0;
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .create-button {
@@ -611,8 +542,8 @@ watch(() => props.refreshTrigger, () => {
 }
 
 .logistics-group {
-  background-color: var(--color-white, #ffffff);
-  border: 1px solid var(--color-gray-200, #e5e7eb);
+  background-color: var(--color-surface, #252525);
+  border: 1px solid var(--color-border, #404040);
   border-radius: var(--border-radius-md, 0.375rem);
   overflow: hidden;
 }
@@ -622,37 +553,65 @@ watch(() => props.refreshTrigger, () => {
   align-items: center;
   gap: var(--spacing-sm, 0.5rem);
   padding: var(--spacing-md, 0.75rem);
-  background-color: var(--color-gray-50, #f9fafb);
-  border-bottom: 1px solid var(--color-gray-200, #e5e7eb);
+  background-color: var(--color-surface-inset, #1f1f1f);
+  border-bottom: 1px solid var(--color-border, #404040);
 }
 
 .group-icon {
   width: 1.5rem;
   height: 1.5rem;
-  color: var(--color-gray-600, #4b5563);
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .group-title {
   font-size: var(--font-size-base, 1rem);
   font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
   margin: 0;
+}
+
+.group-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.375rem;
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-semibold, 600);
+  line-height: 1;
+  color: var(--color-text-primary, #e5e5e5);
+  background-color: var(--color-ficsit-orange, #f58b00);
+  border-radius: 0.625rem;
+  border: 1px solid transparent;
+  font-family: var(--font-family-mono, monospace);
+  margin-left: auto;
 }
 
 .group-content {
   padding: var(--spacing-sm, 0.5rem);
 }
 
+.empty-group-message {
+  padding: var(--spacing-md, 0.75rem);
+  text-align: center;
+  color: var(--color-text-muted, #8a8a8a);
+  font-size: var(--font-size-sm, 0.875rem);
+  font-style: italic;
+}
+
 .logistics-item {
   padding: var(--spacing-md, 0.75rem);
   border-radius: var(--border-radius-sm, 0.25rem);
-  border: 1px solid var(--color-gray-100, #f3f4f6);
+  border: 1px solid var(--color-border, #404040);
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all var(--transition-normal, 200ms);
+  background-color: var(--color-surface-inset, #1f1f1f);
 
   &:hover {
-    background-color: var(--color-gray-50, #f9fafb);
-    border-color: var(--color-gray-200, #e5e7eb);
+    background-color: var(--color-surface, #252525);
+    border-color: var(--color-border-light, #4a4a4a);
   }
 
   &:not(:last-child) {
@@ -676,11 +635,11 @@ watch(() => props.refreshTrigger, () => {
 .factory-name {
   font-size: var(--font-size-sm, 0.875rem);
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 .route-arrow {
-  color: var(--color-gray-400, #9ca3af);
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .logistics-actions {
@@ -695,26 +654,28 @@ watch(() => props.refreshTrigger, () => {
   width: 1.75rem;
   height: 1.75rem;
   padding: 0;
-  border: none;
+  border: 1px solid transparent;
   border-radius: var(--border-radius-sm, 0.25rem);
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all var(--transition-normal, 200ms);
 
   &.edit-button {
-    background-color: var(--color-blue-100, #dbeafe);
-    color: var(--color-blue-600, #2563eb);
+    background-color: rgba(74, 144, 164, 0.2);
+    color: var(--color-info-blue, #4a90a4);
+    border-color: var(--color-info-blue, #4a90a4);
 
     &:hover {
-      background-color: var(--color-blue-200, #bfdbfe);
+      background-color: rgba(74, 144, 164, 0.3);
     }
   }
 
   &.delete-button {
-    background-color: var(--color-red-100, #fee2e2);
-    color: var(--color-red-600, #dc2626);
+    background-color: rgba(239, 68, 68, 0.2);
+    color: var(--color-error, #ef4444);
+    border-color: var(--color-error, #ef4444);
 
     &:hover {
-      background-color: var(--color-red-200, #fecaca);
+      background-color: rgba(239, 68, 68, 0.3);
     }
   }
 }
@@ -736,19 +697,20 @@ watch(() => props.refreshTrigger, () => {
   align-items: center;
   gap: var(--spacing-xs, 0.25rem);
   padding: var(--spacing-xs, 0.25rem) var(--spacing-sm, 0.5rem);
-  background-color: var(--color-gray-100, #f3f4f6);
+  background-color: var(--color-surface, #252525);
+  border: 1px solid var(--color-border, #404040);
   border-radius: var(--border-radius-sm, 0.25rem);
 }
 
 .item-name {
   font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-gray-700, #374151);
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .item-quantity {
   font-size: var(--font-size-xs, 0.75rem);
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 .logistics-meta {
@@ -764,13 +726,13 @@ watch(() => props.refreshTrigger, () => {
 
 .meta-label {
   font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-gray-500, #6b7280);
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .meta-value {
   font-size: var(--font-size-xs, 0.75rem);
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-700, #374151);
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 .loading-state {
@@ -780,7 +742,7 @@ watch(() => props.refreshTrigger, () => {
   justify-content: center;
   padding: var(--spacing-xl, 1.25rem);
   gap: var(--spacing-md, 0.75rem);
-  color: var(--color-gray-500, #6b7280);
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 // Responsive design

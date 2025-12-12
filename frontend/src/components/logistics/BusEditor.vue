@@ -183,10 +183,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import type { BusConfig, ConveyorConfig, PipelineConfig } from '@/api/logistics-types'
 import type { Item } from '@/api/types'
 import { CONVEYOR_SPEEDS, PIPELINE_CAPACITIES } from '@/api/logistics-types'
+import { useGameDataStore } from '@/stores/gameData'
+import { useItemIcon } from '@/composables/useItemIcon'
 
 interface Props {
   modelValue: BusConfig
@@ -200,22 +202,19 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const busConfig = ref<BusConfig>({ ...props.modelValue })
+const gameDataStore = useGameDataStore()
 
-// Sample items - in a real app, these would come from the API
-const solidItems: Item[] = [
-  'IronOre', 'IronIngot', 'IronPlate', 'IronRod', 'Screw',
-  'CopperOre', 'CopperIngot', 'CopperSheet', 'Wire', 'Cable',
-  'Coal', 'Biomass', 'Concrete', 'Limestone'
-]
+// Get all items from game data - backend will validate solid vs fluid
+const solidItems = computed(() => {
+  return gameDataStore.itemNames
+})
 
-const fluidItems: Item[] = [
-  'Water', 'CrudeOil', 'HeavyOilResidue', 'Fuel', 'Turbofuel',
-  'LiquidBiofuel', 'NitrogenGas', 'PackagedWater', 'PackagedOil'
-]
+// Get all items from game data - backend will validate solid vs fluid
+const fluidItems = computed(() => {
+  return gameDataStore.itemNames
+})
 
-const formatItemName = (item: Item): string => {
-  return item.replace(/([A-Z])/g, ' $1').trim()
-}
+const { formatItemName } = useItemIcon()
 
 const addConveyor = () => {
   const newConveyor: ConveyorConfig = {
@@ -257,6 +256,13 @@ const updateConfig = () => {
 watch(() => props.modelValue, (newValue) => {
   busConfig.value = { ...newValue }
 }, { deep: true })
+
+// Fetch game data on mount
+onMounted(async () => {
+  if (gameDataStore.itemNames.length === 0) {
+    await gameDataStore.fetchItems()
+  }
+})
 </script>
 
 <style scoped lang="scss">

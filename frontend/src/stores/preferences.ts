@@ -20,7 +20,6 @@ interface UserPreferences {
     searchText: string
   }
   uiPreferences: {
-    theme: 'light' | 'dark' | 'auto'
     language: string
     autoRefresh: boolean
     refreshInterval: number // in seconds
@@ -46,7 +45,6 @@ const DEFAULT_PREFERENCES: UserPreferences = {
     searchText: ''
   },
   uiPreferences: {
-    theme: 'auto',
     language: 'en',
     autoRefresh: false,
     refreshInterval: 30
@@ -202,14 +200,6 @@ export const usePreferencesStore = defineStore('preferences', () => {
   }
 
   /**
-   * Set theme preference
-   * @param theme - The theme to set
-   */
-  const setTheme = (theme: UserPreferences['uiPreferences']['theme']): void => {
-    preferences.value.uiPreferences.theme = theme
-  }
-
-  /**
    * Set language preference
    * @param language - The language code to set
    */
@@ -329,7 +319,6 @@ export const usePreferencesStore = defineStore('preferences', () => {
     updateLogisticsFilters,
     resetLogisticsFilters,
     updateUIPreferences,
-    setTheme,
     setLanguage,
     setAutoRefresh,
     setRefreshInterval,

@@ -158,6 +158,7 @@ import { factories } from '@/api/endpoints'
 import type { PowerGeneratorResponse, GeneratorType, Item, GeneratorGroup, CreatePowerGeneratorRequest, PowerGeneratorPreviewResponse } from '@/api/types'
 import Button from '@/components/ui/Button.vue'
 import Modal from '@/components/ui/Modal.vue'
+import { useItemIcon } from '@/composables/useItemIcon'
 
 interface Props {
   show: boolean
@@ -302,9 +303,7 @@ const fetchPreview = async () => {
 }
 
 // Methods
-const formatItemName = (item: string): string => {
-  return item.replace(/([A-Z])/g, ' $1').trim()
-}
+const { formatItemName } = useItemIcon()
 
 const formatPower = (power: number): string => {
   if (power < 1) {
@@ -461,7 +460,7 @@ onMounted(async () => {
   display: block;
   font-size: var(--font-size-sm, 0.875rem);
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-700, #374151);
+  color: var(--color-text-secondary, #b8b8b8);
   margin-bottom: var(--spacing-xs, 0.25rem);
 }
 
@@ -470,35 +469,38 @@ onMounted(async () => {
 .form-textarea {
   width: 100%;
   padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 0.75rem);
-  border: 1px solid var(--color-gray-300, #d1d5db);
+  border: 1px solid var(--color-border, #404040);
   border-radius: var(--border-radius-md, 0.375rem);
   font-size: var(--font-size-base, 1rem);
+  background-color: var(--color-surface-inset, #1f1f1f);
+  color: var(--color-text-primary, #e5e5e5);
   transition: border-color 0.2s ease-in-out;
 
   &:focus {
     outline: none;
-    border-color: var(--color-primary-500, #3b82f6);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--color-ficsit-orange, #f58b00);
+    box-shadow: var(--shadow-glow-orange);
+    background-color: var(--color-surface, #252525);
   }
 
   &::placeholder {
-    color: var(--color-gray-400, #9ca3af);
+    color: var(--color-text-muted, #8a8a8a);
   }
 }
 
 .generator-groups {
-  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border: 1px solid var(--color-border, #404040);
   border-radius: var(--border-radius-md, 0.375rem);
   padding: var(--spacing-md, 0.75rem);
-  background-color: var(--color-gray-50, #f9fafb);
+  background-color: var(--color-surface-inset, #1f1f1f);
 }
 
 .generator-group {
   margin-bottom: var(--spacing-md, 0.75rem);
   padding: var(--spacing-md, 0.75rem);
-  background-color: var(--color-white, #ffffff);
+  background-color: var(--color-surface, #252525);
   border-radius: var(--border-radius-md, 0.375rem);
-  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border: 1px solid var(--color-border, #404040);
 
   &:last-child {
     margin-bottom: 0;
@@ -515,7 +517,7 @@ onMounted(async () => {
     margin: 0;
     font-size: var(--font-size-sm, 0.875rem);
     font-weight: var(--font-weight-medium, 500);
-    color: var(--color-gray-900, #111827);
+    color: var(--color-text-primary, #e5e5e5);
   }
 }
 
@@ -538,15 +540,15 @@ onMounted(async () => {
 .field-label {
   font-size: var(--font-size-xs, 0.75rem);
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .power-preview {
   margin-top: var(--spacing-md, 0.75rem);
   padding: var(--spacing-md, 0.75rem);
-  background-color: var(--color-green-50, #f0fdf4);
+  background-color: rgba(34, 197, 94, 0.1);
   border-radius: var(--border-radius-md, 0.375rem);
-  border: 1px solid var(--color-green-200, #dcfce7);
+  border: 1px solid var(--color-success, #22c55e);
 }
 
 .preview-item {
@@ -562,13 +564,13 @@ onMounted(async () => {
 
 .preview-label {
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .preview-value {
   font-size: var(--font-size-sm, 0.875rem);
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 .form-actions {
@@ -577,7 +579,7 @@ onMounted(async () => {
   justify-content: flex-end;
   margin-top: var(--spacing-lg, 1rem);
   padding-top: var(--spacing-lg, 1rem);
-  border-top: 1px solid var(--color-gray-200, #e5e7eb);
+  border-top: 1px solid var(--color-border, #404040);
 }
 
 // Responsive design

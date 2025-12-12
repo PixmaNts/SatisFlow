@@ -15,7 +15,13 @@ export { default as ProgressIndicator } from './ProgressIndicator.vue'
 export { default as SuccessConfirmation } from './SuccessConfirmation.vue'
 export { default as ConfirmDialog } from './ConfirmDialog.vue'
 export { default as ToastContainer } from './ToastContainer.vue'
+export { default as KeyboardShortcutsModal } from './KeyboardShortcutsModal.vue'
+export { default as FloatingActionButton } from './FloatingActionButton.vue'
+export { default as CommandPalette } from './CommandPalette.vue'
+export { default as ItemDisplay } from './ItemDisplay.vue'
 
 // Type exports
+export type { FabAction } from './FloatingActionButton.vue'
+export type { Command } from './CommandPalette.vue'
 export type { Tab } from './Tabs.vue'
 export type { Column } from './DataTable.vue'

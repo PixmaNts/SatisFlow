@@ -6,22 +6,27 @@
       role="tablist"
       :aria-label="ariaLabel"
     >
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        type="button"
-        :class="tabClasses(tab)"
-        :id="`tab-${tab.id}`"
-        :disabled="tab.disabled"
-        :aria-selected="activeTab === tab.id"
-        :aria-controls="`panel-${tab.id}`"
-        :tabindex="activeTab === tab.id ? 0 : -1"
-        role="tab"
-        @click="handleTabClick(tab)"
-        @keydown="handleKeyNavigation($event, tab)"
-      >
-        {{ tab.label }}
-      </button>
+      <div class="tab-buttons">
+        <button
+          v-for="tab in tabs"
+          :key="tab.id"
+          type="button"
+          :class="tabClasses(tab)"
+          :id="`tab-${tab.id}`"
+          :disabled="tab.disabled"
+          :aria-selected="activeTab === tab.id"
+          :aria-controls="`panel-${tab.id}`"
+          :tabindex="activeTab === tab.id ? 0 : -1"
+          role="tab"
+          @click="handleTabClick(tab)"
+          @keydown="handleKeyNavigation($event, tab)"
+        >
+          {{ tab.label }}
+        </button>
+      </div>
+      <div class="tab-actions">
+        <slot name="actions" />
+      </div>
     </div>
 
     <!-- Tab panels -->
@@ -161,7 +166,10 @@ provide('activeTab', activeTab)
 
 .tab-nav {
   display: flex;
-  border-bottom: 1px solid var(--color-gray-200, #e5e7eb);
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border, #404040);
+  background-color: var(--color-surface-inset, #1f1f1f);
   overflow-x: auto;
   scrollbar-width: none; // Firefox
   -ms-overflow-style: none; // IE/Edge
@@ -169,6 +177,26 @@ provide('activeTab', activeTab)
   &::-webkit-scrollbar {
     display: none; // Chrome/Safari/Opera
   }
+}
+
+.tab-buttons {
+  display: flex;
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none; // Firefox
+  -ms-overflow-style: none; // IE/Edge
+
+  &::-webkit-scrollbar {
+    display: none; // Chrome/Safari/Opera
+  }
+}
+
+.tab-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 0.5rem);
+  padding: var(--spacing-md, 0.75rem) var(--spacing-lg, 1rem);
+  flex-shrink: 0;
 }
 
 .tab-button {
@@ -180,31 +208,32 @@ provide('activeTab', activeTab)
   font-family: var(--font-family-sans, system-ui, sans-serif);
   font-size: var(--font-size-base, 1rem);
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-secondary, #b8b8b8);
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all var(--transition-normal, 200ms);
   white-space: nowrap;
   user-select: none;
 
   &:hover:not(.tab-disabled) {
-    color: var(--color-gray-900, #111827);
-    background-color: var(--color-gray-50, #f9fafb);
+    color: var(--color-text-primary, #e5e5e5);
+    background-color: var(--color-surface, #252525);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--color-primary-500, #3b82f6);
+    outline: 2px solid var(--color-ficsit-orange, #f58b00);
     outline-offset: -2px;
   }
 
   &.tab-active {
-    color: var(--color-primary-600, #2563eb);
-    border-bottom-color: var(--color-primary-600, #2563eb);
+    color: var(--color-ficsit-orange, #f58b00);
+    border-bottom-color: var(--color-ficsit-orange, #f58b00);
+    background-color: var(--color-surface, #252525);
   }
 
   &.tab-disabled {
-    color: var(--color-gray-400, #9ca3af);
+    color: var(--color-text-disabled, #5a5a5a);
     cursor: not-allowed;
-    opacity: 0.6;
+    opacity: 0.5;
   }
 }
 

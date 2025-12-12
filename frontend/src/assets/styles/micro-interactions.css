@@ -40,8 +40,8 @@
 }
 
 .btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow-orange);
 }
 
 .btn:active {
@@ -55,8 +55,9 @@
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-ficsit-orange);
 }
 
 /* Link hover effects */
@@ -89,8 +90,8 @@
 
 .input:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-  border-color: #3b82f6;
+  box-shadow: var(--shadow-glow-orange);
+  border-color: var(--color-ficsit-orange);
 }
 
 /* Icon hover effects */
@@ -100,7 +101,7 @@
 
 .icon-hover:hover {
   transform: scale(1.1);
-  color: var(--color-primary);
+  color: var(--color-ficsit-orange);
 }
 
 /* Pulse effect on hover */
@@ -119,10 +120,11 @@
   animation: shake 0.5s;
 }
 
-/* Glow effect on hover */
+/* Glow effect on hover - FICSIT orange */
 .hover-glow:hover {
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+  box-shadow: var(--shadow-glow-orange);
   transition: box-shadow var(--interaction-normal) ease;
+  border-color: var(--color-ficsit-orange);
 }
 
 /* Lift effect on hover */
@@ -327,7 +329,7 @@ input:checked + .toggle-slider:before {
   }
 
   .hover-glow:hover {
-    box-shadow: 0 0 15px rgba(147, 197, 253, 0.5);
+    box-shadow: var(--shadow-glow-orange);
   }
 
   .checkmark {

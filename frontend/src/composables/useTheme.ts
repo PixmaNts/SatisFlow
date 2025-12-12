@@ -1,152 +1,59 @@
-import { computed, watch, onMounted } from 'vue'
-import { usePreferencesStore } from '@/stores/preferences'
-
 /**
- * Theme composable for managing application theme
+ * Theme composable - Industrial dark theme only
  *
- * Provides reactive theme management with automatic CSS class application
- * and system preference detection for 'auto' theme mode.
+ * Always applies the industrial dark theme. No theme switching.
  */
 export function useTheme() {
-  const preferencesStore = usePreferencesStore()
-
-  // Computed property for current theme
-  const currentTheme = computed(() => preferencesStore.uiPreferences.theme)
-
-  // Computed property for effective theme (resolves 'auto' to system preference)
-  const effectiveTheme = computed(() => {
-    if (currentTheme.value === 'auto') {
-      return getSystemTheme()
-    }
-    return currentTheme.value
-  })
-
   /**
-   * Get system theme preference
+   * Apply industrial dark theme to document root element
    */
-  const getSystemTheme = (): 'light' | 'dark' => {
-    if (typeof window !== 'undefined' && window.matchMedia) {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-    }
-    return 'light'
-  }
-
-  /**
-   * Apply theme to document root element
-   */
-  const applyTheme = (theme: 'light' | 'dark') => {
+  const applyTheme = () => {
     if (typeof document !== 'undefined') {
       const root = document.documentElement
 
-      // Remove existing theme classes
+      // Remove any existing theme classes
       root.classList.remove('light-theme', 'dark-theme')
 
-      // Add new theme class
-      root.classList.add(`${theme}-theme`)
-
-      // Update data-theme attribute for CSS selectors
-      root.setAttribute('data-theme', theme)
+      // Always apply dark theme (industrial)
+      root.classList.add('dark-theme')
+      root.setAttribute('data-theme', 'dark')
     }
   }
 
   /**
-   * Set theme and update preferences
-   */
-  const setTheme = (theme: 'light' | 'dark' | 'auto') => {
-    preferencesStore.setTheme(theme)
-  }
-
-  /**
-   * Toggle between light and dark themes
-   */
-  const toggleTheme = () => {
-    const newTheme = currentTheme.value === 'light' ? 'dark' : 'light'
-    setTheme(newTheme)
-  }
-
-  /**
-   * Initialize theme system
+   * Initialize theme system - always dark
    */
   const initializeTheme = () => {
-    // Apply initial theme
-    applyTheme(effectiveTheme.value)
-
-    // Set up system theme listener for 'auto' mode
-    if (typeof window !== 'undefined' && window.matchMedia) {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-
-      const handleSystemThemeChange = () => {
-        if (currentTheme.value === 'auto') {
-          applyTheme(effectiveTheme.value)
-        }
-      }
-
-      // Add event listener (with fallback for older browsers)
-      if (mediaQuery.addEventListener) {
-        mediaQuery.addEventListener('change', handleSystemThemeChange)
-      } else if (mediaQuery.addListener) {
-        // Fallback for older browsers
-        mediaQuery.addListener(handleSystemThemeChange)
-      }
-
-      // Return cleanup function
-      return () => {
-        if (mediaQuery.removeEventListener) {
-          mediaQuery.removeEventListener('change', handleSystemThemeChange)
-        } else if (mediaQuery.removeListener) {
-          mediaQuery.removeListener(handleSystemThemeChange)
-        }
-      }
-    }
-
-    return () => {} // No-op cleanup if no media query support
+    applyTheme()
   }
 
-  // Watch for theme changes
-  watch(
-    effectiveTheme,
-    (newTheme) => {
-      applyTheme(newTheme)
-    },
-    { immediate: true }
-  )
+  // Apply theme immediately (synchronously)
+  applyTheme()
 
-  // Auto-initialize on mount
-  onMounted(() => {
-    initializeTheme()
-  })
-
-  // Return theme management API
+  // Return simplified API (for backwards compatibility if needed)
   return {
-    currentTheme,
-    effectiveTheme,
-    setTheme,
-    toggleTheme,
+    currentTheme: 'dark' as const,
+    effectiveTheme: 'dark' as const,
     applyTheme,
-    getSystemTheme
+    initializeTheme
   }
 }
 
 /**
- * Simple theme detection utility
+ * Always returns dark theme (industrial)
  */
-export function detectSystemTheme(): 'light' | 'dark' {
-  if (typeof window !== 'undefined' && window.matchMedia) {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-  }
-  return 'light'
+export function detectSystemTheme(): 'dark' {
+  return 'dark'
 }
 
 /**
- * Theme-aware CSS custom property helper
+ * Theme-aware CSS custom property helper - always returns dark color
  */
 export function useThemeAwareColor(
-  lightColor: string,
+  _lightColor: string,
   darkColor: string
 ) {
-  const { effectiveTheme } = useTheme()
-
-  return computed(() => {
-    return effectiveTheme.value === 'dark' ? darkColor : lightColor
-  })
+  // Always return dark color for industrial theme
+  return darkColor
 }
+
