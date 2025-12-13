@@ -179,6 +179,8 @@ pub struct RawInput {
     pub item: Item,
     pub purity: Option<Purity>, // Some for ores/oil/gas, None for water
     pub quantity_per_min: f32,
+    pub overclock_percent: f32, // 0.0 to 250.0
+    pub count: u32,             // Number of extractors in group (>= 1)
     // Resource Well system fields
     pub pressurizer: Option<ResourceWellPressurizer>,
     pub extractors: Vec<ResourceWellExtractor>,
@@ -191,6 +193,8 @@ impl RawInput {
         extractor_type: ExtractorType,
         item: Item,
         purity: Option<Purity>,
+        overclock_percent: f32,
+        count: u32,
     ) -> Result<Self, RawInputError> {
         // Validate resource compatibility
         if !extractor_type.is_compatible_with(&item) {
@@ -213,7 +217,20 @@ impl RawInput {
             });
         }
 
-        let quantity_per_min = Self::calculate_extraction_rate(extractor_type, purity);
+        // Validate overclock range
+        if !(0.0..=250.0).contains(&overclock_percent) {
+            return Err(RawInputError::InvalidClockSpeed {
+                clock_speed: overclock_percent,
+            });
+        }
+
+        // Validate count
+        if count == 0 {
+            return Err(RawInputError::InvalidCount { count });
+        }
+
+        let quantity_per_min =
+            Self::calculate_extraction_rate(extractor_type, purity, overclock_percent, count);
 
         Ok(Self {
             id,
@@ -221,12 +238,15 @@ impl RawInput {
             item,
             purity,
             quantity_per_min,
+            overclock_percent,
+            count,
             pressurizer: None,
             extractors: Vec::new(),
         })
     }
 
     /// Create a new Resource Well system with pressurizer and extractors
+    /// OC is applied to the sum of all node extraction rates
     pub fn new_resource_well(
         id: RawInputId,
         item: Item,
@@ -246,11 +266,14 @@ impl RawInput {
             return Err(RawInputError::NoExtractors);
         }
 
-        // Calculate total extraction rate from all extractors
-        let quantity_per_min = extractors
+        // Calculate sum of all node extraction rates (at 100% pressurizer clock)
+        let sum_of_nodes = extractors
             .iter()
-            .map(|e| e.extraction_rate(pressurizer.clock_speed))
-            .sum();
+            .map(|e| e.extraction_rate(100.0))
+            .sum::<f32>();
+
+        // Apply pressurizer OC to the sum: sum × (pressurizer_oc/100)
+        let quantity_per_min = sum_of_nodes * (pressurizer.clock_speed / 100.0);
 
         Ok(Self {
             id,
@@ -258,43 +281,63 @@ impl RawInput {
             item,
             purity: None, // Resource Well system doesn't use overall purity
             quantity_per_min,
+            overclock_percent: pressurizer.clock_speed, // Pressurizer OC is the OC for the system
+            count: 1, // Resource Well systems don't use count (each node is separate)
             pressurizer: Some(pressurizer),
             extractors,
         })
     }
 
-    /// Calculate extraction rate based on extractor type and purity
-    pub fn calculate_extraction_rate(extractor_type: ExtractorType, purity: Option<Purity>) -> f32 {
+    /// Calculate extraction rate based on extractor type, purity, OC, and count
+    /// Formula: base_rate × purity_multiplier × (oc/100) × count
+    pub fn calculate_extraction_rate(
+        extractor_type: ExtractorType,
+        purity: Option<Purity>,
+        overclock_percent: f32,
+        count: u32,
+    ) -> f32 {
         let base_rate = extractor_type.base_rate();
+        let purity_multiplier = purity.map(|p| p.multiplier()).unwrap_or(1.0);
 
-        if let Some(purity) = purity {
-            base_rate * purity.multiplier()
-        } else {
-            // Water extractor has no purity
-            base_rate
+        // At 0% OC, output is 0 (extractor is off)
+        if overclock_percent == 0.0 {
+            return 0.0;
         }
+
+        base_rate * purity_multiplier * (overclock_percent / 100.0) * count as f32
     }
 
     /// Update extraction rates for Resource Well systems when clock speed changes
     pub fn update_extraction_rates(&mut self) {
         if let Some(pressurizer) = &self.pressurizer {
-            self.quantity_per_min = self
+            // Calculate sum of all node extraction rates (at 100% pressurizer clock)
+            let sum_of_nodes = self
                 .extractors
                 .iter()
-                .map(|e| e.extraction_rate(pressurizer.clock_speed))
-                .sum();
+                .map(|e| e.extraction_rate(100.0))
+                .sum::<f32>();
+
+            // Apply pressurizer OC to the sum: sum × (pressurizer_oc/100)
+            self.quantity_per_min = sum_of_nodes * (pressurizer.clock_speed / 100.0);
+            self.overclock_percent = pressurizer.clock_speed;
         }
     }
 
     /// Get the power consumption of this raw input
     /// Resource Well systems consume power only from the pressurizer
-    /// Regular extractors consume their base power consumption
+    /// Regular extractors: base_power × (oc/100)^1.321928 × count
     pub fn power_consumption(&self) -> f32 {
         if let Some(pressurizer) = &self.pressurizer {
             pressurizer.power_consumption()
         } else {
-            // Regular extractors consume their base power consumption
-            self.extractor_type.base_power_consumption()
+            // Regular extractors: base_power × (oc/100)^1.321928 × count
+            let base_power = self.extractor_type.base_power_consumption();
+            let oc_multiplier = if self.overclock_percent == 0.0 {
+                0.0
+            } else {
+                (self.overclock_percent / 100.0).powf(1.321928)
+            };
+            base_power * oc_multiplier * self.count as f32
         }
     }
 
@@ -401,6 +444,9 @@ pub enum RawInputError {
     InvalidClockSpeed {
         clock_speed: f32,
     },
+    InvalidCount {
+        count: u32,
+    },
     NoExtractors,
     ExtractorsWithoutPressurizer,
     PressurizerOnNonResourceWell,
@@ -431,6 +477,9 @@ impl std::fmt::Display for RawInputError {
                     "Clock speed {} is invalid. Must be between 0.000 and 250.000",
                     clock_speed
                 )
+            }
+            RawInputError::InvalidCount { count } => {
+                write!(f, "Count {} is invalid. Must be at least 1", count)
             }
             RawInputError::NoExtractors => {
                 write!(f, "Resource Well system must have at least one extractor")
@@ -540,6 +589,8 @@ mod tests {
             ExtractorType::ResourceWellExtractor,
             Item::Water,
             Some(Purity::Normal),
+            100.0,
+            1,
         )
         .expect("Should create valid water input with resource well");
 
@@ -554,6 +605,8 @@ mod tests {
             ExtractorType::ResourceWellExtractor,
             Item::CrudeOil,
             Some(Purity::Pure),
+            100.0,
+            1,
         )
         .expect("Should create valid oil input with resource well");
 
@@ -568,6 +621,8 @@ mod tests {
             ExtractorType::ResourceWellExtractor,
             Item::NitrogenGas,
             Some(Purity::Normal),
+            100.0,
+            1,
         )
         .expect("Should create valid nitrogen input with resource well");
 
@@ -579,15 +634,30 @@ mod tests {
     #[test]
     fn test_miner_mk1_extraction_rates() {
         assert_eq!(
-            RawInput::calculate_extraction_rate(ExtractorType::MinerMk1, Some(Purity::Impure)),
+            RawInput::calculate_extraction_rate(
+                ExtractorType::MinerMk1,
+                Some(Purity::Impure),
+                100.0,
+                1
+            ),
             30.0
         );
         assert_eq!(
-            RawInput::calculate_extraction_rate(ExtractorType::MinerMk1, Some(Purity::Normal)),
+            RawInput::calculate_extraction_rate(
+                ExtractorType::MinerMk1,
+                Some(Purity::Normal),
+                100.0,
+                1
+            ),
             60.0
         );
         assert_eq!(
-            RawInput::calculate_extraction_rate(ExtractorType::MinerMk1, Some(Purity::Pure)),
+            RawInput::calculate_extraction_rate(
+                ExtractorType::MinerMk1,
+                Some(Purity::Pure),
+                100.0,
+                1
+            ),
             120.0
         );
     }
@@ -595,15 +665,30 @@ mod tests {
     #[test]
     fn test_miner_mk2_extraction_rates() {
         assert_eq!(
-            RawInput::calculate_extraction_rate(ExtractorType::MinerMk2, Some(Purity::Impure)),
+            RawInput::calculate_extraction_rate(
+                ExtractorType::MinerMk2,
+                Some(Purity::Impure),
+                100.0,
+                1
+            ),
             60.0
         );
         assert_eq!(
-            RawInput::calculate_extraction_rate(ExtractorType::MinerMk2, Some(Purity::Normal)),
+            RawInput::calculate_extraction_rate(
+                ExtractorType::MinerMk2,
+                Some(Purity::Normal),
+                100.0,
+                1
+            ),
             120.0
         );
         assert_eq!(
-            RawInput::calculate_extraction_rate(ExtractorType::MinerMk2, Some(Purity::Pure)),
+            RawInput::calculate_extraction_rate(
+                ExtractorType::MinerMk2,
+                Some(Purity::Pure),
+                100.0,
+                1
+            ),
             240.0
         );
     }
@@ -611,15 +696,30 @@ mod tests {
     #[test]
     fn test_miner_mk3_extraction_rates() {
         assert_eq!(
-            RawInput::calculate_extraction_rate(ExtractorType::MinerMk3, Some(Purity::Impure)),
+            RawInput::calculate_extraction_rate(
+                ExtractorType::MinerMk3,
+                Some(Purity::Impure),
+                100.0,
+                1
+            ),
             120.0
         );
         assert_eq!(
-            RawInput::calculate_extraction_rate(ExtractorType::MinerMk3, Some(Purity::Normal)),
+            RawInput::calculate_extraction_rate(
+                ExtractorType::MinerMk3,
+                Some(Purity::Normal),
+                100.0,
+                1
+            ),
             240.0
         );
         assert_eq!(
-            RawInput::calculate_extraction_rate(ExtractorType::MinerMk3, Some(Purity::Pure)),
+            RawInput::calculate_extraction_rate(
+                ExtractorType::MinerMk3,
+                Some(Purity::Pure),
+                100.0,
+                1
+            ),
             480.0
         );
     }
@@ -628,7 +728,7 @@ mod tests {
     fn test_water_extractor_rate() {
         // Water extractor has fixed rate, no purity
         assert_eq!(
-            RawInput::calculate_extraction_rate(ExtractorType::WaterExtractor, None),
+            RawInput::calculate_extraction_rate(ExtractorType::WaterExtractor, None, 100.0, 1),
             120.0
         );
     }
@@ -636,15 +736,30 @@ mod tests {
     #[test]
     fn test_oil_extractor_rates() {
         assert_eq!(
-            RawInput::calculate_extraction_rate(ExtractorType::OilExtractor, Some(Purity::Impure)),
+            RawInput::calculate_extraction_rate(
+                ExtractorType::OilExtractor,
+                Some(Purity::Impure),
+                100.0,
+                1
+            ),
             60.0
         );
         assert_eq!(
-            RawInput::calculate_extraction_rate(ExtractorType::OilExtractor, Some(Purity::Normal)),
+            RawInput::calculate_extraction_rate(
+                ExtractorType::OilExtractor,
+                Some(Purity::Normal),
+                100.0,
+                1
+            ),
             120.0
         );
         assert_eq!(
-            RawInput::calculate_extraction_rate(ExtractorType::OilExtractor, Some(Purity::Pure)),
+            RawInput::calculate_extraction_rate(
+                ExtractorType::OilExtractor,
+                Some(Purity::Pure),
+                100.0,
+                1
+            ),
             240.0
         );
     }
@@ -654,21 +769,27 @@ mod tests {
         assert_eq!(
             RawInput::calculate_extraction_rate(
                 ExtractorType::ResourceWellExtractor,
-                Some(Purity::Impure)
+                Some(Purity::Impure),
+                100.0,
+                1
             ),
             30.0
         );
         assert_eq!(
             RawInput::calculate_extraction_rate(
                 ExtractorType::ResourceWellExtractor,
-                Some(Purity::Normal)
+                Some(Purity::Normal),
+                100.0,
+                1
             ),
             60.0
         );
         assert_eq!(
             RawInput::calculate_extraction_rate(
                 ExtractorType::ResourceWellExtractor,
-                Some(Purity::Pure)
+                Some(Purity::Pure),
+                100.0,
+                1
             ),
             120.0
         );
@@ -683,6 +804,8 @@ mod tests {
             ExtractorType::MinerMk2,
             Item::IronOre,
             Some(Purity::Normal),
+            100.0,
+            1,
         )
         .expect("Should create valid iron ore input");
 
@@ -700,6 +823,8 @@ mod tests {
             ExtractorType::WaterExtractor,
             Item::Water,
             None,
+            100.0,
+            1,
         )
         .expect("Should create valid water input");
 
@@ -717,6 +842,8 @@ mod tests {
             ExtractorType::OilExtractor,
             Item::CrudeOil,
             Some(Purity::Pure),
+            100.0,
+            1,
         )
         .expect("Should create valid oil input");
 
@@ -730,6 +857,8 @@ mod tests {
             ExtractorType::MinerMk1,
             Item::Water,
             Some(Purity::Normal),
+            100.0,
+            1,
         );
 
         assert!(result.is_err());
@@ -749,6 +878,8 @@ mod tests {
             ExtractorType::MinerMk1,
             Item::IronOre,
             None,
+            100.0,
+            1,
         );
 
         assert!(result.is_err());
@@ -767,6 +898,8 @@ mod tests {
             ExtractorType::WaterExtractor,
             Item::Water,
             Some(Purity::Normal),
+            100.0,
+            1,
         );
 
         assert!(result.is_err());
@@ -787,6 +920,8 @@ mod tests {
             ExtractorType::MinerMk2,
             Item::CopperOre,
             Some(Purity::Pure),
+            100.0,
+            1,
         )
         .expect("Should create valid input");
 
@@ -800,6 +935,8 @@ mod tests {
             ExtractorType::WaterExtractor,
             Item::Water,
             None,
+            100.0,
+            1,
         )
         .expect("Should create valid input");
 
@@ -828,6 +965,8 @@ mod tests {
                 ExtractorType::MinerMk3,
                 ore,
                 Some(Purity::Normal),
+                100.0,
+                1,
             );
             assert!(result.is_ok(), "Mk3 miner should work with {:?}", ore);
             assert_eq!(result.unwrap().quantity_per_min, 240.0);
@@ -841,6 +980,8 @@ mod tests {
             ExtractorType::MinerMk3,
             Item::Uranium,
             Some(Purity::Pure),
+            100.0,
+            1,
         )
         .expect("Should create valid uranium input");
 
@@ -854,6 +995,8 @@ mod tests {
             ExtractorType::MinerMk1,
             Item::Coal,
             Some(Purity::Impure),
+            100.0,
+            1,
         )
         .expect("Should create valid coal input");
 
@@ -1200,6 +1343,8 @@ mod tests {
             ExtractorType::MinerMk2,
             Item::IronOre,
             Some(Purity::Normal),
+            100.0,
+            1,
         )
         .expect("Should create valid input");
 
@@ -1214,6 +1359,8 @@ mod tests {
             ExtractorType::MinerMk1,
             Item::IronOre,
             Some(Purity::Normal),
+            100.0,
+            1,
         )
         .expect("Should create valid input");
         let mk2 = RawInput::new(
@@ -1221,6 +1368,8 @@ mod tests {
             ExtractorType::MinerMk2,
             Item::IronOre,
             Some(Purity::Normal),
+            100.0,
+            1,
         )
         .expect("Should create valid input");
         let mk3 = RawInput::new(
@@ -1228,6 +1377,8 @@ mod tests {
             ExtractorType::MinerMk3,
             Item::IronOre,
             Some(Purity::Normal),
+            100.0,
+            1,
         )
         .expect("Should create valid input");
         let water = RawInput::new(
@@ -1235,6 +1386,8 @@ mod tests {
             ExtractorType::WaterExtractor,
             Item::Water,
             None,
+            100.0,
+            1,
         )
         .expect("Should create valid input");
         let oil = RawInput::new(
@@ -1242,6 +1395,8 @@ mod tests {
             ExtractorType::OilExtractor,
             Item::CrudeOil,
             Some(Purity::Normal),
+            100.0,
+            1,
         )
         .expect("Should create valid input");
 
@@ -1272,6 +1427,8 @@ mod tests {
             ExtractorType::MinerMk2,
             Item::IronOre,
             Some(Purity::Normal),
+            100.0,
+            1,
         )
         .expect("Should create valid input");
 
@@ -1293,6 +1450,8 @@ mod tests {
             ExtractorType::MinerMk2,
             Item::IronOre,
             Some(Purity::Normal),
+            100.0,
+            1,
         )
         .expect("Should create valid input");
 
@@ -1306,5 +1465,179 @@ mod tests {
             }
             _ => panic!("Expected PressurizerOnNonResourceWell error"),
         }
+    }
+
+    // ===== Overclocking and Count Tests =====
+
+    #[test]
+    fn test_overclock_at_0_percent() {
+        let input = RawInput::new(
+            uuid_from_u64(1),
+            ExtractorType::MinerMk2,
+            Item::IronOre,
+            Some(Purity::Normal),
+            0.0,
+            1,
+        )
+        .expect("Should create valid input");
+
+        assert_eq!(input.quantity_per_min, 0.0); // At 0% OC, output is 0
+        assert_eq!(input.power_consumption(), 0.0); // Power is also 0
+    }
+
+    #[test]
+    fn test_overclock_at_100_percent() {
+        let input = RawInput::new(
+            uuid_from_u64(1),
+            ExtractorType::MinerMk2,
+            Item::IronOre,
+            Some(Purity::Normal),
+            100.0,
+            1,
+        )
+        .expect("Should create valid input");
+
+        assert_eq!(input.quantity_per_min, 120.0); // Base rate
+        assert_eq!(input.power_consumption(), 15.0); // Base power
+    }
+
+    #[test]
+    fn test_overclock_at_250_percent() {
+        let input = RawInput::new(
+            uuid_from_u64(1),
+            ExtractorType::MinerMk2,
+            Item::IronOre,
+            Some(Purity::Normal),
+            250.0,
+            1,
+        )
+        .expect("Should create valid input");
+
+        assert_eq!(input.quantity_per_min, 300.0); // 120 * 2.5
+        let power = input.power_consumption();
+        let expected = 15.0 * (2.5_f32).powf(1.321928);
+        assert!(
+            (power - expected).abs() < 0.1,
+            "Power should be approximately {}, got {}",
+            expected,
+            power
+        );
+    }
+
+    #[test]
+    fn test_count_multiplier() {
+        let input = RawInput::new(
+            uuid_from_u64(1),
+            ExtractorType::MinerMk2,
+            Item::IronOre,
+            Some(Purity::Normal),
+            100.0,
+            4,
+        )
+        .expect("Should create valid input");
+
+        assert_eq!(input.quantity_per_min, 480.0); // 120 * 4
+        assert_eq!(input.power_consumption(), 60.0); // 15 * 4
+    }
+
+    #[test]
+    fn test_overclock_and_count_together() {
+        let input = RawInput::new(
+            uuid_from_u64(1),
+            ExtractorType::MinerMk2,
+            Item::IronOre,
+            Some(Purity::Normal),
+            150.0,
+            3,
+        )
+        .expect("Should create valid input");
+
+        assert_eq!(input.quantity_per_min, 540.0); // 120 * 1.5 * 3
+        let power = input.power_consumption();
+        let expected = 15.0 * (1.5_f32).powf(1.321928) * 3.0;
+        assert!(
+            (power - expected).abs() < 0.1,
+            "Power should be approximately {}, got {}",
+            expected,
+            power
+        );
+    }
+
+    #[test]
+    fn test_invalid_overclock_too_low() {
+        let result = RawInput::new(
+            uuid_from_u64(1),
+            ExtractorType::MinerMk2,
+            Item::IronOre,
+            Some(Purity::Normal),
+            -10.0,
+            1,
+        );
+
+        assert!(result.is_err());
+        match result {
+            Err(RawInputError::InvalidClockSpeed { clock_speed }) => {
+                assert_eq!(clock_speed, -10.0);
+            }
+            _ => panic!("Expected InvalidClockSpeed error"),
+        }
+    }
+
+    #[test]
+    fn test_invalid_overclock_too_high() {
+        let result = RawInput::new(
+            uuid_from_u64(1),
+            ExtractorType::MinerMk2,
+            Item::IronOre,
+            Some(Purity::Normal),
+            300.0,
+            1,
+        );
+
+        assert!(result.is_err());
+        match result {
+            Err(RawInputError::InvalidClockSpeed { clock_speed }) => {
+                assert_eq!(clock_speed, 300.0);
+            }
+            _ => panic!("Expected InvalidClockSpeed error"),
+        }
+    }
+
+    #[test]
+    fn test_invalid_count_zero() {
+        let result = RawInput::new(
+            uuid_from_u64(1),
+            ExtractorType::MinerMk2,
+            Item::IronOre,
+            Some(Purity::Normal),
+            100.0,
+            0,
+        );
+
+        assert!(result.is_err());
+        match result {
+            Err(RawInputError::InvalidCount { count }) => {
+                assert_eq!(count, 0);
+            }
+            _ => panic!("Expected InvalidCount error"),
+        }
+    }
+
+    #[test]
+    fn test_pressurizer_oc_applies_to_sum() {
+        let pressurizer =
+            ResourceWellPressurizer::new(1, 200.0).expect("Should create pressurizer");
+        let extractors = vec![
+            ResourceWellExtractor::new(1, Purity::Normal), // 60 at 100%
+            ResourceWellExtractor::new(2, Purity::Pure),   // 120 at 100%
+        ];
+
+        let raw_input =
+            RawInput::new_resource_well(uuid_from_u64(1), Item::CrudeOil, pressurizer, extractors)
+                .expect("Should create valid resource well system");
+
+        // Sum at 100%: 60 + 120 = 180
+        // At 200% OC: 180 * 2.0 = 360
+        assert_eq!(raw_input.quantity_per_min, 360.0);
     }
 }

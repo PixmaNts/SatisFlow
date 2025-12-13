@@ -50,14 +50,20 @@ async fn test_production_line_calculated_fields() {
             .await
             .expect("Failed to create production line");
 
-        println!("DEBUG: First production line creation status: {}", create_response.status());
+        println!(
+            "DEBUG: First production line creation status: {}",
+            create_response.status()
+        );
 
         if create_response.status().as_u16() == 201 {
             let created_factory: Value = create_response.json().await.unwrap();
 
             // Verify calculated fields in response
             let production_lines = created_factory["production_lines"].as_array().unwrap();
-            println!("DEBUG: Production lines after first creation: {}", production_lines.len());
+            println!(
+                "DEBUG: Production lines after first creation: {}",
+                production_lines.len()
+            );
             assert_eq!(production_lines.len(), 1);
 
             let line = &production_lines[0];
@@ -76,8 +82,14 @@ async fn test_production_line_calculated_fields() {
             assert_eq!(output_rate[0]["item"], "IronIngot");
             assert_eq!(output_rate[0]["quantity"], 120.0); // 4 machines * 30 ingots/min each
         } else {
-            println!("DEBUG: First production line creation failed with status: {}", create_response.status());
-            println!("DEBUG: Response body: {:?}", create_response.text().await.unwrap());
+            println!(
+                "DEBUG: First production line creation failed with status: {}",
+                create_response.status()
+            );
+            println!(
+                "DEBUG: Response body: {:?}",
+                create_response.text().await.unwrap()
+            );
         }
 
         // Test 2: Create a production line with overclocking and somersloop
@@ -109,25 +121,38 @@ async fn test_production_line_calculated_fields() {
             let updated_factory: Value = overclocked_response.json().await.unwrap();
 
             // Debug: print the actual response
-            println!("DEBUG: Factory after second production line: {:?}", updated_factory);
+            println!(
+                "DEBUG: Factory after second production line: {:?}",
+                updated_factory
+            );
 
             // Verify calculated fields with overclocking and somersloop
             let production_lines = updated_factory["production_lines"].as_array().unwrap();
-            println!("DEBUG: Number of production lines: {}", production_lines.len());
+            println!(
+                "DEBUG: Number of production lines: {}",
+                production_lines.len()
+            );
             assert_eq!(production_lines.len(), 2);
 
             // Find the motor production line (second one)
-            let motor_line = production_lines.iter().find(|line| {
-                line["ProductionLineRecipe"]["recipe"] == "Motor"
-            }).unwrap();
+            let motor_line = production_lines
+                .iter()
+                .find(|line| line["ProductionLineRecipe"]["recipe"] == "Motor")
+                .unwrap();
 
             assert_eq!(motor_line["total_machines"], 2);
             assert_eq!(motor_line["total_somersloop"], 4); // 2 machines * 2 somersloop each
 
             // Power calculation: base 16MW * (1 + 2/2)^2 * (150/100)^1.321928 * 2 machines
             // = 16 * (1 + 1)^2 * 1.5^1.321928 * 2 = 16 * 4 * ~2.5 * 2 = ~320MW
-            let expected_power = 16.0_f64 * (1.0_f64 + 2.0_f64/2.0_f64).powf(2.0_f64) * (1.5_f64).powf(1.321928_f64) * 2.0_f64;
-            assert!((motor_line["total_power_consumption"].as_f64().unwrap() - expected_power).abs() < 0.1);
+            let expected_power = 16.0_f64
+                * (1.0_f64 + 2.0_f64 / 2.0_f64).powf(2.0_f64)
+                * (1.5_f64).powf(1.321928_f64)
+                * 2.0_f64;
+            assert!(
+                (motor_line["total_power_consumption"].as_f64().unwrap() - expected_power).abs()
+                    < 0.1
+            );
 
             // Verify input/output rates are scaled by overclocking
             let input_rate = motor_line["input_rate"].as_array().unwrap();
@@ -189,9 +214,12 @@ async fn test_production_line_calculated_fields() {
             assert_eq!(production_lines.len(), 3);
 
             // Find the blueprint line
-            let blueprint_line = production_lines.iter().find(|line| {
-                line["ProductionLineBlueprint"]["name"] == "Heavy Modular Frame Blueprint"
-            }).unwrap();
+            let blueprint_line = production_lines
+                .iter()
+                .find(|line| {
+                    line["ProductionLineBlueprint"]["name"] == "Heavy Modular Frame Blueprint"
+                })
+                .unwrap();
 
             assert_eq!(blueprint_line["total_machines"], 3); // 2 + 1
             assert_eq!(blueprint_line["total_somersloop"], 4); // 2 machines * 2 somersloop each
@@ -296,9 +324,10 @@ async fn test_power_generator_calculated_fields() {
             assert_eq!(generators.len(), 2);
 
             // Find the nuclear generator
-            let nuclear_generator = generators.iter().find(|gen| {
-                gen["generator_type"] == "Nuclear"
-            }).unwrap();
+            let nuclear_generator = generators
+                .iter()
+                .find(|gen| gen["generator_type"] == "Nuclear")
+                .unwrap();
 
             assert_eq!(nuclear_generator["total_power_generation"], 5000.0); // 2 * 2500MW
             assert_eq!(nuclear_generator["total_fuel_consumption"], 0.05); // 2 * 0.025
@@ -336,9 +365,10 @@ async fn test_power_generator_calculated_fields() {
             assert_eq!(generators.len(), 3);
 
             // Find the fuel generator
-            let fuel_generator = generators.iter().find(|gen| {
-                gen["fuel_type"] == "Turbofuel"
-            }).unwrap();
+            let fuel_generator = generators
+                .iter()
+                .find(|gen| gen["fuel_type"] == "Turbofuel")
+                .unwrap();
 
             assert_eq!(fuel_generator["total_power_generation"], 900.0); // 3 * 150MW * 2.0
             assert_eq!(fuel_generator["total_fuel_consumption"], 6.75); // 3 * 4.5 * 0.25 * 2.0
@@ -375,9 +405,10 @@ async fn test_power_generator_calculated_fields() {
             assert_eq!(generators.len(), 4);
 
             // Find the geothermal generator
-            let geothermal_generator = generators.iter().find(|gen| {
-                gen["generator_type"] == "Geothermal"
-            }).unwrap();
+            let geothermal_generator = generators
+                .iter()
+                .find(|gen| gen["generator_type"] == "Geothermal")
+                .unwrap();
 
             assert_eq!(geothermal_generator["total_power_generation"], 800.0); // 4 * 200MW
             assert_eq!(geothermal_generator["total_fuel_consumption"], 0.0); // No fuel consumption
@@ -412,6 +443,8 @@ async fn test_raw_input_calculated_fields() {
             "extractor_type": "MinerMk2",
             "item": "IronOre",
             "purity": "Normal",
+            "overclock_percent": 100.0,
+            "count": 1,
             "quantity_per_min": 0.0
         });
 
@@ -442,6 +475,8 @@ async fn test_raw_input_calculated_fields() {
             "extractor_type": "WaterExtractor",
             "item": "Water",
             "purity": null,
+            "overclock_percent": 100.0,
+            "count": 1,
             "quantity_per_min": 0.0
         });
 
@@ -463,9 +498,10 @@ async fn test_raw_input_calculated_fields() {
             assert_eq!(raw_inputs.len(), 2);
 
             // Find the water extractor
-            let water_input = raw_inputs.iter().find(|input| {
-                input["item"] == "Water"
-            }).unwrap();
+            let water_input = raw_inputs
+                .iter()
+                .find(|input| input["item"] == "Water")
+                .unwrap();
 
             assert_eq!(water_input["power_consumption"], 20.0); // Water extractor base power
             assert_eq!(water_input["quantity_per_min"], 120.0); // Fixed water extraction rate
@@ -510,9 +546,10 @@ async fn test_raw_input_calculated_fields() {
             assert_eq!(raw_inputs.len(), 3);
 
             // Find the resource well
-            let resource_well_input = raw_inputs.iter().find(|input| {
-                input["extractor_type"] == "ResourceWellExtractor"
-            }).unwrap();
+            let resource_well_input = raw_inputs
+                .iter()
+                .find(|input| input["extractor_type"] == "ResourceWellExtractor")
+                .unwrap();
 
             // Power should be pressurizer power at 150% clock speed
             let power_consumption = resource_well_input["power_consumption"].as_f64().unwrap();
@@ -528,6 +565,8 @@ async fn test_raw_input_calculated_fields() {
             "extractor_type": "OilExtractor",
             "item": "CrudeOil",
             "purity": "Pure",
+            "overclock_percent": 100.0,
+            "count": 1,
             "quantity_per_min": 0.0
         });
 
@@ -549,9 +588,12 @@ async fn test_raw_input_calculated_fields() {
             assert_eq!(raw_inputs.len(), 4);
 
             // Find the oil extractor
-            let oil_input = raw_inputs.iter().find(|input| {
-                input["item"] == "CrudeOil" && input["extractor_type"] == "OilExtractor"
-            }).unwrap();
+            let oil_input = raw_inputs
+                .iter()
+                .find(|input| {
+                    input["item"] == "CrudeOil" && input["extractor_type"] == "OilExtractor"
+                })
+                .unwrap();
 
             assert_eq!(oil_input["power_consumption"], 40.0); // Oil extractor base power
             assert_eq!(oil_input["quantity_per_min"], 240.0); // Oil extractor * Pure purity
@@ -682,7 +724,9 @@ async fn test_preview_endpoints_calculations() {
             assert_eq!(blueprint_preview_data["total_somersloop"], 4); // 2 machines * 2 somersloop each
 
             // Verify power consumption includes somersloop multiplier
-            let power_consumption = blueprint_preview_data["total_power_consumption"].as_f64().unwrap();
+            let power_consumption = blueprint_preview_data["total_power_consumption"]
+                .as_f64()
+                .unwrap();
             assert!(power_consumption > 0.0);
 
             // Verify input/output aggregation
@@ -720,9 +764,15 @@ async fn test_preview_endpoints_calculations() {
             let generator_preview_data: Value = generator_response.json().await.unwrap();
 
             // Verify generator preview response structure
-            assert!(generator_preview_data.get("total_power_generation").is_some());
-            assert!(generator_preview_data.get("total_fuel_consumption").is_some());
-            assert!(generator_preview_data.get("waste_production_rate").is_some());
+            assert!(generator_preview_data
+                .get("total_power_generation")
+                .is_some());
+            assert!(generator_preview_data
+                .get("total_fuel_consumption")
+                .is_some());
+            assert!(generator_preview_data
+                .get("waste_production_rate")
+                .is_some());
             assert!(generator_preview_data.get("waste_product").is_some());
 
             // Verify calculations
@@ -769,6 +819,8 @@ async fn test_preview_endpoints_calculations() {
             "extractor_type": "MinerMk2",
             "item": "IronOre",
             "purity": "Normal",
+            "overclock_percent": 100.0,
+            "count": 1,
             "quantity_per_min": 0.0
         });
 
@@ -829,8 +881,12 @@ async fn test_preview_endpoints_calculations() {
             let resource_well_preview_data: Value = resource_well_response.json().await.unwrap();
 
             // Verify resource well calculations
-            let power_consumption = resource_well_preview_data["power_consumption"].as_f64().unwrap();
-            let quantity_per_min = resource_well_preview_data["quantity_per_min"].as_f64().unwrap();
+            let power_consumption = resource_well_preview_data["power_consumption"]
+                .as_f64()
+                .unwrap();
+            let quantity_per_min = resource_well_preview_data["quantity_per_min"]
+                .as_f64()
+                .unwrap();
 
             // Power should be pressurizer power at 150% clock speed
             assert!(power_consumption > 150.0);
@@ -1014,6 +1070,8 @@ async fn test_preview_endpoints_error_handling() {
             "extractor_type": "MinerMk1",
             "item": "Water", // Miners can't extract water
             "purity": "Normal",
+            "overclock_percent": 100.0,
+            "count": 1,
             "quantity_per_min": 0.0
         });
 
@@ -1127,7 +1185,10 @@ async fn test_factory_level_calculations() {
             .expect("Failed to send production line request");
 
         if production_response.status().as_u16() != 201 {
-            panic!("Production line creation failed: {}", production_response.text().await.unwrap());
+            panic!(
+                "Production line creation failed: {}",
+                production_response.text().await.unwrap()
+            );
         }
 
         // Create a raw input
@@ -1135,6 +1196,8 @@ async fn test_factory_level_calculations() {
             "extractor_type": "MinerMk2",
             "item": "IronOre",
             "purity": "Normal",
+            "overclock_percent": 100.0,
+            "count": 1,
             "quantity_per_min": 0.0
         });
 
@@ -1192,8 +1255,377 @@ async fn test_factory_level_calculations() {
             let iron_ore_item = items.iter().find(|item| item["item"] == "IronOre").unwrap();
             assert_eq!(iron_ore_item["quantity"], 0.0); // Balanced
 
-            let iron_ingot_item = items.iter().find(|item| item["item"] == "IronIngot").unwrap();
+            let iron_ingot_item = items
+                .iter()
+                .find(|item| item["item"] == "IronIngot")
+                .unwrap();
             assert_eq!(iron_ingot_item["quantity"], 120.0); // Production output
         }
+    }
+}
+
+#[tokio::test]
+async fn test_raw_input_overclock_and_count() {
+    let server = create_test_server().await;
+    let client = create_test_client();
+
+    // First create a factory for testing
+    let factory_response = client
+        .post(format!("{}/api/factories", server.base_url))
+        .json(&json!({
+            "name": "OC and Count Test Factory",
+            "description": "Factory for testing overclock and count features"
+        }))
+        .send()
+        .await
+        .expect("Failed to create factory");
+
+    if factory_response.status().as_u16() == 201 {
+        let factory: Value = factory_response.json().await.unwrap();
+        let factory_id = factory["id"].as_str().unwrap().to_string();
+
+        // Test 1: Preview raw input with 0% OC (should return 0 quantity)
+        let zero_oc_preview = json!({
+            "extractor_type": "MinerMk2",
+            "item": "IronOre",
+            "purity": "Normal",
+            "overclock_percent": 0.0,
+            "count": 1,
+            "quantity_per_min": 0.0
+        });
+
+        let zero_oc_response = client
+            .post(format!(
+                "{}/api/factories/{}/raw-inputs/preview",
+                server.base_url, factory_id
+            ))
+            .json(&zero_oc_preview)
+            .send()
+            .await
+            .expect("Failed to preview raw input with 0% OC");
+
+        if zero_oc_response.status().as_u16() == 200 {
+            let preview_data: Value = zero_oc_response.json().await.unwrap();
+            assert_eq!(preview_data["quantity_per_min"], 0.0); // 0% OC = 0 output
+            assert_eq!(preview_data["power_consumption"], 0.0); // 0% OC = 0 power
+        }
+
+        // Test 2: Preview raw input with 150% OC
+        let oc150_preview = json!({
+            "extractor_type": "MinerMk2",
+            "item": "IronOre",
+            "purity": "Normal",
+            "overclock_percent": 150.0,
+            "count": 1,
+            "quantity_per_min": 0.0
+        });
+
+        let oc150_response = client
+            .post(format!(
+                "{}/api/factories/{}/raw-inputs/preview",
+                server.base_url, factory_id
+            ))
+            .json(&oc150_preview)
+            .send()
+            .await
+            .expect("Failed to preview raw input with 150% OC");
+
+        if oc150_response.status().as_u16() == 200 {
+            let preview_data: Value = oc150_response.json().await.unwrap();
+            // Base: 120 items/min, at 150% OC: 120 * 1.5 = 180
+            assert_eq!(preview_data["quantity_per_min"], 180.0);
+            // Power: 15MW * (1.5)^1.321928 ≈ 26.0MW (MinerMk2 base power is 15MW)
+            let expected_power = 15.0 * (1.5_f64).powf(1.321928);
+            assert!(
+                (preview_data["power_consumption"].as_f64().unwrap() - expected_power).abs() < 0.1
+            );
+        }
+
+        // Test 3: Preview raw input with 250% OC
+        let oc250_preview = json!({
+            "extractor_type": "MinerMk2",
+            "item": "IronOre",
+            "purity": "Normal",
+            "overclock_percent": 250.0,
+            "count": 1,
+            "quantity_per_min": 0.0
+        });
+
+        let oc250_response = client
+            .post(format!(
+                "{}/api/factories/{}/raw-inputs/preview",
+                server.base_url, factory_id
+            ))
+            .json(&oc250_preview)
+            .send()
+            .await
+            .expect("Failed to preview raw input with 250% OC");
+
+        if oc250_response.status().as_u16() == 200 {
+            let preview_data: Value = oc250_response.json().await.unwrap();
+            // Base: 120 items/min, at 250% OC: 120 * 2.5 = 300
+            assert_eq!(preview_data["quantity_per_min"], 300.0);
+            // Power: 15MW * (2.5)^1.321928 ≈ 50.6MW (MinerMk2 base power is 15MW)
+            let expected_power = 15.0 * (2.5_f64).powf(1.321928);
+            assert!(
+                (preview_data["power_consumption"].as_f64().unwrap() - expected_power).abs() < 0.1
+            );
+        }
+
+        // Test 4: Preview raw input with count = 4
+        let count4_preview = json!({
+            "extractor_type": "MinerMk2",
+            "item": "IronOre",
+            "purity": "Pure",
+            "overclock_percent": 100.0,
+            "count": 4,
+            "quantity_per_min": 0.0
+        });
+
+        let count4_response = client
+            .post(format!(
+                "{}/api/factories/{}/raw-inputs/preview",
+                server.base_url, factory_id
+            ))
+            .json(&count4_preview)
+            .send()
+            .await
+            .expect("Failed to preview raw input with count 4");
+
+        if count4_response.status().as_u16() == 200 {
+            let preview_data: Value = count4_response.json().await.unwrap();
+            // Base: 240 items/min (Pure), at 100% OC, count 4: 240 * 1.0 * 4 = 960
+            assert_eq!(preview_data["quantity_per_min"], 960.0);
+            // Power: 15MW * (1.0)^1.321928 * 4 = 60MW (MinerMk2 base power is 15MW)
+            assert_eq!(preview_data["power_consumption"], 60.0);
+        }
+
+        // Test 5: Preview raw input with OC 200% and count 3
+        let oc200_count3_preview = json!({
+            "extractor_type": "MinerMk1",
+            "item": "IronOre",
+            "purity": "Normal",
+            "overclock_percent": 200.0,
+            "count": 3,
+            "quantity_per_min": 0.0
+        });
+
+        let oc200_count3_response = client
+            .post(format!(
+                "{}/api/factories/{}/raw-inputs/preview",
+                server.base_url, factory_id
+            ))
+            .json(&oc200_count3_preview)
+            .send()
+            .await
+            .expect("Failed to preview raw input with 200% OC and count 3");
+
+        if oc200_count3_response.status().as_u16() == 200 {
+            let preview_data: Value = oc200_count3_response.json().await.unwrap();
+            // Base: 60 items/min (Mk1 Normal), at 200% OC, count 3: 60 * 2.0 * 3 = 360
+            assert_eq!(preview_data["quantity_per_min"], 360.0);
+            // Power: 5MW * (2.0)^1.321928 * 3 ≈ 5 * 2.5 * 3 = 37.5MW
+            let expected_power = 5.0 * (2.0_f64).powf(1.321928) * 3.0;
+            assert!(
+                (preview_data["power_consumption"].as_f64().unwrap() - expected_power).abs() < 0.1
+            );
+        }
+
+        // Test 6: Create raw input with OC and count
+        let create_request = json!({
+            "extractor_type": "MinerMk2",
+            "item": "IronOre",
+            "purity": "Pure",
+            "overclock_percent": 150.0,
+            "count": 2,
+            "quantity_per_min": 0.0
+        });
+
+        let create_response = client
+            .post(format!(
+                "{}/api/factories/{}/raw-inputs",
+                server.base_url, factory_id
+            ))
+            .json(&create_request)
+            .send()
+            .await
+            .expect("Failed to create raw input with OC and count");
+
+        if create_response.status().as_u16() == 201 {
+            let factory_data: Value = create_response.json().await.unwrap();
+            let raw_inputs = factory_data["raw_inputs"].as_array().unwrap();
+
+            // Find the created raw input
+            let created_input = raw_inputs
+                .iter()
+                .find(|input| {
+                    input["extractor_type"] == "MinerMk2"
+                        && input["item"] == "IronOre"
+                        && input["purity"] == "Pure"
+                })
+                .unwrap();
+
+            // Verify OC and count are stored
+            assert_eq!(created_input["overclock_percent"], 150.0);
+            assert_eq!(created_input["count"], 2);
+
+            // Verify calculated values
+            // Base: 240 items/min (Pure), at 150% OC, count 2: 240 * 1.5 * 2 = 720
+            assert_eq!(created_input["quantity_per_min"], 720.0);
+
+            // Power: 15MW * (1.5)^1.321928 * 2 ≈ 26.0 * 2 = 52.0MW (MinerMk2 base power is 15MW)
+            let expected_power = 15.0 * (1.5_f64).powf(1.321928) * 2.0;
+            assert!(
+                (created_input["power_consumption"].as_f64().unwrap() - expected_power).abs() < 0.1
+            );
+        }
+
+        // Test 7: Preview water extractor with OC and count
+        let water_oc_preview = json!({
+            "extractor_type": "WaterExtractor",
+            "item": "Water",
+            "overclock_percent": 200.0,
+            "count": 3,
+            "quantity_per_min": 0.0
+        });
+
+        let water_oc_response = client
+            .post(format!(
+                "{}/api/factories/{}/raw-inputs/preview",
+                server.base_url, factory_id
+            ))
+            .json(&water_oc_preview)
+            .send()
+            .await
+            .expect("Failed to preview water extractor with OC and count");
+
+        if water_oc_response.status().as_u16() == 200 {
+            let preview_data: Value = water_oc_response.json().await.unwrap();
+            // Base: 120 m³/min, at 200% OC, count 3: 120 * 2.0 * 3 = 720
+            assert_eq!(preview_data["quantity_per_min"], 720.0);
+            // Power: 20MW * (2.0)^1.321928 * 3 ≈ 20 * 2.5 * 3 = 150MW
+            let expected_power = 20.0 * (2.0_f64).powf(1.321928) * 3.0;
+            assert!(
+                (preview_data["power_consumption"].as_f64().unwrap() - expected_power).abs() < 0.1
+            );
+        }
+
+        // Test 8: Preview oil extractor with different OC and purity
+        let oil_oc_preview = json!({
+            "extractor_type": "OilExtractor",
+            "item": "CrudeOil",
+            "purity": "Impure",
+            "overclock_percent": 125.0,
+            "count": 2,
+            "quantity_per_min": 0.0
+        });
+
+        let oil_oc_response = client
+            .post(format!(
+                "{}/api/factories/{}/raw-inputs/preview",
+                server.base_url, factory_id
+            ))
+            .json(&oil_oc_preview)
+            .send()
+            .await
+            .expect("Failed to preview oil extractor with OC and count");
+
+        if oil_oc_response.status().as_u16() == 200 {
+            let preview_data: Value = oil_oc_response.json().await.unwrap();
+            // Base: 60 m³/min (Impure), at 125% OC, count 2: 60 * 1.25 * 2 = 150
+            assert_eq!(preview_data["quantity_per_min"], 150.0);
+            // Power: 40MW * (1.25)^1.321928 * 2 ≈ 40 * 1.35 * 2 = 108MW
+            let expected_power = 40.0 * (1.25_f64).powf(1.321928) * 2.0;
+            assert!(
+                (preview_data["power_consumption"].as_f64().unwrap() - expected_power).abs() < 0.1
+            );
+        }
+
+        // Test 9: Preview resource well with extractor count
+        let resource_well_count_preview = json!({
+            "extractor_type": "ResourceWellExtractor",
+            "item": "NitrogenGas",
+            "purity": null,
+            "quantity_per_min": 0.0,
+            "pressurizer": {
+                "clock_speed": 200.0
+            },
+            "extractors": [
+                {
+                    "purity": "Normal"
+                },
+                {
+                    "purity": "Normal"
+                },
+                {
+                    "purity": "Pure"
+                }
+            ]
+        });
+
+        let resource_well_count_response = client
+            .post(format!(
+                "{}/api/factories/{}/raw-inputs/preview",
+                server.base_url, factory_id
+            ))
+            .json(&resource_well_count_preview)
+            .send()
+            .await
+            .expect("Failed to preview resource well with multiple extractors");
+
+        if resource_well_count_response.status().as_u16() == 200 {
+            let preview_data: Value = resource_well_count_response.json().await.unwrap();
+            // Sum at 100%: 60 + 60 + 120 = 240, at 200% OC: 240 * 2.0 = 480
+            assert_eq!(preview_data["quantity_per_min"], 480.0);
+            // Power: 150MW * (2.0)^1.321928 ≈ 150 * 2.5 = 375MW
+            let expected_power = 150.0 * (2.0_f64).powf(1.321928);
+            assert!(
+                (preview_data["power_consumption"].as_f64().unwrap() - expected_power).abs() < 0.1
+            );
+        }
+
+        // Test 10: Test invalid OC values
+        let invalid_oc_preview = json!({
+            "extractor_type": "MinerMk2",
+            "item": "IronOre",
+            "purity": "Normal",
+            "overclock_percent": 300.0, // Invalid: > 250%
+            "count": 1,
+            "quantity_per_min": 0.0
+        });
+
+        let invalid_oc_response = client
+            .post(format!(
+                "{}/api/factories/{}/raw-inputs/preview",
+                server.base_url, factory_id
+            ))
+            .json(&invalid_oc_preview)
+            .send()
+            .await
+            .expect("Failed to send invalid OC preview request");
+
+        assert_bad_request(invalid_oc_response).await;
+
+        // Test 11: Test invalid count (0)
+        let invalid_count_preview = json!({
+            "extractor_type": "MinerMk2",
+            "item": "IronOre",
+            "purity": "Normal",
+            "overclock_percent": 100.0,
+            "count": 0, // Invalid: count must be >= 1
+            "quantity_per_min": 0.0
+        });
+
+        let invalid_count_response = client
+            .post(format!(
+                "{}/api/factories/{}/raw-inputs/preview",
+                server.base_url, factory_id
+            ))
+            .json(&invalid_count_preview)
+            .send()
+            .await
+            .expect("Failed to send invalid count preview request");
+
+        assert_bad_request(invalid_count_response).await;
     }
 }

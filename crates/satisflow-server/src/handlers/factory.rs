@@ -101,6 +101,10 @@ pub struct RawInputPayload {
     pub item: Item,
     pub purity: Option<Purity>,
     #[serde(default)]
+    pub overclock_percent: Option<f32>, // Default to 100.0 if None
+    #[serde(default)]
+    pub count: Option<u32>, // Default to 1 if None
+    #[serde(default)]
     pub quantity_per_min: f32,
     #[serde(default)]
     pub pressurizer: Option<RawInputPressurizerPayload>,
@@ -204,6 +208,10 @@ pub struct RawInputPreviewRequest {
     pub extractor_type: ExtractorType,
     pub item: Item,
     pub purity: Option<Purity>,
+    #[serde(default)]
+    pub overclock_percent: Option<f32>,
+    #[serde(default)]
+    pub count: Option<u32>,
     #[serde(default)]
     pub quantity_per_min: f32,
     #[serde(default)]
@@ -420,6 +428,10 @@ fn build_production_line_from_payload(
 fn build_raw_input_from_payload(payload: &RawInputPayload, id: Option<Uuid>) -> Result<RawInput> {
     let raw_input_id = id.unwrap_or_else(Uuid::new_v4);
 
+    // Extract OC and count with defaults
+    let overclock_percent = payload.overclock_percent.unwrap_or(100.0);
+    let count = payload.count.unwrap_or(1);
+
     let mut raw_input = if payload.extractor_type == ExtractorType::ResourceWellExtractor {
         let pressurizer_payload = payload.pressurizer.as_ref().ok_or_else(|| {
             AppError::BadRequest("Resource well extractors require a pressurizer".to_string())
@@ -432,9 +444,12 @@ fn build_raw_input_from_payload(payload: &RawInputPayload, id: Option<Uuid>) -> 
         }
 
         let pressurizer_id = pressurizer_payload.id.unwrap_or(1);
-        let pressurizer =
-            ResourceWellPressurizer::new(pressurizer_id, pressurizer_payload.clock_speed)
-                .map_err(|e| AppError::ValidationError(e.to_string()))?;
+        // For pressurizer, use the OC from payload or pressurizer clock_speed
+        let pressurizer_oc = payload
+            .overclock_percent
+            .unwrap_or(pressurizer_payload.clock_speed);
+        let pressurizer = ResourceWellPressurizer::new(pressurizer_id, pressurizer_oc)
+            .map_err(|e| AppError::ValidationError(e.to_string()))?;
 
         let extractors: Vec<ResourceWellExtractor> = payload
             .extractors
@@ -454,10 +469,14 @@ fn build_raw_input_from_payload(payload: &RawInputPayload, id: Option<Uuid>) -> 
             payload.extractor_type,
             payload.item,
             payload.purity,
+            overclock_percent,
+            count,
         )
         .map_err(|e| AppError::ValidationError(e.to_string()))?
     };
 
+    // Only override quantity_per_min if explicitly provided and > 0
+    // Otherwise, use the calculated value from the engine
     if payload.quantity_per_min > 0.0 {
         raw_input.quantity_per_min = payload.quantity_per_min;
     }
@@ -979,6 +998,8 @@ pub async fn preview_raw_input(
             extractor_type: request.extractor_type,
             item: request.item,
             purity: request.purity,
+            overclock_percent: request.overclock_percent,
+            count: request.count,
             quantity_per_min: request.quantity_per_min,
             pressurizer: request.pressurizer,
             extractors: request.extractors,
@@ -1027,8 +1048,5 @@ pub fn routes() -> Router<AppState> {
             "/:id/power-generators/preview",
             post(preview_power_generator),
         )
-        .route(
-            "/:id/raw-inputs/preview",
-            post(preview_raw_input),
-        )
+        .route("/:id/raw-inputs/preview", post(preview_raw_input))
 }

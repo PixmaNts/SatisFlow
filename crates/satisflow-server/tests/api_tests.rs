@@ -1152,7 +1152,9 @@ async fn test_preview_endpoints() {
             assert_eq!(blueprint_preview_data["total_somersloop"], 4); // 2 machines * 2 somersloop each
 
             // Verify power consumption includes somersloop multiplier
-            let power_consumption = blueprint_preview_data["total_power_consumption"].as_f64().unwrap();
+            let power_consumption = blueprint_preview_data["total_power_consumption"]
+                .as_f64()
+                .unwrap();
             assert!(power_consumption > 0.0);
 
             // Verify input/output aggregation
@@ -1190,9 +1192,15 @@ async fn test_preview_endpoints() {
             let generator_preview_data: Value = generator_response.json().await.unwrap();
 
             // Verify generator preview response structure
-            assert!(generator_preview_data.get("total_power_generation").is_some());
-            assert!(generator_preview_data.get("total_fuel_consumption").is_some());
-            assert!(generator_preview_data.get("waste_production_rate").is_some());
+            assert!(generator_preview_data
+                .get("total_power_generation")
+                .is_some());
+            assert!(generator_preview_data
+                .get("total_fuel_consumption")
+                .is_some());
+            assert!(generator_preview_data
+                .get("waste_production_rate")
+                .is_some());
             assert!(generator_preview_data.get("waste_product").is_some());
 
             // Verify calculations
@@ -1239,6 +1247,8 @@ async fn test_preview_endpoints() {
             "extractor_type": "MinerMk2",
             "item": "IronOre",
             "purity": "Normal",
+            "overclock_percent": 100.0,
+            "count": 1,
             "quantity_per_min": 0.0
         });
 
@@ -1299,8 +1309,12 @@ async fn test_preview_endpoints() {
             let resource_well_preview_data: Value = resource_well_response.json().await.unwrap();
 
             // Verify resource well calculations
-            let power_consumption = resource_well_preview_data["power_consumption"].as_f64().unwrap();
-            let quantity_per_min = resource_well_preview_data["quantity_per_min"].as_f64().unwrap();
+            let power_consumption = resource_well_preview_data["power_consumption"]
+                .as_f64()
+                .unwrap();
+            let quantity_per_min = resource_well_preview_data["quantity_per_min"]
+                .as_f64()
+                .unwrap();
 
             // Power should be pressurizer power at 150% clock speed
             assert!(power_consumption > 150.0);

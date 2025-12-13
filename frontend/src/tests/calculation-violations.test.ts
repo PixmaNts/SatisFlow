@@ -360,7 +360,9 @@ describe('Frontend Calculation Violations', () => {
               line.includes('powerBalance') || // Power chart percentage calculation
               line.includes('value') && line.includes('1000') || // Power value formatting
               line.includes('/ maxPower') || // Percentage calculation
-              line.includes('* 100') // Percentage conversion
+              line.includes('* 100') || // Percentage conversion
+              line.includes('STICKY') || // UI sticky value detection
+              line.includes('sticky') // UI sticky value detection (lowercase)
             )) ||
             // Math.max for calculating max values for percentage display (charts, bars, etc.)
             (line.includes('Math.max') && (

@@ -95,7 +95,7 @@ pub struct ExtractorCompatibleItemsResponse {
 pub async fn get_extractor_compatible_items(
     State(_state): State<AppState>,
 ) -> Result<Json<Vec<ExtractorCompatibleItemsResponse>>> {
-    let extractor_types = vec![
+    let extractor_types = [
         ExtractorType::MinerMk1,
         ExtractorType::MinerMk2,
         ExtractorType::MinerMk3,
@@ -120,5 +120,8 @@ pub fn routes() -> Router<AppState> {
         .route("/recipes", get(get_recipes))
         .route("/items", get(get_items))
         .route("/machines", get(get_machines))
-        .route("/extractor-compatible-items", get(get_extractor_compatible_items))
+        .route(
+            "/extractor-compatible-items",
+            get(get_extractor_compatible_items),
+        )
 }

@@ -1,5 +1,6 @@
 <template>
   <button
+    :type="type"
     :class="buttonClasses"
     :disabled="disabled || loading"
     :aria-disabled="disabled || loading"
@@ -33,6 +34,8 @@ interface Props {
   disabled?: boolean
   /** Whether to show loading state */
   loading?: boolean
+  /** Button type */
+  type?: 'button' | 'submit' | 'reset'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -40,6 +43,7 @@ const props = withDefaults(defineProps<Props>(), {
   size: 'md',
   disabled: false,
   loading: false,
+  type: 'button',
 })
 
 /** Emit click event */

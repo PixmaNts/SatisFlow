@@ -1024,10 +1024,13 @@ mod tests {
         ];
 
         for (gen_type, fuel) in test_cases {
-            let generator = PowerGenerator::new(uuid_from_u64(1), gen_type, fuel).expect(&format!(
-                "Should create valid {:?} generator with {:?}",
-                gen_type, fuel
-            ));
+            let generator =
+                PowerGenerator::new(uuid_from_u64(1), gen_type, fuel).unwrap_or_else(|_| {
+                    panic!(
+                        "Should create valid {:?} generator with {:?}",
+                        gen_type, fuel
+                    )
+                });
             assert_eq!(generator.generator_type, gen_type);
             assert_eq!(generator.fuel_type, fuel);
         }
@@ -1046,10 +1049,10 @@ mod tests {
         ];
 
         for fuel in biomass_fuels {
-            let generator =
-                PowerGenerator::new(uuid_from_u64(1), GeneratorType::Biomass, fuel).expect(
-                    &format!("Should create valid biomass generator with {:?}", fuel),
-                );
+            let generator = PowerGenerator::new(uuid_from_u64(1), GeneratorType::Biomass, fuel)
+                .unwrap_or_else(|_| {
+                    panic!("Should create valid biomass generator with {:?}", fuel)
+                });
             assert_eq!(generator.fuel_type, fuel);
         }
     }

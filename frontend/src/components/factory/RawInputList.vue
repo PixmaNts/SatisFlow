@@ -29,7 +29,14 @@
           <span v-if="(row as unknown as RawInputResponse).pressurizer" class="pressurized-indicator" title="Pressurized">
             ⚡
           </span>
+          <span v-if="(row as unknown as RawInputResponse).count && (row as unknown as RawInputResponse).count > 1" class="count-badge" :title="`Group of ${(row as unknown as RawInputResponse).count} extractors`">
+            ×{{ (row as unknown as RawInputResponse).count }}
+          </span>
         </div>
+      </template>
+
+      <template #cell-oc="{ row }">
+        <span class="oc-value">{{ ((row as unknown as RawInputResponse).overclock_percent ?? 100).toFixed(1) }}%</span>
       </template>
 
       <template #cell-power="{ row }">
@@ -157,31 +164,37 @@ const columns = [
     key: 'resource',
     label: 'Resource',
     sortable: true,
-    width: '25%'
+    width: '20%'
   },
   {
     key: 'purity',
     label: 'Purity',
     sortable: true,
-    width: '15%'
+    width: '12%'
   },
   {
     key: 'rate',
     label: 'Rate',
     sortable: true,
-    width: '20%'
+    width: '18%'
+  },
+  {
+    key: 'oc',
+    label: 'OC',
+    sortable: true,
+    width: '10%'
   },
   {
     key: 'power',
     label: 'Power',
     sortable: true,
-    width: '20%'
+    width: '15%'
   },
   {
     key: 'actions',
     label: 'Actions',
     sortable: false,
-    width: '20%'
+    width: '25%'
   }
 ]
 
@@ -368,6 +381,22 @@ defineExpose({
 .extractor-count {
   font-size: var(--font-size-xs, 0.75rem);
   color: var(--color-text-secondary, #b8b8b8);
+}
+
+.count-badge {
+  display: inline-block;
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--border-radius-sm, 0.25rem);
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-medium, 500);
+  background-color: rgba(59, 130, 246, 0.2);
+  color: var(--color-primary-400, #60a5fa);
+  border: 1px solid var(--color-primary-500, #3b82f6);
+}
+
+.oc-value {
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 .action-buttons {

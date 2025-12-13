@@ -34,6 +34,8 @@
             "item": "IronOre",
             "purity": "Pure",
             "quantity_per_min": 240.0,
+            "overclock_percent": 100.0,
+            "count": 1,
             "pressurizer": null,
             "extractors": []
           }
@@ -82,6 +84,8 @@
             "item": "Coal",
             "purity": "Normal",
             "quantity_per_min": 60.0,
+            "overclock_percent": 100.0,
+            "count": 1,
             "pressurizer": null,
             "extractors": []
           }

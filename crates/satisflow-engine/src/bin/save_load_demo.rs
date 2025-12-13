@@ -167,6 +167,8 @@ fn create_sample_engine() -> SatisflowEngine {
             ExtractorType::MinerMk2,
             Item::IronOre,
             Some(Purity::Pure),
+            100.0,
+            1,
         )
         .expect("Failed to create miner");
         factory
@@ -216,6 +218,8 @@ fn create_sample_engine() -> SatisflowEngine {
             ExtractorType::MinerMk1,
             Item::Coal,
             Some(Purity::Normal),
+            100.0,
+            1,
         )
         .expect("Failed to create miner");
         factory

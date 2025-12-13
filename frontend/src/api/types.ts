@@ -353,6 +353,8 @@ export interface RawInputResponse {
   item: Item;
   purity: Purity | null;
   quantity_per_min: number;
+  overclock_percent: number;
+  count: number;
   pressurizer: ResourceWellPressurizer | null;
   extractors: ResourceWellExtractor[];
   power_consumption: number;
@@ -657,7 +659,9 @@ export interface CreateRawInputRequest {
   extractor_type: ExtractorType;
   item: Item;
   purity?: Purity;
-  quantity_per_min?: number;
+  overclock_percent?: number; // 0-250, default 100
+  count?: number; // >= 1, default 1
+  quantity_per_min?: number; // Optional override
   pressurizer?: {
     id?: number;
     clock_speed: number;
@@ -712,6 +716,8 @@ export interface RawInputPreviewRequest {
   extractor_type: ExtractorType;
   item: Item;
   purity?: Purity;
+  overclock_percent?: number; // 0-250, default 100
+  count?: number; // >= 1, default 1
   quantity_per_min?: number;
   pressurizer?: {
     id?: number;

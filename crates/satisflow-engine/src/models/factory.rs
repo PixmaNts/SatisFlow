@@ -186,6 +186,8 @@ mod tests {
             ExtractorType::MinerMk2,
             Item::IronOre,
             Some(Purity::Normal),
+            100.0,
+            1,
         )
         .expect("Should create valid raw input");
 
@@ -211,6 +213,8 @@ mod tests {
             ExtractorType::MinerMk3,
             Item::IronOre,
             Some(Purity::Pure),
+            100.0,
+            1,
         )
         .expect("Should create valid raw input");
 
@@ -219,6 +223,8 @@ mod tests {
             ExtractorType::MinerMk2,
             Item::CopperOre,
             Some(Purity::Normal),
+            100.0,
+            1,
         )
         .expect("Should create valid raw input");
 
@@ -245,6 +251,8 @@ mod tests {
             ExtractorType::WaterExtractor,
             Item::Water,
             None,
+            100.0,
+            1,
         )
         .expect("Should create valid water input");
 
@@ -266,6 +274,8 @@ mod tests {
             ExtractorType::MinerMk2,
             Item::IronOre,
             Some(Purity::Normal),
+            100.0,
+            1,
         )
         .expect("Should create valid raw input");
 
@@ -303,6 +313,8 @@ mod tests {
             ExtractorType::MinerMk3,
             Item::Coal,
             Some(Purity::Impure),
+            100.0,
+            1,
         )
         .expect("Should create valid raw input");
 
@@ -323,6 +335,8 @@ mod tests {
             ExtractorType::MinerMk2,
             Item::IronOre,
             Some(Purity::Normal),
+            100.0,
+            1,
         )
         .expect("Should create valid raw input");
 
@@ -351,6 +365,8 @@ mod tests {
                     ExtractorType::MinerMk1,
                     Item::IronOre,
                     Some(Purity::Normal),
+                    100.0,
+                    1,
                 )
                 .expect("valid"),
             )
@@ -363,6 +379,8 @@ mod tests {
                     ExtractorType::MinerMk1,
                     Item::IronOre,
                     Some(Purity::Pure),
+                    100.0,
+                    1,
                 )
                 .expect("valid"),
             )
@@ -385,6 +403,8 @@ mod tests {
                     ExtractorType::OilExtractor,
                     Item::CrudeOil,
                     Some(Purity::Impure),
+                    100.0,
+                    1,
                 )
                 .expect("valid"),
             )
@@ -397,6 +417,8 @@ mod tests {
                     ExtractorType::OilExtractor,
                     Item::CrudeOil,
                     Some(Purity::Pure),
+                    100.0,
+                    1,
                 )
                 .expect("valid"),
             )
@@ -420,6 +442,8 @@ mod tests {
                     ExtractorType::MinerMk1,
                     Item::IronOre,
                     Some(Purity::Normal),
+                    100.0,
+                    1,
                 )
                 .expect("valid"),
             )
@@ -432,6 +456,8 @@ mod tests {
                     ExtractorType::WaterExtractor,
                     Item::Water,
                     None,
+                    100.0,
+                    1,
                 )
                 .expect("valid"),
             )
@@ -444,6 +470,8 @@ mod tests {
                     ExtractorType::OilExtractor,
                     Item::CrudeOil,
                     Some(Purity::Normal),
+                    100.0,
+                    1,
                 )
                 .expect("valid"),
             )
@@ -698,6 +726,8 @@ mod tests {
             ExtractorType::MinerMk2,
             Item::IronOre,
             Some(Purity::Normal),
+            100.0,
+            1,
         )
         .expect("Should create valid iron input");
 
@@ -720,6 +750,8 @@ mod tests {
             ExtractorType::MinerMk3,
             Item::IronOre,
             Some(Purity::Normal),
+            100.0,
+            1,
         )
         .expect("Should create valid iron input");
 
@@ -870,6 +902,8 @@ mod tests {
             ExtractorType::MinerMk1,
             Item::IronOre,
             Some(Purity::Normal),
+            100.0,
+            1,
         )
         .expect("Should create valid iron input");
 

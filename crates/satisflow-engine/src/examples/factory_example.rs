@@ -89,6 +89,8 @@ fn setup_northern_forest_factory(engine: &mut SatisflowEngine, factory_id: Facto
         ExtractorType::MinerMk2,
         Item::IronOre,
         Some(Purity::Normal),
+        100.0,
+        1,
     )
     .expect("Should create valid iron ore input");
 
@@ -97,6 +99,8 @@ fn setup_northern_forest_factory(engine: &mut SatisflowEngine, factory_id: Facto
         ExtractorType::MinerMk2,
         Item::CopperOre,
         Some(Purity::Normal),
+        100.0,
+        1,
     )
     .expect("Should create valid copper ore input");
 
@@ -105,6 +109,8 @@ fn setup_northern_forest_factory(engine: &mut SatisflowEngine, factory_id: Facto
         ExtractorType::MinerMk1,
         Item::Limestone,
         Some(Purity::Normal),
+        100.0,
+        1,
     )
     .expect("Should create valid limestone input");
 
@@ -382,6 +388,8 @@ fn setup_oil_refinery_factory(engine: &mut SatisflowEngine, factory_id: FactoryI
         ExtractorType::OilExtractor,
         Item::CrudeOil,
         Some(Purity::Normal),
+        100.0,
+        1,
     )
     .expect("Should create valid crude oil input");
 
@@ -390,6 +398,8 @@ fn setup_oil_refinery_factory(engine: &mut SatisflowEngine, factory_id: FactoryI
         ExtractorType::WaterExtractor,
         Item::Water,
         None,
+        100.0,
+        1,
     )
     .expect("Should create valid water input");
 
@@ -492,6 +502,8 @@ fn setup_steel_mill_factory(engine: &mut SatisflowEngine, factory_id: FactoryId)
         ExtractorType::MinerMk3,
         Item::IronOre,
         Some(Purity::Pure),
+        100.0,
+        1,
     )
     .expect("Should create valid iron ore input");
 
@@ -500,6 +512,8 @@ fn setup_steel_mill_factory(engine: &mut SatisflowEngine, factory_id: FactoryId)
         ExtractorType::MinerMk2,
         Item::Coal,
         Some(Purity::Normal),
+        100.0,
+        1,
     )
     .expect("Should create valid coal input");
 
@@ -508,6 +522,8 @@ fn setup_steel_mill_factory(engine: &mut SatisflowEngine, factory_id: FactoryId)
         ExtractorType::MinerMk3,
         Item::Limestone,
         Some(Purity::Pure),
+        100.0,
+        1,
     )
     .expect("Should create valid limestone input");
 
@@ -516,6 +532,8 @@ fn setup_steel_mill_factory(engine: &mut SatisflowEngine, factory_id: FactoryId)
         ExtractorType::MinerMk2,
         Item::Bauxite,
         Some(Purity::Normal),
+        100.0,
+        1,
     )
     .expect("Should create valid bauxite input");
 
@@ -644,6 +662,8 @@ fn setup_electronics_lab_factory(engine: &mut SatisflowEngine, factory_id: Facto
         ExtractorType::MinerMk2,
         Item::CateriumOre,
         Some(Purity::Normal),
+        100.0,
+        1,
     )
     .expect("Should create valid caterium ore input");
 
@@ -652,6 +672,8 @@ fn setup_electronics_lab_factory(engine: &mut SatisflowEngine, factory_id: Facto
         ExtractorType::MinerMk2,
         Item::RawQuartz,
         Some(Purity::Normal),
+        100.0,
+        1,
     )
     .expect("Should create valid quartz input");
 
@@ -660,6 +682,8 @@ fn setup_electronics_lab_factory(engine: &mut SatisflowEngine, factory_id: Facto
         ExtractorType::MinerMk1,
         Item::Sulfur,
         Some(Purity::Impure),
+        100.0,
+        1,
     )
     .expect("Should create valid sulfur input");
 
