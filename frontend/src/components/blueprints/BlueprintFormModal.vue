@@ -96,15 +96,20 @@
               </div>
 
               <div class="form-field full-width">
-                <label :for="`line-recipe-${index}`">Recipe *</label>
-                <SearchableSelect
+                <label :for="`line-recipe-${index}`" class="form-label">
+                  Recipe
+                  <span class="required-mark">*</span>
+                </label>
+                <RecipeAutocomplete
                   :id="`line-recipe-${index}`"
                   v-model="line.recipe"
-                  :options="recipeOptions"
-                  placeholder="Search and select a recipe..."
-                  :error="getLineError(index, 'recipe')"
-                  required
+                  :recipes="rawRecipes"
+                  placeholder="Start typing to search recipes..."
+                  :disabled="!rawRecipes.length"
                 />
+                <div v-if="getLineError(index, 'recipe')" class="error-message">
+                  {{ getLineError(index, 'recipe') }}
+                </div>
               </div>
 
               <!-- Machine Groups Table -->
@@ -123,17 +128,27 @@
                 <table v-else class="groups-table">
                   <thead>
                     <tr>
-                      <th>#</th>
-                      <th>Machines</th>
-                      <th>Overclock (%)</th>
-                      <th>Somersloops</th>
-                      <th></th>
+                      <th class="col-number">#</th>
+                      <th class="col-machines">Machines</th>
+                      <th class="col-overclock">
+                        <div class="header-with-icon">
+                          <img src="/icons/Clock_speed.webp" alt="Clock Speed" class="header-icon" />
+                          <span>Overclock (%)</span>
+                        </div>
+                      </th>
+                      <th class="col-somersloop">
+                        <div class="header-with-icon">
+                          <img src="/icons/Somersloop.webp" alt="Somersloop" class="header-icon" />
+                          <span>Somersloops</span>
+                        </div>
+                      </th>
+                      <th class="col-actions"></th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-for="(group, groupIndex) in line.machine_groups" :key="groupIndex">
-                      <td class="group-number">{{ groupIndex + 1 }}</td>
-                      <td class="group-cell">
+                      <td class="col-number">{{ groupIndex + 1 }}</td>
+                      <td class="col-machines">
                         <FormNumber
                           :id="`group-machines-${index}-${groupIndex}`"
                           v-model="group.number_of_machine"
@@ -143,7 +158,7 @@
                           required
                         />
                       </td>
-                      <td class="group-cell">
+                      <td class="col-overclock">
                         <RangeSlider
                           :id="`group-oc-${index}-${groupIndex}`"
                           v-model="group.oc_value"
@@ -155,9 +170,10 @@
                           :show-quick-presets="false"
                           :error="getGroupError(index, groupIndex, 'oc_value')"
                           required
+                          compact
                         />
                       </td>
-                      <td class="group-cell">
+                      <td class="col-somersloop">
                         <FormNumber
                           :id="`group-somersloop-${index}-${groupIndex}`"
                           v-model="group.somersloop"
@@ -167,7 +183,7 @@
                           :error="getGroupError(index, groupIndex, 'somersloop')"
                         />
                       </td>
-                      <td class="group-actions">
+                      <td class="col-actions">
                         <Button variant="ghost" size="sm" @click="confirmDeleteGroup(index, groupIndex)">
                           ×
                         </Button>
@@ -230,10 +246,10 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
-import type { BlueprintTemplateResponse, CreateBlueprintTemplateRequest, MachineGroupInfo } from '@/api/types';
+import type { BlueprintTemplateResponse, CreateBlueprintTemplateRequest, MachineGroupInfo, RecipeInfo } from '@/api/types';
 import { gameData } from '@/api/endpoints';
 import BaseInput from '@/components/forms/BaseInput.vue';
-import SearchableSelect from '@/components/forms/SearchableSelect.vue';
+import RecipeAutocomplete from '@/components/factory/RecipeAutocomplete.vue';
 import FormNumber from '@/components/forms/FormNumber.vue';
 import RangeSlider from '@/components/forms/RangeSlider.vue';
 import Button from '@/components/ui/Button.vue';
@@ -256,7 +272,7 @@ const emit = defineEmits<Emits>();
 
 // State
 const loading = ref(false);
-const recipes = ref<Array<{ value: string; label: string }>>([]);
+const rawRecipes = ref<RecipeInfo[]>([]);
 const errors = ref<Record<string, string>>({});
 
 // Confirmation dialog
@@ -298,7 +314,6 @@ const formData = ref<FormData>({
 });
 
 // Computed
-const recipeOptions = computed(() => recipes.value);
 
 const totalMachines = computed(() => {
   return formData.value.production_lines.reduce((total, line) => {
@@ -331,11 +346,7 @@ const isValid = computed(() => {
 // Methods
 const loadRecipes = async () => {
   try {
-    const recipeData = await gameData.getRecipes();
-    recipes.value = recipeData.map(recipe => ({
-      value: recipe.name,
-      label: `${recipe.name} (${recipe.machine})`,
-    }));
+    rawRecipes.value = await gameData.getRecipes();
   } catch (err) {
     console.error('Failed to load recipes:', err);
   }
@@ -507,30 +518,23 @@ onMounted(() => {
 .blueprint-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 /* Form Sections */
 .form-section {
-  padding: 1rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  padding: 1.5rem;
+  background: var(--color-surface, #252525);
+  border: 1px solid var(--color-border, #404040);
   border-radius: 0.5rem;
-}
-
-:global(.dark) .form-section {
-  background: #1f2937;
-  border-color: #374151;
+  margin-bottom: 0;
+  overflow: visible;
+  min-height: fit-content;
 }
 
 .form-section.preview {
-  background: #f0fdf4;
-  border-color: #bbf7d0;
-}
-
-:global(.dark) .form-section.preview {
-  background: #064e3b;
-  border-color: #065f46;
+  background: var(--color-surface, #252525);
+  border-color: var(--color-border, #404040);
 }
 
 .section-header {
@@ -543,50 +547,83 @@ onMounted(() => {
 .section-title {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary, #e5e5e5);
   margin: 0 0 0.75rem 0;
-}
-
-:global(.dark) .section-title {
-  color: #f9fafb;
 }
 
 .subsection-title {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-text-secondary, #b8b8b8);
   margin: 0;
-}
-
-:global(.dark) .subsection-title {
-  color: #d1d5db;
 }
 
 /* Form Layout */
 .form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 0;
+  align-items: flex-start;
+}
+
+.form-row > .form-field {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .form-field {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.5rem;
+  margin-bottom: 0;
+  min-height: fit-content;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .form-field.full-width {
   grid-column: 1 / -1;
 }
 
-.form-field label {
+.form-field label,
+.form-field .form-label {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: #374151;
+  color: var(--color-text-secondary, #b8b8b8);
+  margin-bottom: 0.5rem;
 }
 
-:global(.dark) .form-field label {
-  color: #d1d5db;
+.form-label .required-mark {
+  color: var(--color-error, #ef4444);
+  margin-left: 0.25rem;
+}
+
+.form-field .error-message {
+  font-size: 0.75rem;
+  color: var(--color-error, #ef4444);
+  margin-top: 0.25rem;
+}
+
+/* Recipe Autocomplete styling to match form inputs */
+.form-field :deep(.recipe-autocomplete .autocomplete-input) {
+  padding: 0.625rem 0.875rem;
+  padding-right: 2.25rem;
+  font-size: 0.875rem;
+  background-color: var(--color-surface-inset, #1f1f1f);
+  border: 1px solid var(--color-border, #404040);
+  border-radius: 6px;
+  color: var(--color-text-primary, #e5e5e5);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-field :deep(.recipe-autocomplete .autocomplete-input:focus) {
+  border-color: var(--color-ficsit-orange, #f58b00);
+  box-shadow: 0 0 0 3px rgba(245, 139, 0, 0.1);
+}
+
+.form-field :deep(.recipe-autocomplete .autocomplete-input::placeholder) {
+  color: var(--color-text-muted, #8a8a8a);
 }
 
 /* Production Lines */
@@ -602,6 +639,7 @@ onMounted(() => {
   gap: 0.5rem;
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .line-number {
@@ -610,58 +648,47 @@ onMounted(() => {
   justify-content: center;
   width: 1.25rem;
   height: 1.25rem;
-  background: #dbeafe;
-  color: #1e40af;
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
   border-radius: 50%;
   font-size: 0.75rem;
   font-weight: 700;
   flex-shrink: 0;
 }
 
-:global(.dark) .line-number {
-  background: #1e3a8a;
-  color: #93c5fd;
-}
-
 .line-name {
   font-weight: 500;
   font-size: 0.875rem;
-  color: #111827;
-}
-
-:global(.dark) .line-name {
-  color: #f9fafb;
+  color: var(--color-text-primary, #e5e5e5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .line-recipe {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--color-text-muted, #8a8a8a);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-:global(.dark) .line-recipe {
-  color: #9ca3af;
-}
-
 .line-stats {
-  display: flex;
+  display: inline-flex !important;
+  align-items: center;
   gap: 0.5rem;
   font-size: 0.75rem;
+  flex-wrap: nowrap !important;
+  white-space: nowrap !important;
+  flex-shrink: 0;
 }
 
 .line-stats .stat {
   padding: 0.125rem 0.5rem;
-  background: #e0e7ff;
-  color: #3730a3;
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
   border-radius: 0.25rem;
   white-space: nowrap;
-}
-
-:global(.dark) .line-stats .stat {
-  background: #312e81;
-  color: #c7d2fe;
 }
 
 .line-content {
@@ -680,85 +707,97 @@ onMounted(() => {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
+  table-layout: fixed;
 }
 
 .groups-table thead {
-  background: #f3f4f6;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-:global(.dark) .groups-table thead {
-  background: #374151;
-  border-color: #4b5563;
+  background: var(--color-surface-inset, #1f1f1f);
+  border-bottom: 2px solid var(--color-border, #404040);
 }
 
 .groups-table th {
-  padding: 0.5rem;
+  padding: 0.75rem 0.5rem;
   text-align: left;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--color-text-muted, #8a8a8a);
   text-transform: uppercase;
+  vertical-align: middle;
 }
 
-:global(.dark) .groups-table th {
-  color: #9ca3af;
+.header-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.header-icon {
+  width: 1rem;
+  height: 1rem;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .groups-table tbody tr {
-  border-bottom: 1px solid #e5e7eb;
-}
-
-:global(.dark) .groups-table tbody tr {
-  border-color: #374151;
+  border-bottom: 1px solid var(--color-border, #404040);
 }
 
 .groups-table tbody tr:hover {
-  background: #f9fafb;
-}
-
-:global(.dark) .groups-table tbody tr:hover {
-  background: #1f2937;
+  background: var(--color-surface-hover, #2a2a2a);
 }
 
 .groups-table td {
-  padding: 0.5rem;
+  padding: 0.75rem 0.5rem;
+  vertical-align: top;
 }
 
-.group-number {
-  font-weight: 600;
-  color: #111827;
-  width: 2rem;
-}
-
-:global(.dark) .group-number {
-  color: #f9fafb;
-}
-
-.group-cell {
-  min-width: 8rem;
-}
-
-.group-actions {
-  text-align: right;
+.col-number {
   width: 3rem;
+  text-align: center;
+  font-weight: 600;
+  color: var(--color-text-primary, #e5e5e5);
+}
+
+.col-machines {
+  width: 6rem;
+}
+
+.col-machines .form-number {
+  max-width: 100%;
+}
+
+.col-overclock {
+  width: auto;
+  min-width: 18rem;
+}
+
+.col-somersloop {
+  width: 5rem;
+}
+
+.col-somersloop .form-number {
+  max-width: 100%;
+}
+
+.col-machines .number-input,
+.col-somersloop .number-input {
+  min-width: 0;
+}
+
+.col-actions {
+  width: 3rem;
+  text-align: center;
 }
 
 /* Empty States */
 .empty-state {
   padding: 2rem;
   text-align: center;
-  color: #6b7280;
+  color: var(--color-text-muted, #8a8a8a);
   font-size: 0.875rem;
-  background: #fff;
-  border: 2px dashed #d1d5db;
+  background: var(--color-surface-inset, #1f1f1f);
+  border: 2px dashed var(--color-border, #404040);
   border-radius: 0.5rem;
-}
-
-:global(.dark) .empty-state {
-  background: #111827;
-  border-color: #4b5563;
-  color: #9ca3af;
 }
 
 .empty-state.small {
@@ -778,34 +817,21 @@ onMounted(() => {
   flex-direction: column;
   gap: 0.25rem;
   padding: 0.75rem;
-  background: #fff;
-  border: 1px solid #d1d5db;
+  background: var(--color-surface-inset, #1f1f1f);
+  border: 1px solid var(--color-border, #404040);
   border-radius: 0.375rem;
-}
-
-:global(.dark) .stat-item {
-  background: #1f2937;
-  border-color: #374151;
 }
 
 .stat-label {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--color-text-muted, #8a8a8a);
   font-weight: 500;
-}
-
-:global(.dark) .stat-label {
-  color: #9ca3af;
 }
 
 .stat-value {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #111827;
-}
-
-:global(.dark) .stat-value {
-  color: #f9fafb;
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 /* Modal Actions */

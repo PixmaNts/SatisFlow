@@ -8,7 +8,7 @@
       <input
         :id="inputId"
         ref="inputElement"
-        v-model="searchTerm"
+        :value="inputValue"
         class="autocomplete-input"
         type="text"
         :placeholder="placeholder"
@@ -90,6 +90,7 @@ import {
   watch
 } from 'vue'
 import type { RecipeInfo } from '@/api/types'
+import { formatItemName } from '@/composables/useItemIcon'
 
 interface Props {
   modelValue: string
@@ -122,9 +123,27 @@ const emit = defineEmits<Emits>()
 
 const rootElement = ref<HTMLElement | null>(null)
 const inputElement = ref<HTMLInputElement | null>(null)
-const searchTerm = ref(props.modelValue ?? '')
+const searchTerm = ref('')
+const inputValue = ref('') // The actual displayed value in the input
 const isOpen = ref(false)
 const highlightedIndex = ref(-1)
+const lastEmittedRecipe = ref<string | null>(null) // Track last emitted recipe to avoid loops
+
+// Update inputValue when searchTerm or isOpen changes
+watch([searchTerm, isOpen], ([term, open]) => {
+  if (!term) {
+    inputValue.value = ''
+    return
+  }
+  
+  // When dropdown is open, show the raw search term (what user is typing)
+  if (open) {
+    inputValue.value = term
+  } else {
+    // When dropdown is closed, format the recipe identifier for display
+    inputValue.value = formatItemName(term)
+  }
+}, { immediate: true })
 
 const instanceId = Math.random().toString(36).slice(2, 9)
 const inputId = computed(() => props.id ?? `recipe-autocomplete-${instanceId}`)
@@ -141,8 +160,12 @@ const visibleRecipes = computed<RecipeInfo[]>(() => {
   const term = searchTerm.value.trim().toLowerCase()
   const suggestions = term
     ? normalizedRecipes.value.filter(recipe => {
+        // Search by recipe identifier (name) and formatted name for better matching
+        const recipeNameLower = recipe.name.toLowerCase()
+        const formattedNameLower = formatItemName(recipe.name).toLowerCase()
         return (
-          recipe.name.toLowerCase().includes(term) ||
+          recipeNameLower.includes(term) ||
+          formattedNameLower.includes(term) ||
           recipe.machine.toLowerCase().includes(term)
         )
       })
@@ -153,6 +176,11 @@ const visibleRecipes = computed<RecipeInfo[]>(() => {
 
 const openDropdown = () => {
   if (props.disabled) return
+  // When opening, ensure searchTerm is set to the modelValue (recipe identifier)
+  // This ensures search works correctly with the identifier format
+  if (props.modelValue && searchTerm.value !== props.modelValue) {
+    searchTerm.value = props.modelValue
+  }
   isOpen.value = true
   highlightedIndex.value = visibleRecipes.value.length ? 0 : -1
   emit('focus')
@@ -169,6 +197,8 @@ const setHighlightedIndex = (index: number) => {
 
 const selectRecipe = (recipe: RecipeInfo) => {
   searchTerm.value = recipe.name
+  inputValue.value = formatItemName(recipe.name) // Format immediately for display
+  lastEmittedRecipe.value = recipe.name // Track that we're emitting this
   emit('update:modelValue', recipe.name)
   emit('selected', recipe)
   nextTick(() => {
@@ -179,6 +209,7 @@ const selectRecipe = (recipe: RecipeInfo) => {
 
 const clearSelection = () => {
   searchTerm.value = ''
+  inputValue.value = ''
   highlightedIndex.value = -1
   emit('update:modelValue', '')
   emit('cleared')
@@ -187,7 +218,15 @@ const clearSelection = () => {
   })
 }
 
-const handleInput = () => {
+const handleInput = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const newValue = target.value
+  
+  // Update searchTerm with what user typed
+  searchTerm.value = newValue
+  // Also update inputValue directly (watch will handle formatting when closed)
+  inputValue.value = newValue
+  
   if (!isOpen.value) {
     openDropdown()
   }
@@ -230,6 +269,8 @@ const handleKeydown = (event: KeyboardEvent) => {
       if (isOpen.value) {
         event.preventDefault()
         closeDropdown()
+        // Reset to modelValue when closing
+        searchTerm.value = props.modelValue ?? ''
       } else {
         searchTerm.value = props.modelValue ?? ''
       }
@@ -247,7 +288,12 @@ const handleBlur = () => {
   requestAnimationFrame(() => {
     closeDropdown()
     emit('blur')
-    searchTerm.value = props.modelValue ?? searchTerm.value
+    // Reset to modelValue (recipe identifier) - the watch will format it for display
+    if (props.modelValue) {
+      searchTerm.value = props.modelValue
+    } else {
+      searchTerm.value = ''
+    }
   })
 }
 
@@ -265,13 +311,40 @@ const formatItems = (items?: Array<{ item: string; quantity: number }>) => {
   }).join(', ')
 }
 
+// Watch for modelValue changes
 watch(
   () => props.modelValue,
-  value => {
+  (value) => {
+    // When modelValue changes, update searchTerm to the recipe identifier
     if (value !== searchTerm.value) {
       searchTerm.value = value ?? ''
+      // Reset lastEmittedRecipe when modelValue changes externally (e.g., when editing)
+      if (value !== lastEmittedRecipe.value) {
+        lastEmittedRecipe.value = null
+      }
     }
-  }
+  },
+  { immediate: true }
+)
+
+// Watch for when recipes become available and modelValue is set
+// This ensures we emit the selected event when editing a production line
+watch(
+  () => [props.modelValue, normalizedRecipes.value.length],
+  ([value, recipeCount]) => {
+    if (value && recipeCount > 0 && value !== lastEmittedRecipe.value) {
+      const matchingRecipe = normalizedRecipes.value.find(r => r.name === value)
+      if (matchingRecipe) {
+        lastEmittedRecipe.value = value
+        // Emit selected event so parent knows recipe is selected
+        // Use nextTick to avoid infinite loops
+        nextTick(() => {
+          emit('selected', matchingRecipe)
+        })
+      }
+    }
+  },
+  { immediate: true }
 )
 
 watch(

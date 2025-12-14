@@ -71,18 +71,55 @@ const onFocus = (event: FocusEvent) => {
 
 <style scoped>
 .form-number {
-  @apply space-y-1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
 }
 
 .number-input {
-  @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.625rem 0.875rem;
+  background-color: var(--color-surface-inset, #1f1f1f);
+  border: 1px solid var(--color-border, #404040);
+  border-radius: 6px;
+  color: var(--color-text-primary, #e5e5e5);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.number-input::placeholder {
+  color: var(--color-text-muted, #8a8a8a);
+}
+
+.number-input:hover:not(:disabled) {
+  border-color: var(--color-border-light, #4a4a4a);
+}
+
+.number-input:focus {
+  border-color: var(--color-ficsit-orange, #f58b00);
+  box-shadow: 0 0 0 3px rgba(245, 139, 0, 0.1);
+}
+
+.number-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .number-input.has-error {
-  @apply border-red-300 dark:border-red-600 focus:ring-red-500 focus:border-red-500;
+  border-color: var(--color-error, #ef4444);
+}
+
+.number-input.has-error:focus {
+  border-color: var(--color-error, #ef4444);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
 .error-message {
-  @apply text-sm text-red-600 dark:text-red-400 mt-1;
+  font-size: 0.75rem;
+  color: var(--color-error, #ef4444);
 }
 </style>

@@ -142,18 +142,30 @@ defineExpose({
 }
 
 .header-content {
-  @apply flex items-center justify-between gap-3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  flex-wrap: nowrap;
 }
 
 .header-left {
-  @apply flex items-center gap-2 flex-1 min-w-0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .chevron-icon {
   @apply text-gray-500 dark:text-gray-400
          transition-transform duration-200 flex-shrink-0;
   font-size: 0.625rem;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1;
 }
 
@@ -166,7 +178,12 @@ defineExpose({
 }
 
 .header-right {
-  @apply flex items-center gap-2 flex-shrink-0;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem;
+  flex-shrink: 0 !important;
+  flex-wrap: nowrap !important;
+  margin-left: auto;
 }
 
 .summary-content {

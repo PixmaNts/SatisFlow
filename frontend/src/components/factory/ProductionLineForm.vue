@@ -67,7 +67,8 @@
       </div>
 
       <!-- Machine Groups -->
-      <div v-if="formData.type === 'recipe' && selectedRecipe" class="form-group">
+      <!-- Show machine groups if recipe is selected OR if we're editing with machine groups (recipes might not be loaded yet) -->
+      <div v-if="formData.type === 'recipe' && (selectedRecipe || (isEditing && formData.machine_groups.length > 0))" class="form-group">
         <label class="form-label">Machine Groups</label>
         <div class="machine-groups">
           <div
@@ -102,7 +103,12 @@
                 </div>
 
                 <div class="field">
-                  <label :for="`oc-${index}`" class="field-label">Overclock (%)</label>
+                  <label :for="`oc-${index}`" class="field-label">
+                    <div class="label-with-icon">
+                      <img src="/icons/Clock_speed.webp" alt="Clock Speed" class="label-icon" />
+                      <span>Overclock (%)</span>
+                    </div>
+                  </label>
                   <input
                     :id="`oc-${index}`"
                     v-model.number="group.oc_value"
@@ -117,7 +123,10 @@
 
                 <div v-if="selectedMachineInfo" class="field">
                   <label :for="`somersloop-${index}`" class="field-label">
-                    Somersloops (max: {{ selectedMachineInfo.max_somersloop }})
+                    <div class="label-with-icon">
+                      <img src="/icons/Somersloop.webp" alt="Somersloop" class="label-icon" />
+                      <span>Somersloops (max: {{ selectedMachineInfo.max_somersloop }})</span>
+                    </div>
                   </label>
                   <input
                     :id="`somersloop-${index}`"
@@ -198,7 +207,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameDataStore } from '@/stores/gameData'
 import { useFactoryStore } from '@/stores/factory'
@@ -368,12 +377,21 @@ const handleTypeChange = () => {
 }
 
 const handleRecipeSelected = (recipe: RecipeInfo) => {
-  if (lastSelectedRecipe.value === recipe.name && formData.value.machine_groups.length) {
+  // Always update lastSelectedRecipe to ensure recipe is recognized
+  // This is important for the selectedRecipe computed to work correctly
+  lastSelectedRecipe.value = recipe.name
+  
+  // Don't reset machine groups if this is the same recipe and groups already exist
+  // This prevents losing machine group data when editing
+  if (lastSelectedRecipe.value === recipe.name && formData.value.machine_groups.length > 0) {
+    // Recipe is already selected and has groups, just ensure it's recognized
     return
   }
 
-  formData.value.machine_groups = [createDefaultMachineGroup()]
-  lastSelectedRecipe.value = recipe.name
+  // Only create default machine group if we don't have any groups yet
+  if (formData.value.machine_groups.length === 0) {
+    formData.value.machine_groups = [createDefaultMachineGroup()]
+  }
 }
 
 const handleRecipeCleared = () => {
@@ -444,9 +462,19 @@ const loadProductionLine = () => {
       blueprint_template_id: '',
       machine_groups: [...recipe.machine_groups]
     }
-    lastSelectedRecipe.value = recipe.recipe
-    // Fetch preview for the loaded production line
-    fetchPreview()
+    // Don't set lastSelectedRecipe here - let handleRecipeSelected do it
+    // This ensures the recipe is properly recognized
+    
+    // Manually trigger recipe selection to ensure it's recognized
+    // Use nextTick to ensure recipes are loaded first
+    // The watch on formData will handle fetching the preview once everything is ready
+    nextTick(() => {
+      const recipeInfo = gameDataStore.getRecipeByName(recipe.recipe)
+      if (recipeInfo) {
+        // Ensure recipe is selected even if machine groups exist
+        handleRecipeSelected(recipeInfo)
+      }
+    })
   } else if ('ProductionLineBlueprint' in props.productionLine) {
     const blueprint = props.productionLine.ProductionLineBlueprint
     formData.value = {
@@ -527,10 +555,7 @@ watch(() => props.productionLine, () => {
 watch(() => props.show, (show) => {
   if (show) {
     loadProductionLine()
-    // Also fetch preview for new production lines
-    if (!props.productionLine) {
-      fetchPreview()
-    }
+    // Preview will be fetched by the watch on formData when form is valid
   } else {
     resetForm()
   }
@@ -540,11 +565,43 @@ watch(() => props.show, (show) => {
 watch(
   () => [formData.value.recipe, formData.value.machine_groups],
   () => {
-    if (formData.value.type === 'recipe') {
+    // Only fetch preview if:
+    // 1. Type is recipe
+    // 2. Recipe is set
+    // 3. Machine groups exist and are valid
+    // 4. Form can submit (validates all required fields)
+    if (
+      formData.value.type === 'recipe' &&
+      formData.value.recipe &&
+      formData.value.machine_groups.length > 0 &&
+      canSubmit.value
+    ) {
       fetchPreview()
+    } else {
+      // Clear preview if form is invalid
+      previewData.value = null
     }
   },
   { deep: true }
+)
+
+// Watch for recipes to become available and ensure recipe is selected when editing
+watch(
+  () => [recipes.value.length, formData.value.recipe, props.productionLine],
+  ([recipeCount, recipeValue, productionLine]) => {
+    // If we're editing and have a recipe but it's not selected yet, select it
+    if (productionLine && recipeValue && recipeCount > 0) {
+      const recipeInfo = gameDataStore.getRecipeByName(recipeValue)
+      if (recipeInfo) {
+        // Always ensure recipe is selected when recipes become available
+        // This handles the case where recipes load after the form
+        if (lastSelectedRecipe.value !== recipeInfo.name) {
+          handleRecipeSelected(recipeInfo)
+        }
+      }
+    }
+  },
+  { immediate: true }
 )
 
 // Load recipes and blueprint templates on mount
@@ -666,6 +723,19 @@ onMounted(async () => {
   font-size: var(--font-size-xs, 0.75rem);
   font-weight: var(--font-weight-medium, 500);
   color: var(--color-gray-600, #4b5563);
+}
+
+.label-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.label-icon {
+  width: 1rem;
+  height: 1rem;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .power-preview {

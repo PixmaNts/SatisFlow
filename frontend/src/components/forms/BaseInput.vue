@@ -143,50 +143,92 @@ defineExpose({
 
 <style scoped>
 .base-input {
-  @apply mb-4;
+  margin-bottom: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .base-input__label {
-  @apply block text-sm font-medium text-gray-700 mb-1;
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-secondary, #b8b8b8);
+  margin-bottom: 0.5rem;
 }
 
 .base-input__required {
-  @apply text-red-500 ml-1;
+  color: var(--color-error, #ef4444);
+  margin-left: 0.25rem;
 }
 
 .base-input__wrapper {
-  @apply relative;
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .base-input__field {
-  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.625rem 0.875rem;
+  background-color: var(--color-surface-inset, #1f1f1f);
+  border: 1px solid var(--color-border, #404040);
+  border-radius: 6px;
+  color: var(--color-text-primary, #e5e5e5);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.base-input__field::placeholder {
+  color: var(--color-text-muted, #8a8a8a);
+}
+
+.base-input__field:hover:not(:disabled):not(:readonly) {
+  border-color: var(--color-border-light, #4a4a4a);
+}
+
+.base-input__field:focus {
+  border-color: var(--color-ficsit-orange, #f58b00);
+  box-shadow: 0 0 0 3px rgba(245, 139, 0, 0.1);
 }
 
 .base-input__field--invalid {
-  @apply border-red-300 focus:ring-red-500 focus:border-red-500;
+  border-color: var(--color-error, #ef4444);
+}
+
+.base-input__field--invalid:focus {
+  border-color: var(--color-error, #ef4444);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
 .base-input__field--disabled {
-  @apply bg-gray-50 text-gray-500 cursor-not-allowed;
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .base-input__field--readonly {
-  @apply bg-gray-50 text-gray-700;
+  cursor: default;
 }
 
 .base-input__error {
-  @apply mt-1 text-sm text-red-600;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--color-error, #ef4444);
 }
 
 .base-input__hint {
-  @apply mt-1 text-sm text-gray-500;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #8a8a8a);
 }
 
 .base-input--has-error .base-input__label {
-  @apply text-red-700;
+  color: var(--color-error, #ef4444);
 }
 
 .base-input--disabled .base-input__label {
-  @apply text-gray-500;
+  color: var(--color-text-disabled, #5a5a5a);
 }
 </style>

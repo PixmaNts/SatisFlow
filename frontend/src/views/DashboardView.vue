@@ -94,7 +94,7 @@
         >
           <template #cell-item="{ row }">
             <div class="item-name">
-              <span class="item-icon">{{ getItemIcon(String(row.item)) }}</span>
+              <ItemDisplay :item="row.item" :show-name="false" size="sm" />
               <span class="item-text">{{ formatItemName(String(row.item)) }}</span>
             </div>
           </template>
@@ -149,6 +149,7 @@ import { useDashboardStore, useFactoryStore, useLogisticsStore, useGameDataStore
 import { usePreferencesStore } from '@/stores/preferences'
 import { Button, Alert, LoadingSpinner, DataTable } from '@/components/ui'
 import { PowerStatsChart, SaveLoadControls } from '@/components/dashboard'
+import ItemDisplay from '@/components/ui/ItemDisplay.vue'
 import type { Column } from '@/components/ui/DataTable.vue'
 
 // Stores
@@ -332,28 +333,6 @@ const formatItemName = (item: string): string => {
   return item.replace(/([A-Z])/g, ' $1').trim()
 }
 
-const getItemIcon = (item: string): string => {
-  // Simple icon mapping - could be enhanced with actual icons
-  const iconMap: Record<string, string> = {
-    'IronOre': '⛏️',
-    'CopperOre': '⛏️',
-    'IronIngot': '🔩',
-    'CopperIngot': '🔩',
-    'IronPlate': '🔷',
-    'CopperSheet': '🔷',
-    'Wire': '🔌',
-    'Cable': '🔌',
-    'Concrete': '🧱',
-    'Coal': '⚫',
-    'Water': '💧',
-    'CrudeOil': '🛢️',
-    'Fuel': '⛽',
-    'PowerShard': '💎',
-    'NuclearWaste': '☢️'
-  }
-  return iconMap[item] || '📦'
-}
-
 // Lifecycle
 onMounted(() => {
   fetchData()
@@ -517,9 +496,6 @@ watch([autoRefreshEnabled, refreshInterval], () => {
   gap: var(--spacing-xs, 0.25rem);
 }
 
-.item-icon {
-  font-size: var(--font-size-lg, 1.125rem);
-}
 
 .item-text {
   font-weight: var(--font-weight-medium, 500);

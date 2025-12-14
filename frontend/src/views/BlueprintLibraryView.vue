@@ -44,26 +44,45 @@
 
     <!-- Error State -->
     <div v-else-if="error" class="error-container">
-      <Alert variant="error" :message="error" />
-      <Button @click="fetchTemplates" variant="primary">Retry</Button>
+      <div class="error-content-wrapper">
+        <Alert variant="error" :message="error" />
+        <Button @click="fetchTemplates" variant="primary" class="mt-4">
+          <template #icon>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </template>
+          Retry
+        </Button>
+      </div>
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="templates.length === 0" class="empty-state">
-      <EmptyState
-        title="No Blueprints Yet"
-        description="Create your first blueprint or import one from a file to get started."
-        icon="blueprint"
-      >
-        <template #actions>
-          <Button @click="showCreateModal = true" variant="primary">
+    <div v-else-if="templates.length === 0" class="empty-state-container">
+      <div class="empty-state-content">
+        <h2 class="empty-title">No Blueprints Yet</h2>
+        <p class="empty-description">
+          Create your first blueprint or import one from a file to get started.
+        </p>
+        <div class="empty-state-buttons">
+          <Button @click="showCreateModal = true" variant="primary" size="lg">
+            <template #icon>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+            </template>
             Create First Blueprint
           </Button>
-          <Button @click="triggerFileImport" variant="secondary">
+          <Button @click="triggerFileImport" variant="secondary" size="lg">
+            <template #icon>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+            </template>
             Import Blueprint File
           </Button>
-        </template>
-      </EmptyState>
+        </div>
+      </div>
     </div>
 
     <!-- Blueprint Grid -->
@@ -72,12 +91,21 @@
         v-for="template in templates"
         :key="template.id"
         :template="template"
-        @edit="onEditTemplate"
-        @export="onExportTemplate"
-        @delete="onDeleteTemplate"
-        @use-in-factory="onUseInFactory"
+        @click="onCardClick"
       />
     </div>
+
+    <!-- Blueprint Details Modal -->
+    <BlueprintDetailsModal
+      v-if="selectedTemplate"
+      :show="showDetailsModal"
+      :template="selectedTemplate"
+      @close="closeDetailsModal"
+      @use-in-factory="onUseInFactoryFromModal"
+      @export="onExportFromModal"
+      @edit="onEditFromModal"
+      @delete="onDeleteFromModal"
+    />
 
     <!-- Create/Edit Modal -->
     <BlueprintFormModal
@@ -141,6 +169,7 @@ import { useErrorHandler } from '@/composables/useErrorHandler';
 import PageHeader from '@/components/layout/PageHeader.vue';
 import Button from '@/components/ui/Button.vue';
 import BlueprintCard from '@/components/blueprints/BlueprintCard.vue';
+import BlueprintDetailsModal from '@/components/blueprints/BlueprintDetailsModal.vue';
 import BlueprintFormModal from '@/components/blueprints/BlueprintFormModal.vue';
 import BlueprintPreviewModal from '@/components/factory/BlueprintPreviewModal.vue';
 import FactorySelectorModal from '@/components/blueprints/FactorySelectorModal.vue';
@@ -159,6 +188,7 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const showCreateModal = ref(false);
 const showImportModal = ref(false);
+const showDetailsModal = ref(false);
 const showFactorySelector = ref(false);
 const editingTemplate = ref<BlueprintTemplateResponse | null>(null);
 const selectedTemplate = ref<BlueprintTemplateResponse | null>(null);
@@ -232,6 +262,44 @@ const onFileSelected = async (event: Event) => {
 
   // Reset file input
   target.value = '';
+};
+
+const onCardClick = (template: BlueprintTemplateResponse) => {
+  selectedTemplate.value = template;
+  showDetailsModal.value = true;
+};
+
+const closeDetailsModal = () => {
+  showDetailsModal.value = false;
+  selectedTemplate.value = null;
+};
+
+const onUseInFactoryFromModal = () => {
+  if (selectedTemplate.value) {
+    closeDetailsModal();
+    onUseInFactory(selectedTemplate.value);
+  }
+};
+
+const onExportFromModal = () => {
+  if (selectedTemplate.value) {
+    closeDetailsModal();
+    onExportTemplate(selectedTemplate.value);
+  }
+};
+
+const onEditFromModal = () => {
+  if (selectedTemplate.value) {
+    closeDetailsModal();
+    onEditTemplate(selectedTemplate.value);
+  }
+};
+
+const onDeleteFromModal = () => {
+  if (selectedTemplate.value) {
+    closeDetailsModal();
+    onDeleteTemplate(selectedTemplate.value);
+  }
 };
 
 const onEditTemplate = (template: BlueprintTemplateResponse) => {
@@ -367,30 +435,120 @@ onMounted(() => {
 
 <style scoped>
 .blueprint-library-view {
-  @apply p-6;
+  padding: 1.5rem 1.5rem 1.5rem 2rem;
+  max-width: 80rem;
+  margin: 0 auto;
+  min-height: calc(100vh - 200px);
 }
 
 .header-actions {
-  @apply flex gap-3;
+  @apply flex gap-3 flex-wrap;
 }
 
 .loading-container {
-  @apply flex flex-col items-center justify-center py-12;
+  @apply flex flex-col items-center justify-center py-24;
+  min-height: 400px;
 }
 
 .loading-text {
-  @apply mt-4 text-gray-600;
+  @apply mt-4 text-gray-500 dark:text-gray-400 text-lg;
 }
 
 .error-container {
-  @apply py-12;
+  @apply py-16 px-4 flex flex-col items-center justify-center;
+  min-height: 400px;
 }
 
-.empty-state {
-  @apply py-12;
+.error-content-wrapper {
+  @apply max-w-md w-full flex flex-col items-center;
+}
+
+.empty-state-container {
+  @apply py-12 px-4;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.empty-state-content {
+  @apply max-w-2xl w-full;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.empty-title {
+  @apply text-2xl font-semibold mb-3;
+  color: var(--color-text-primary, #e5e5e5);
+}
+
+.empty-description {
+  @apply text-base mb-8;
+  color: var(--color-text-secondary, #b8b8b8);
+  max-width: 500px;
+  line-height: 1.6;
+}
+
+.empty-state-buttons {
+  @apply flex flex-col sm:flex-row gap-3 items-center justify-center w-full;
 }
 
 .blueprint-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6;
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 2rem;
+  animation: fade-in 0.3s ease-out;
+}
+
+@media (min-width: 640px) {
+  .blueprint-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .blueprint-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .blueprint-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Ensure cards have equal height */
+.blueprint-grid > * {
+  height: 100%;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .blueprint-library-view {
+    @apply p-4;
+  }
+  
+  .header-actions {
+    @apply w-full;
+  }
+  
+  .header-actions > * {
+    @apply flex-1;
+  }
 }
 </style>

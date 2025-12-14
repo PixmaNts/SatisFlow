@@ -41,6 +41,46 @@
         </div>
       </template>
 
+      <template #cell-consumed="{ row }">
+        <div class="consumed-items">
+          <div
+            v-for="input in (row as ProductionLineResponse).input_rate"
+            :key="input.item"
+            class="consumed-item"
+          >
+            <ItemDisplay
+              :item="input.item"
+              :show-name="false"
+              size="sm"
+            />
+            <span class="consumed-quantity">{{ formatQuantity(input.quantity) }}</span>
+          </div>
+          <span v-if="(row as ProductionLineResponse).input_rate.length === 0" class="no-input">
+            No input
+          </span>
+        </div>
+      </template>
+
+      <template #cell-produced="{ row }">
+        <div class="produced-items">
+          <div
+            v-for="output in (row as ProductionLineResponse).output_rate"
+            :key="output.item"
+            class="produced-item"
+          >
+            <ItemDisplay
+              :item="output.item"
+              :show-name="false"
+              size="sm"
+            />
+            <span class="produced-quantity">{{ formatQuantity(output.quantity) }}</span>
+          </div>
+          <span v-if="(row as ProductionLineResponse).output_rate.length === 0" class="no-output">
+            No output
+          </span>
+        </div>
+      </template>
+
       <template #cell-actions="{ row }">
         <div class="action-buttons">
           <!-- Export button for blueprints only -->
@@ -151,6 +191,7 @@ import Button from '@/components/ui/Button.vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import Modal from '@/components/ui/Modal.vue'
 import Alert from '@/components/ui/Alert.vue'
+import ItemDisplay from '@/components/ui/ItemDisplay.vue'
 import ProductionLineForm from './ProductionLineForm.vue'
 import BlueprintPreviewModal from './BlueprintPreviewModal.vue'
 import BlueprintSelectorModal from './BlueprintSelectorModal.vue'
@@ -199,31 +240,43 @@ const columns = [
     key: 'name',
     label: 'Name',
     sortable: true,
-    width: '25%'
+    width: '15%'
   },
   {
     key: 'recipe',
     label: 'Recipe',
     sortable: true,
-    width: '25%'
+    width: '15%'
   },
   {
     key: 'machines',
     label: 'Machines',
     sortable: false,
-    width: '20%'
+    width: '12%'
+  },
+  {
+    key: 'consumed',
+    label: 'Consumed',
+    sortable: false,
+    width: '18%'
+  },
+  {
+    key: 'produced',
+    label: 'Produced',
+    sortable: false,
+    width: '18%'
   },
   {
     key: 'power',
     label: 'Power',
     sortable: true,
-    width: '15%'
+    width: '10%'
   },
   {
     key: 'actions',
     label: 'Actions',
     sortable: false,
-    width: '15%'
+    width: '12%'
   }
 ]
 
@@ -298,6 +351,14 @@ const formatPower = (power: number): string => {
     return `${(power * 1000).toFixed(0)} kW`
   }
   return `${power.toFixed(1)} MW`
+}
+
+const formatQuantity = (quantity: number): string => {
+  // Format quantity per minute
+  if (quantity >= 1000) {
+    return `${(quantity / 1000).toFixed(1)}k/min`
+  }
+  return `${quantity.toFixed(1)}/min`
 }
 
 const handleRowClick = (row: ProductionLineResponse) => {
@@ -567,6 +628,34 @@ defineExpose({
   font-size: var(--font-size-xs, 0.75rem);
   color: var(--color-amber-600, #d97706);
   font-weight: var(--font-weight-medium, 500);
+}
+
+.consumed-items,
+.produced-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs, 0.25rem);
+}
+
+.consumed-item,
+.produced-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 0.25rem);
+}
+
+.consumed-quantity,
+.produced-quantity {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary, #b8b8b8);
+  font-family: var(--font-family-mono, 'Courier New', monospace);
+}
+
+.no-input,
+.no-output {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-secondary, #b8b8b8);
+  font-style: italic;
 }
 
 .action-buttons {

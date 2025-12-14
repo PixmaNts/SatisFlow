@@ -22,12 +22,22 @@ const emit = defineEmits<{
   action: []
 }>()
 
+// Icon components map
+const iconMap: Record<string, string> = {
+  blueprint: `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 2v6m6-6v6M9 18v4m6-4v4M3 10H1m2 6H1m20-6h-2m2 6h-2M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+      <path d="M9 10h6v6H9V10z"/>
+    </svg>
+  `
+}
+
 // Size classes
 const sizeClasses = computed(() => {
   const sizes = {
     sm: 'p-4',
-    md: 'p-6',
-    lg: 'p-8'
+    md: 'p-8',
+    lg: 'p-12'
   }
   return sizes[props.size]
 })
@@ -36,8 +46,8 @@ const sizeClasses = computed(() => {
 const iconSizeClasses = computed(() => {
   const sizes = {
     sm: 'w-8 h-8',
-    md: 'w-12 h-12',
-    lg: 'w-16 h-16'
+    md: 'w-10 h-10',
+    lg: 'w-12 h-12'
   }
   return sizes[props.size]
 })
@@ -46,8 +56,8 @@ const iconSizeClasses = computed(() => {
 const titleSizeClasses = computed(() => {
   const sizes = {
     sm: 'text-lg',
-    md: 'text-xl',
-    lg: 'text-2xl'
+    md: 'text-2xl',
+    lg: 'text-3xl'
   }
   return sizes[props.size]
 })
@@ -71,6 +81,12 @@ const actionClasses = computed(() => {
   return variants[props.actionVariant]
 })
 
+// Get icon HTML
+const iconHtml = computed(() => {
+  if (!props.icon) return null
+  return iconMap[props.icon] || props.icon
+})
+
 // Handle action click
 const handleAction = () => {
   emit('action')
@@ -88,7 +104,7 @@ const handleAction = () => {
     role="presentation"
   >
     <!-- Illustration or Icon -->
-    <div v-if="illustration" class="mb-6">
+    <div v-if="illustration" class="empty-illustration mb-8">
       <img
         :src="illustration"
         :alt="title"
@@ -96,13 +112,13 @@ const handleAction = () => {
       />
     </div>
 
-    <div v-else-if="icon" class="mb-6">
+    <div v-else-if="iconHtml" class="empty-icon-wrapper mb-4">
       <div
         :class="[
-          'flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800',
+          'empty-icon',
           iconSizeClasses
         ]"
-        v-html="icon"
+        v-html="iconHtml"
       />
     </div>
 
@@ -110,7 +126,7 @@ const handleAction = () => {
     <h3
       :class="[
         titleSizeClasses,
-        'font-medium text-gray-900 dark:text-white mb-2'
+        'empty-title font-semibold text-gray-900 dark:text-white mb-3'
       ]"
     >
       {{ title }}
@@ -121,7 +137,7 @@ const handleAction = () => {
       v-if="description"
       :class="[
         descriptionSizeClasses,
-        'text-gray-500 dark:text-gray-400 mb-6 max-w-md'
+        'empty-description text-gray-500 dark:text-gray-400 mb-8 max-w-lg'
       ]"
     >
       {{ description }}
@@ -131,7 +147,7 @@ const handleAction = () => {
     <button
       v-if="actionText"
       :class="[
-        'px-4 py-2 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500',
+        'px-6 py-3 rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm hover:shadow-md',
         actionClasses
       ]"
       @click="handleAction"
@@ -139,8 +155,9 @@ const handleAction = () => {
       {{ actionText }}
     </button>
 
-    <!-- Slot for additional content -->
-    <div v-if="$slots.default" class="mt-6">
+    <!-- Slot for additional content (actions) -->
+    <div v-if="$slots.actions || $slots.default" class="empty-actions mt-2">
+      <slot name="actions" />
       <slot />
     </div>
   </div>
@@ -148,7 +165,46 @@ const handleAction = () => {
 
 <style scoped>
 .empty-state {
-  min-height: 200px;
+  min-height: 300px;
+}
+
+.empty-icon-wrapper {
+  opacity: 0.25;
+  color: var(--color-text-muted, #8a8a8a);
+  margin-bottom: 0.75rem;
+}
+
+.empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+}
+
+.empty-icon :deep(svg) {
+  width: 100%;
+  height: 100%;
+  opacity: 0.4;
+}
+
+.empty-title {
+  color: var(--color-text-primary, #e5e5e5);
+}
+
+.empty-description {
+  color: var(--color-text-secondary, #b8b8b8);
+  line-height: 1.6;
+}
+
+.empty-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.empty-illustration {
+  opacity: 0.7;
 }
 
 /* Dark mode adjustments */
@@ -160,13 +216,13 @@ const handleAction = () => {
 
 /* Animation for empty state appearance */
 .empty-state {
-  animation: fade-in 0.3s ease-out;
+  animation: fade-in 0.4s ease-out;
 }
 
 @keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;

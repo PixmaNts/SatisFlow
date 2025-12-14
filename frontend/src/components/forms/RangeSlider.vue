@@ -1,6 +1,6 @@
 <template>
-  <div class="range-slider">
-    <div class="slider-header">
+  <div class="range-slider" :class="{ 'range-slider--compact': compact }">
+    <div v-if="!compact" class="slider-header">
       <label v-if="label" :for="inputId" class="slider-label">
         {{ label }}
         <span v-if="required" class="required-mark">*</span>
@@ -22,7 +22,39 @@
       </div>
     </div>
 
-    <div class="slider-container">
+    <div v-if="compact" class="slider-compact-row">
+      <div class="slider-container slider-container--compact">
+        <input
+          :id="inputId"
+          v-model.number="sliderValue"
+          type="range"
+          :min="min"
+          :max="max"
+          :step="step"
+          :disabled="disabled"
+          class="slider-track slider-track--compact"
+          :style="sliderStyle"
+          @input="handleSliderChange"
+        />
+      </div>
+      <div class="value-display value-display--compact">
+        <input
+          :id="`${inputId}-input`"
+          v-model.number="inputValue"
+          type="number"
+          :min="min"
+          :max="max"
+          :step="step"
+          class="value-input value-input--compact"
+          :class="{ 'value-input--error': error }"
+          @blur="handleInputBlur"
+          @keydown.enter="handleInputBlur"
+        />
+        <span class="value-unit value-unit--compact">{{ unit }}</span>
+      </div>
+    </div>
+
+    <div v-if="!compact" class="slider-container">
       <input
         :id="inputId"
         v-model.number="sliderValue"
@@ -52,7 +84,7 @@
       </div>
     </div>
 
-    <div v-if="showQuickPresets" class="quick-presets">
+    <div v-if="showQuickPresets && !compact" class="quick-presets">
       <button
         v-for="preset in presets"
         :key="preset.value"
@@ -66,7 +98,7 @@
     </div>
 
     <p v-if="error" class="error-message">{{ error }}</p>
-    <p v-if="hint" class="hint-text">{{ hint }}</p>
+    <p v-if="hint && !compact" class="hint-text">{{ hint }}</p>
   </div>
 </template>
 
@@ -92,6 +124,7 @@ interface Props {
   error?: string;
   hint?: string;
   id?: string;
+  compact?: boolean;
 }
 
 interface Emits {
@@ -113,6 +146,7 @@ const props = withDefaults(defineProps<Props>(), {
   showQuickPresets: true,
   disabled: false,
   required: false,
+  compact: false,
 });
 
 const emit = defineEmits<Emits>();
@@ -166,94 +200,125 @@ watch(() => props.modelValue, (newValue) => {
 
 <style scoped>
 .range-slider {
-  @apply w-full space-y-3;
+  width: 100%;
+}
+
+.range-slider:not(.range-slider--compact) {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.range-slider--compact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.slider-compact-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: calc(0.625rem * 2 + 0.875rem * 1.5);
 }
 
 .slider-header {
-  @apply flex items-center justify-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .slider-label {
-  @apply text-sm font-medium text-gray-700 dark:text-gray-300;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .required-mark {
-  @apply text-red-500 dark:text-red-400 ml-1;
+  color: var(--color-error, #ef4444);
+  margin-left: 0.25rem;
 }
 
 .value-display {
-  @apply flex items-center gap-1;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .value-input {
-  @apply w-20 px-2 py-1 text-sm text-right
-         bg-white dark:bg-gray-800
-         border border-gray-300 dark:border-gray-600
-         rounded text-gray-900 dark:text-gray-100
-         focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500
-         transition-colors;
+  width: 5rem;
+  padding: 0.5rem 0.625rem;
+  font-size: 0.875rem;
+  text-align: right;
+  background-color: var(--color-surface-inset, #1f1f1f);
+  border: 1px solid var(--color-border, #404040);
+  border-radius: 6px;
+  color: var(--color-text-primary, #e5e5e5);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.value-input--compact {
+  width: 6.5rem;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.value-display--compact {
+  flex-shrink: 0;
+}
+
+.value-unit--compact {
+  font-size: 0.875rem;
+}
+
+.value-input:hover:not(:disabled) {
+  border-color: var(--color-border-light, #4a4a4a);
+}
+
+.value-input:focus {
+  border-color: var(--color-ficsit-orange, #f58b00);
+  box-shadow: 0 0 0 3px rgba(245, 139, 0, 0.1);
 }
 
 .value-input--error {
-  @apply border-red-500 dark:border-red-400;
+  border-color: var(--color-error, #ef4444);
+}
+
+.value-input--error:focus {
+  border-color: var(--color-error, #ef4444);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
 .value-unit {
-  @apply text-sm text-gray-600 dark:text-gray-400 font-medium min-w-[2ch];
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, #b8b8b8);
+  font-weight: 500;
+  min-width: 2ch;
 }
 
 .slider-container {
-  @apply relative pt-2 pb-8;
+  position: relative;
+  padding-top: 0.5rem;
+  padding-bottom: 2rem;
+}
+
+.slider-container--compact {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
 }
 
 .slider-track {
-  @apply w-full h-2 appearance-none cursor-pointer
-         bg-gray-200 dark:bg-gray-700 rounded-full
-         disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
-/* Webkit browsers (Chrome, Safari) */
-.slider-track::-webkit-slider-thumb {
-  @apply appearance-none w-5 h-5 rounded-full
-         bg-blue-600 dark:bg-blue-500
-         border-2 border-white dark:border-gray-800
-         shadow-md cursor-pointer
-         transition-transform hover:scale-110;
-}
-
-.slider-track:active::-webkit-slider-thumb {
-  @apply scale-125;
-}
-
-/* Firefox */
-.slider-track::-moz-range-thumb {
-  @apply w-5 h-5 rounded-full
-         bg-blue-600 dark:bg-blue-500
-         border-2 border-white dark:border-gray-800
-         shadow-md cursor-pointer
-         transition-transform;
-}
-
-.slider-track::-moz-range-thumb:hover {
-  @apply scale-110;
-}
-
-.slider-track:active::-moz-range-thumb {
-  @apply scale-125;
-}
-
-/* Track fill effect */
-.slider-track {
-  background: linear-gradient(
-    to right,
-    rgb(37, 99, 235) 0%,
-    rgb(37, 99, 235) var(--slider-percentage),
-    rgb(229, 231, 235) var(--slider-percentage),
-    rgb(229, 231, 235) 100%
-  );
-}
-
-.dark .slider-track {
+  width: 100%;
+  height: 0.5rem;
+  appearance: none;
+  cursor: pointer;
+  border-radius: 9999px;
   background: linear-gradient(
     to right,
     rgb(59, 130, 246) 0%,
@@ -261,70 +326,175 @@ watch(() => props.modelValue, (newValue) => {
     rgb(55, 65, 81) var(--slider-percentage),
     rgb(55, 65, 81) 100%
   );
+  outline: none;
+  transition: background 0.2s;
+}
+
+.slider-track--compact {
+  height: 0.375rem;
+}
+
+.slider-track:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Webkit browsers (Chrome, Safari) */
+.slider-track::-webkit-slider-thumb {
+  appearance: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: rgb(59, 130, 246);
+  border: 2px solid rgb(255, 255, 255);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.slider-track::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.slider-track:active::-webkit-slider-thumb {
+  transform: scale(1.25);
+}
+
+.slider-track--compact::-webkit-slider-thumb {
+  width: 1rem;
+  height: 1rem;
+  border-width: 1.5px;
+}
+
+.slider-track--compact::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+/* Firefox */
+.slider-track::-moz-range-thumb {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: rgb(59, 130, 246);
+  border: 2px solid rgb(255, 255, 255);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.slider-track::-moz-range-thumb:hover {
+  transform: scale(1.1);
+}
+
+.slider-track:active::-moz-range-thumb {
+  transform: scale(1.25);
+}
+
+.slider-track--compact::-moz-range-thumb {
+  width: 1rem;
+  height: 1rem;
+  border-width: 1.5px;
+}
+
+.slider-track--compact::-moz-range-thumb:hover {
+  transform: scale(1.15);
 }
 
 .slider-markers {
-  @apply absolute left-0 right-0 top-0 h-2 pointer-events-none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 0.5rem;
+  pointer-events: none;
 }
 
 .marker-button {
-  @apply absolute -translate-x-1/2 pointer-events-auto;
+  position: absolute;
+  transform: translateX(-50%);
+  pointer-events: auto;
   top: -2px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
 }
 
 .marker-dot {
-  @apply block w-2 h-2 rounded-full
-         bg-gray-400 dark:bg-gray-500
-         border border-white dark:border-gray-800
-         transition-all;
+  display: block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: rgb(156, 163, 175);
+  border: 1px solid rgb(255, 255, 255);
+  transition: all 0.2s;
 }
 
 .marker-button:hover .marker-dot {
-  @apply bg-gray-600 dark:bg-gray-300 scale-125;
+  background: rgb(75, 85, 99);
+  transform: scale(1.25);
 }
 
 .marker-button--active .marker-dot {
-  @apply bg-blue-600 dark:bg-blue-500 scale-150;
+  background: rgb(59, 130, 246);
+  transform: scale(1.5);
 }
 
 .marker-label {
-  @apply absolute top-6 left-1/2 -translate-x-1/2
-         text-xs text-gray-600 dark:text-gray-400
-         whitespace-nowrap opacity-0 transition-opacity;
+  position: absolute;
+  top: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #8a8a8a);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
 }
 
 .marker-button:hover .marker-label,
 .marker-button--active .marker-label {
-  @apply opacity-100;
+  opacity: 1;
 }
 
 .quick-presets {
-  @apply flex gap-2 flex-wrap;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .preset-button {
-  @apply px-3 py-1.5 text-sm font-medium
-         bg-white dark:bg-gray-800
-         border border-gray-300 dark:border-gray-600
-         rounded-md
-         text-gray-700 dark:text-gray-300
-         hover:bg-gray-50 dark:hover:bg-gray-700
-         hover:border-gray-400 dark:hover:border-gray-500
-         transition-all;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: var(--color-surface-inset, #1f1f1f);
+  border: 1px solid var(--color-border, #404040);
+  border-radius: 6px;
+  color: var(--color-text-primary, #e5e5e5);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.preset-button:hover {
+  background-color: var(--color-surface-hover, #2a2a2a);
+  border-color: var(--color-border-light, #4a4a4a);
 }
 
 .preset-button--active {
-  @apply bg-blue-50 dark:bg-blue-900/20
-         border-blue-500 dark:border-blue-400
-         text-blue-700 dark:text-blue-300
-         ring-2 ring-blue-500/20;
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: rgb(59, 130, 246);
+  color: rgb(147, 197, 253);
 }
 
 .error-message {
-  @apply text-sm text-red-600 dark:text-red-400;
+  font-size: 0.875rem;
+  color: var(--color-error, #ef4444);
+  margin-top: 0.25rem;
 }
 
 .hint-text {
-  @apply text-xs text-gray-500 dark:text-gray-400;
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #8a8a8a);
+  margin-top: 0.25rem;
 }
 </style>
