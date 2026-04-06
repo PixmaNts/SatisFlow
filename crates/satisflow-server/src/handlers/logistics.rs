@@ -240,7 +240,9 @@ pub async fn create_logistics(
         .create_logistics_line(from_factory, to_factory, transport_type, transport_details)
         .map_err(|e| AppError::BadRequest(format!("Failed to create logistics line: {}", e)))?;
 
-    let logistics = engine.get_logistics_line(logistics_id).unwrap();
+    let logistics = engine
+        .get_logistics_line(logistics_id)
+        .ok_or_else(|| AppError::InternalError(anyhow::anyhow!("Failed to retrieve created logistics line")))?;
     let response = logistics_to_response(logistics);
 
     Ok((StatusCode::CREATED, Json(response)))

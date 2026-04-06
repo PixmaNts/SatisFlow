@@ -187,8 +187,9 @@ impl ProductionLineRecipe {
                 1.0
             };
             let power_multiplier = somersloop_multiplier * somersloop_multiplier;
-            total_power += base_power * power_multiplier * (group.oc_value / 100.0).powf(1.321928);
-            total_power *= group.number_of_machine as f32;
+            let machine_power =
+                base_power * power_multiplier * (group.oc_value / 100.0).powf(1.321928);
+            total_power += machine_power * group.number_of_machine as f32;
         }
         total_power
     }
@@ -380,5 +381,134 @@ mod tests {
         // Each machine has 1 somersloop, max is 1 for Constructor, so power multiplier is (1 + 1/1)² = 4
         // Each machine consumes 4 MW at base power, so total power = 2 machines * 4 MW * 4 = 32 MW
         assert_eq!(production_line.total_power_consumption(), 32.0);
+    }
+
+    // =========================================================================
+    // Power Calculation Regression Tests
+    // =========================================================================
+    // Bug: total_power *= group.number_of_machine compounded across groups
+    // instead of being part of each group's calculation.
+    //
+    // BUGGY: for 2 groups of 2 machines each at 100% OC:
+    //   Group1: total = 4.0, total *= 2 → 8.0
+    //   Group2: total = 8.0 + 4.0 = 12.0, total *= 2 → 24.0 (WRONG)
+    //
+    // CORRECT: for 2 groups of 2 machines each at 100% OC:
+    //   Group1: 2 * 4.0 = 8.0
+    //   Group2: 2 * 4.0 = 8.0
+    //   Total: 8.0 + 8.0 = 16.0
+
+    #[test]
+    fn test_power_single_machine_100_oc() {
+        // Single machine at 100% OC = 4.0 MW (base power)
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        production_line
+            .add_machine_group(MachineGroup::new(1, 100.0, 0))
+            .expect("Invalid group");
+        // 1 machine * 4.0 MW * (100/100)^1.321928 = 4.0 MW
+        assert_eq!(production_line.total_power_consumption(), 4.0);
+    }
+
+    #[test]
+    fn test_power_two_machines_100_oc() {
+        // 2 machines at 100% OC = 8.0 MW
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        production_line
+            .add_machine_group(MachineGroup::new(2, 100.0, 0))
+            .expect("Invalid group");
+        // 2 machines * 4.0 MW * (100/100)^1.321928 = 8.0 MW
+        assert_eq!(production_line.total_power_consumption(), 8.0);
+    }
+
+    #[test]
+    fn test_power_multiple_groups_no_compounding() {
+        // Two groups of 2 machines each at 100% OC = 16.0 MW
+        // This is the key regression test - with the bug, this would be 24.0 MW
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        production_line
+            .add_machine_group(MachineGroup::new(2, 100.0, 0))
+            .expect("Invalid group");
+        production_line
+            .add_machine_group(MachineGroup::new(2, 100.0, 0))
+            .expect("Invalid group");
+        // Group1: 2 * 4.0 = 8.0 MW
+        // Group2: 2 * 4.0 = 8.0 MW
+        // Total: 8.0 + 8.0 = 16.0 MW (NOT compounding)
+        assert_eq!(production_line.total_power_consumption(), 16.0);
+    }
+
+    #[test]
+    fn test_power_multiple_groups_different_oc() {
+        // One group at 100% OC, one at 200% OC
+        // 100% OC: 1 * 4.0 = 4.0 MW
+        // 200% OC: 1 * 4.0 * (200/100)^1.321928 = 4.0 * 2^1.321928 ≈ 4.0 * 2.5 = 10.0 MW
+        // Total: 4.0 + 10.0 = 14.0 MW
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        production_line
+            .add_machine_group(MachineGroup::new(1, 100.0, 0))
+            .expect("Invalid group");
+        production_line
+            .add_machine_group(MachineGroup::new(1, 200.0, 0))
+            .expect("Invalid group");
+        let total_power = production_line.total_power_consumption();
+        // Allow small floating point tolerance
+        assert!((total_power - 14.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_power_zero_oc() {
+        // 0% OC means machine is off, 0 MW power consumption
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        production_line
+            .add_machine_group(MachineGroup::new(4, 0.0, 0))
+            .expect("Invalid group");
+        // 0% clock speed = machine off = 0 MW
+        assert_eq!(production_line.total_power_consumption(), 0.0);
+    }
+
+    #[test]
+    fn test_power_max_oc_250() {
+        // 250% OC = 2.5x clock speed, power = base * 2.5^1.321928 = base * 2.5^log2(2.5)
+        // = base * 2.5^1.321928 = base * 2.5^1.321928 ≈ base * 2.5^1.321928
+        // For 1 machine at 250% OC: 4.0 * 2.5^1.321928 ≈ 4.0 * 2.5^1.321928
+        // 2.5^1.321928 = e^(1.321928 * ln(2.5)) = e^(1.321928 * 0.9163) = e^(1.211) ≈ 3.36
+        // So 4.0 * 3.36 ≈ 13.44 MW per machine
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        production_line
+            .add_machine_group(MachineGroup::new(1, 250.0, 0))
+            .expect("Invalid group");
+        let total_power = production_line.total_power_consumption();
+        // 4.0 * (250/100)^1.321928 = 4.0 * 2.5^1.321928 ≈ 4.0 * 3.36 = 13.44
+        assert!((total_power - 13.44).abs() < 0.1);
     }
 }

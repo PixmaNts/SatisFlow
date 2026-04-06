@@ -125,7 +125,6 @@ interface Props {
 
 const props = defineProps<Props>()
 const factoryStore = useFactoryStore()
-// const gameDataStore = useGameDataStore()
 
 // State
 const showCreateModal = ref(false)

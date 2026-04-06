@@ -570,7 +570,9 @@ pub async fn create_factory(
         };
     }
 
-    let factory = engine.get_factory(factory_id).unwrap(); // We just created it
+    let factory = engine
+        .get_factory(factory_id)
+        .ok_or_else(|| AppError::InternalError(anyhow::anyhow!("Failed to retrieve created factory")))?;
 
     let response = build_factory_response(factory, engine.get_all_logistics());
 

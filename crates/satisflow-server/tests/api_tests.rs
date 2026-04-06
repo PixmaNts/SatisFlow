@@ -478,10 +478,14 @@ async fn test_game_data_endpoints() {
     assert!(!machines.as_array().unwrap().is_empty());
 
     // Verify machine structure
-    if let Some(first_machine) = machines.as_array().unwrap().first() {
-        assert!(first_machine.get("name").is_some());
-        assert!(first_machine.get("base_power").is_some());
-        assert!(first_machine.get("max_somersloop").is_some());
+    for machine in machines.as_array().unwrap() {
+        assert!(machine.get("name").is_some(), "Machine should have a name");
+        assert!(machine.get("base_power").is_some(), "Machine should have base_power");
+        assert!(machine.get("max_somersloop").is_some(), "Machine should have max_somersloop");
+
+        // Verify base_power is non-negative (Manual machine has 0.0 power)
+        let base_power = machine["base_power"].as_f64().unwrap();
+        assert!(base_power >= 0.0, "Base power should be non-negative");
     }
 }
 
@@ -1361,5 +1365,1052 @@ async fn test_preview_endpoints() {
     } else {
         // Factory creation might not be implemented yet
         assert_bad_request(factory_response).await;
+    }
+}
+
+// DRONE LOGISTICS TESTS
+#[tokio::test]
+async fn test_drone_logistics_operations() {
+    let server = create_test_server().await;
+    let client = create_test_client();
+
+    // Create two factories for logistics testing
+    let factory1_response = client
+        .post(format!("{}/api/factories", server.base_url))
+        .json(&json!({
+            "name": "Drone Source Factory",
+            "description": "Source factory for drone transport"
+        }))
+        .send()
+        .await
+        .expect("Failed to create factory 1");
+
+    let factory2_response = client
+        .post(format!("{}/api/factories", server.base_url))
+        .json(&json!({
+            "name": "Drone Destination Factory",
+            "description": "Destination factory for drone transport"
+        }))
+        .send()
+        .await
+        .expect("Failed to create factory 2");
+
+    if factory1_response.status().as_u16() == 201 && factory2_response.status().as_u16() == 201 {
+        let factory1: Value = factory1_response.json().await.unwrap();
+        let factory2: Value = factory2_response.json().await.unwrap();
+        let factory1_id = factory1["id"].as_str().unwrap().to_string();
+        let factory2_id = factory2["id"].as_str().unwrap().to_string();
+
+        // Test: Create drone logistics line
+        let drone_request = json!({
+            "from_factory": factory1_id,
+            "to_factory": factory2_id,
+            "transport_type": "Drone",
+            "item": "CopperOre",
+            "quantity_per_min": 120.0,
+            "drone_id": "DRN-001"
+        });
+
+        let create_response = client
+            .post(format!("{}/api/logistics", server.base_url))
+            .json(&drone_request)
+            .send()
+            .await
+            .expect("Failed to create drone logistics");
+
+        if create_response.status().as_u16() == 201 {
+            let logistics: Value = assert_created_response(create_response).await;
+            let logistics_id = logistics["id"]
+                .as_str()
+                .and_then(|id| Uuid::parse_str(id).ok())
+                .unwrap();
+
+            assert_eq!(logistics["transport_type"], json!("Drone"));
+            assert!(logistics["items"].as_array().map(|items| !items.is_empty()).unwrap_or(false));
+
+            let _ = client
+                .delete(format!("{}/api/logistics/{}", server.base_url, logistics_id))
+                .send()
+                .await;
+        }
+    }
+}
+
+// SAVE/LOAD ROUND-TRIP TESTS
+#[tokio::test]
+async fn test_save_load_roundtrip() {
+    let server = create_test_server().await;
+    let client = create_test_client();
+
+    let factory_response = client
+        .post(format!("{}/api/factories", server.base_url))
+        .json(&json!({
+            "name": "Save/Load Test Factory",
+            "description": "Factory for testing save/load functionality"
+        }))
+        .send()
+        .await
+        .expect("Failed to create factory");
+
+    if factory_response.status().as_u16() == 201 {
+        let factory: Value = factory_response.json().await.unwrap();
+        let factory_id = factory["id"].as_str().unwrap().to_string();
+
+        let _ = client
+            .post(format!("{}/api/factories/{}/production-lines", server.base_url, factory_id))
+            .json(&json!({
+                "name": "Test Production Line",
+                "type": "recipe",
+                "recipe": "IronIngot",
+                "machine_groups": [
+                    {
+                        "number_of_machine": 2,
+                        "oc_value": 100.0,
+                        "somersloop": 0
+                    }
+                ]
+            }))
+            .send()
+            .await;
+
+        let save_response = client
+            .get(format!("{}/api/save", server.base_url))
+            .send()
+            .await
+            .expect("Failed to save engine state");
+
+        if save_response.status().as_u16() == 200 {
+            let save_data: Value = save_response.json().await.unwrap();
+            assert!(save_data.get("save_data").is_some());
+            assert!(save_data.get("summary").is_some());
+            assert_eq!(save_data["summary"]["factory_count"], 1);
+
+            let saved_json = save_data["save_data"].as_str().unwrap().to_string();
+
+            let reset_response = client
+                .post(format!("{}/api/reset", server.base_url))
+                .send()
+                .await
+                .expect("Failed to reset engine");
+
+            if reset_response.status().as_u16() == 200 {
+                let factories_response = client
+                    .get(format!("{}/api/factories", server.base_url))
+                    .send()
+                    .await
+                    .expect("Failed to get factories after reset");
+
+                let factories: Value = factories_response.json().await.unwrap();
+                assert!(factories.as_array().unwrap().is_empty());
+
+                let load_response = client
+                    .post(format!("{}/api/load", server.base_url))
+                    .json(&json!({
+                        "save_data": saved_json
+                    }))
+                    .send()
+                    .await
+                    .expect("Failed to load engine state");
+
+                if load_response.status().as_u16() == 200 {
+                    let load_result: Value = load_response.json().await.unwrap();
+                    assert!(load_result["message"].as_str().unwrap().contains("Successfully loaded"));
+                    assert_eq!(load_result["summary"]["factory_count"], 1);
+
+                    let restored_response = client
+                        .get(format!("{}/api/factories/{}", server.base_url, factory_id))
+                        .send()
+                        .await
+                        .expect("Failed to get restored factory");
+
+                    if restored_response.status().as_u16() == 200 {
+                        let restored_factory: Value = restored_response.json().await.unwrap();
+                        assert_eq!(restored_factory["name"], "Save/Load Test Factory");
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[tokio::test]
+async fn test_save_load_error_cases() {
+    let server = create_test_server().await;
+    let client = create_test_client();
+
+    let response = client
+        .post(format!("{}/api/load", server.base_url))
+        .json(&json!({
+            "save_data": "{ invalid json }"
+        }))
+        .send()
+        .await
+        .expect("Failed to send invalid load request");
+
+    assert_bad_request(response).await;
+
+    let response = client
+        .post(format!("{}/api/load", server.base_url))
+        .json(&json!({
+            "save_data": r#"{
+                "version": "999.0.0",
+                "created_at": "2025-01-01T00:00:00Z",
+                "last_modified": "2025-01-01T00:00:00Z",
+                "game_version": "1.2",
+                "engine": {
+                    "factories": {},
+                    "logistics_lines": {},
+                    "blueprint_templates": {}
+                }
+            }"#
+        }))
+        .send()
+        .await
+        .expect("Failed to send future version load request");
+
+    assert_bad_request(response).await;
+}
+
+// BLUEPRINT TEMPLATE INSTANTIATE TESTS
+#[tokio::test]
+async fn test_blueprint_template_instantiate() {
+    let server = create_test_server().await;
+    let client = create_test_client();
+
+    let template_response = client
+        .post(format!("{}/api/blueprints/templates", server.base_url))
+        .json(&json!({
+            "name": "Instantiate Test Template",
+            "description": "Template for testing instantiation",
+            "production_lines": [
+                {
+                    "name": "Steel Ingot Line",
+                    "description": "Produces steel ingots",
+                    "recipe": "SteelIngot",
+                    "machine_groups": [
+                        {
+                            "number_of_machine": 3,
+                            "oc_value": 100.0,
+                            "somersloop": 0
+                        }
+                    ]
+                }
+            ]
+        }))
+        .send()
+        .await
+        .expect("Failed to create blueprint template");
+
+    if template_response.status().as_u16() == 201 {
+        let template: Value = template_response.json().await.unwrap();
+        let template_id = template["id"].as_str().unwrap().to_string();
+
+        let factory_response = client
+            .post(format!("{}/api/factories", server.base_url))
+            .json(&json!({
+                "name": "Instantiation Test Factory",
+                "description": "Factory for blueprint instantiation"
+            }))
+            .send()
+            .await
+            .expect("Failed to create factory");
+
+        if factory_response.status().as_u16() == 201 {
+            let factory: Value = factory_response.json().await.unwrap();
+            let factory_id = factory["id"].as_str().unwrap().to_string();
+
+            let instantiate_response = client
+                .post(format!(
+                    "{}/api/factories/{}/production-lines/from-template/{}",
+                    server.base_url, factory_id, template_id
+                ))
+                .json(&json!({
+                    "name": "Instantiated Steel Line"
+                }))
+                .send()
+                .await
+                .expect("Failed to instantiate blueprint");
+
+            if instantiate_response.status().as_u16() == 201 {
+                let instance: Value = instantiate_response.json().await.unwrap();
+                assert!(instance["message"].as_str().unwrap().contains("created"));
+                assert_eq!(instance["factory_id"], factory_id);
+                assert!(instance.get("blueprint_id").is_some());
+
+                let get_response = client
+                    .get(format!("{}/api/factories/{}", server.base_url, factory_id))
+                    .send()
+                    .await
+                    .expect("Failed to get factory after instantiation");
+
+                if get_response.status().as_u16() == 200 {
+                    let updated_factory: Value = get_response.json().await.unwrap();
+                    let production_lines = updated_factory["production_lines"].as_array().unwrap();
+                    assert_eq!(production_lines.len(), 1);
+                }
+            }
+        }
+    }
+}
+
+// BLUEPRINT IMPORT/EXPORT ROUND-TRIP TESTS
+#[tokio::test]
+async fn test_blueprint_import_export_roundtrip() {
+    let server = create_test_server().await;
+    let client = create_test_client();
+
+    let factory_response = client
+        .post(format!("{}/api/factories", server.base_url))
+        .json(&json!({
+            "name": "Export Test Factory",
+            "description": "Factory for testing blueprint export"
+        }))
+        .send()
+        .await
+        .expect("Failed to create factory");
+
+    if factory_response.status().as_u16() == 201 {
+        let factory: Value = factory_response.json().await.unwrap();
+        let factory_id = factory["id"].as_str().unwrap().to_string();
+
+        let blueprint_json = r#"{
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "name": "Round-trip Test Blueprint",
+            "description": "Blueprint for testing import/export round-trip",
+            "production_lines": [
+                {
+                    "id": "550e8400-e29b-41d4-a716-446655440001",
+                    "name": "Iron Plate Production",
+                    "description": "Produces iron plates",
+                    "recipe": "IronPlate",
+                    "machine_groups": [
+                        {
+                            "number_of_machine": 5,
+                            "oc_value": 100.0,
+                            "somersloop": 0
+                        }
+                    ]
+                }
+            ]
+        }"#;
+
+        let import_response = client
+            .post(format!("{}/api/factories/{}/production-lines/import", server.base_url, factory_id))
+            .json(&json!({
+                "blueprint_json": blueprint_json,
+                "name": "Imported Round-trip Blueprint"
+            }))
+            .send()
+            .await
+            .expect("Failed to import blueprint");
+
+        if import_response.status().as_u16() == 200 {
+            let import_result: Value = import_response.json().await.unwrap();
+            let blueprint_id = import_result["blueprint_id"].as_str().unwrap().to_string();
+
+            let export_response = client
+                .get(format!(
+                    "{}/api/factories/{}/production-lines/{}/export",
+                    server.base_url, factory_id, blueprint_id
+                ))
+                .send()
+                .await
+                .expect("Failed to export blueprint");
+
+            if export_response.status().as_u16() == 200 {
+                let export_data: Value = export_response.json().await.unwrap();
+                assert!(export_data.get("blueprint_json").is_some());
+                assert!(export_data.get("metadata").is_some());
+
+                let metadata = &export_data["metadata"];
+                assert_eq!(metadata["name"], "Imported Round-trip Blueprint");
+                assert_eq!(metadata["total_machines"], 5);
+                assert!(metadata["total_power"].as_f64().unwrap() > 0.0);
+
+                let exported_json = export_data["blueprint_json"].as_str().unwrap();
+
+                let factory2_response = client
+                    .post(format!("{}/api/factories", server.base_url))
+                    .json(&json!({
+                        "name": "Second Factory",
+                        "description": "Factory for round-trip import"
+                    }))
+                    .send()
+                    .await
+                    .expect("Failed to create second factory");
+
+                if factory2_response.status().as_u16() == 201 {
+                    let factory2: Value = factory2_response.json().await.unwrap();
+                    let factory2_id = factory2["id"].as_str().unwrap().to_string();
+
+                    let roundtrip_response = client
+                        .post(format!(
+                            "{}/api/factories/{}/production-lines/import",
+                            server.base_url, factory2_id
+                        ))
+                        .json(&json!({
+                            "blueprint_json": exported_json,
+                            "name": "Round-tripped Blueprint"
+                        }))
+                        .send()
+                        .await
+                        .expect("Failed to import round-tripped blueprint");
+
+                    if roundtrip_response.status().as_u16() == 200 {
+                        let roundtrip_result: Value = roundtrip_response.json().await.unwrap();
+                        assert!(roundtrip_result["message"].as_str().unwrap().contains("imported successfully"));
+                        assert_eq!(roundtrip_result["factory_id"], factory2_id);
+                    }
+                }
+            }
+        }
+    }
+}
+
+// COMPREHENSIVE LOGISTICS TESTS - ALL TRANSPORT TYPES
+#[tokio::test]
+async fn test_all_transport_types() {
+    let server = create_test_server().await;
+    let client = create_test_client();
+
+    let factory1_response = client
+        .post(format!("{}/api/factories", server.base_url))
+        .json(&json!({
+            "name": "Transport Test Factory 1",
+            "description": "Source factory"
+        }))
+        .send()
+        .await
+        .expect("Failed to create factory 1");
+
+    let factory2_response = client
+        .post(format!("{}/api/factories", server.base_url))
+        .json(&json!({
+            "name": "Transport Test Factory 2",
+            "description": "Destination factory"
+        }))
+        .send()
+        .await
+        .expect("Failed to create factory 2");
+
+    if factory1_response.status().as_u16() == 201 && factory2_response.status().as_u16() == 201 {
+        let factory1: Value = factory1_response.json().await.unwrap();
+        let factory2: Value = factory2_response.json().await.unwrap();
+        let factory1_id = factory1["id"].as_str().unwrap().to_string();
+        let factory2_id = factory2["id"].as_str().unwrap().to_string();
+
+        let truck_response = client
+            .post(format!("{}/api/logistics", server.base_url))
+            .json(&json!({
+                "from_factory": factory1_id,
+                "to_factory": factory2_id,
+                "transport_type": "Truck",
+                "item": "IronOre",
+                "quantity_per_min": 60.0,
+                "truck_id": "TRK-TEST-001"
+            }))
+            .send()
+            .await
+            .expect("Failed to create truck logistics");
+
+        let drone_response = client
+            .post(format!("{}/api/logistics", server.base_url))
+            .json(&json!({
+                "from_factory": factory1_id,
+                "to_factory": factory2_id,
+                "transport_type": "Drone",
+                "item": "CopperOre",
+                "quantity_per_min": 120.0,
+                "drone_id": "DRN-TEST-001"
+            }))
+            .send()
+            .await
+            .expect("Failed to create drone logistics");
+
+        let bus_response = client
+            .post(format!("{}/api/logistics", server.base_url))
+            .json(&json!({
+                "from_factory": factory1_id,
+                "to_factory": factory2_id,
+                "transport_type": "Bus",
+                "bus_name": "Test Bus Route",
+                "conveyors": [
+                    {
+                        "line_id": "CV-TEST-001",
+                        "conveyor_type": "Mk4",
+                        "item": "IronPlate",
+                        "quantity_per_min": 240.0
+                    },
+                    {
+                        "line_id": "CV-TEST-002",
+                        "conveyor_type": "Mk5",
+                        "item": "CopperPlate",
+                        "quantity_per_min": 480.0
+                    }
+                ],
+                "pipelines": [
+                    {
+                        "pipeline_id": "PL-TEST-001",
+                        "pipeline_type": "Mk2",
+                        "item": "Water",
+                        "quantity_per_min": 600.0
+                    }
+                ]
+            }))
+            .send()
+            .await
+            .expect("Failed to create bus logistics");
+
+        let train_response = client
+            .post(format!("{}/api/logistics", server.base_url))
+            .json(&json!({
+                "from_factory": factory1_id,
+                "to_factory": factory2_id,
+                "transport_type": "Train",
+                "train_name": "Test Train Line",
+                "wagons": [
+                    {
+                        "wagon_id": "WG-TEST-001",
+                        "wagon_type": "Cargo",
+                        "item": "IronPlate",
+                        "quantity_per_min": 240.0
+                    },
+                    {
+                        "wagon_id": "WG-TEST-002",
+                        "wagon_type": "Cargo",
+                        "item": "CopperPlate",
+                        "quantity_per_min": 240.0
+                    },
+                    {
+                        "wagon_id": "WG-TEST-003",
+                        "wagon_type": "Fluid",
+                        "item": "Water",
+                        "quantity_per_min": 500.0
+                    }
+                ]
+            }))
+            .send()
+            .await
+            .expect("Failed to create train logistics");
+
+        let list_response = client
+            .get(format!("{}/api/logistics", server.base_url))
+            .send()
+            .await
+            .expect("Failed to get logistics list");
+
+        if list_response.status().as_u16() == 200 {
+            let logistics: Value = list_response.json().await.unwrap();
+            let _ = logistics;
+        }
+    }
+}
+
+// EDGE CASE TESTS
+#[tokio::test]
+async fn test_edge_cases() {
+    let server = create_test_server().await;
+    let client = create_test_client();
+
+    let empty_factory_response = client
+        .post(format!("{}/api/factories", server.base_url))
+        .json(&json!({
+            "name": "Empty Factory",
+            "description": "Factory with nothing in it"
+        }))
+        .send()
+        .await
+        .expect("Failed to create empty factory");
+
+    if empty_factory_response.status().as_u16() == 201 {
+        let empty_factory: Value = empty_factory_response.json().await.unwrap();
+
+        assert_eq!(empty_factory["total_power_consumption"], 0.0);
+        assert_eq!(empty_factory["total_power_generation"], 0.0);
+        assert_eq!(empty_factory["power_balance"], 0.0);
+        assert!(empty_factory["production_lines"].as_array().unwrap().is_empty());
+        assert!(empty_factory["raw_inputs"].as_array().unwrap().is_empty());
+        assert!(empty_factory["power_generators"].as_array().unwrap().is_empty());
+
+        let factory_response = client
+            .post(format!("{}/api/factories", server.base_url))
+            .json(&json!({
+                "name": "Zero Machine Test Factory",
+                "description": "Factory for testing zero machine edge case"
+            }))
+            .send()
+            .await
+            .expect("Failed to create factory");
+
+        if factory_response.status().as_u16() == 201 {
+            let factory: Value = factory_response.json().await.unwrap();
+            let factory_id = factory["id"].as_str().unwrap().to_string();
+
+            let zero_machine_preview = client
+                .post(format!("{}/api/factories/{}/production-lines/preview", server.base_url, factory_id))
+                .json(&json!({
+                    "name": "Zero Machine Line",
+                    "type": "recipe",
+                    "recipe": "IronIngot",
+                    "machine_groups": [
+                        {
+                            "number_of_machine": 0,
+                            "oc_value": 100.0,
+                            "somersloop": 0
+                        }
+                    ]
+                }))
+                .send()
+                .await
+                .expect("Failed to send zero machine preview request");
+
+            let _ = zero_machine_preview;
+        }
+    }
+
+    let factory_response = client
+        .post(format!("{}/api/factories", server.base_url))
+        .json(&json!({
+            "name": "Invalid Recipe Test Factory",
+            "description": "Factory for testing invalid recipe"
+        }))
+        .send()
+        .await
+        .expect("Failed to create factory");
+
+    if factory_response.status().as_u16() == 201 {
+        let factory: Value = factory_response.json().await.unwrap();
+        let factory_id = factory["id"].as_str().unwrap().to_string();
+
+        let invalid_recipe_preview = client
+            .post(format!("{}/api/factories/{}/production-lines/preview", server.base_url, factory_id))
+            .json(&json!({
+                "name": "Invalid Recipe Line",
+                "type": "recipe",
+                "recipe": "NonExistentRecipeXYZ123",
+                "machine_groups": [
+                    {
+                        "number_of_machine": 1,
+                        "oc_value": 100.0,
+                        "somersloop": 0
+                    }
+                ]
+            }))
+            .send()
+            .await
+            .expect("Failed to send invalid recipe preview request");
+
+        assert_bad_request(invalid_recipe_preview).await;
+    }
+}
+
+// GAME DATA ENDPOINTS - 1.2 DATA VALIDATION
+#[tokio::test]
+async fn test_game_data_1_2_endpoints() {
+    let server = create_test_server().await;
+    let client = create_test_client();
+
+    let recipes_response = client
+        .get(format!("{}/api/game-data/recipes", server.base_url))
+        .send()
+        .await
+        .expect("Failed to get recipes");
+
+    let recipes: Value = assert_json_response(recipes_response).await;
+    assert!(recipes.is_array());
+    assert!(!recipes.as_array().unwrap().is_empty());
+
+    for recipe in recipes.as_array().unwrap() {
+        assert!(recipe.get("name").is_some(), "Recipe should have a name");
+        assert!(recipe.get("machine").is_some(), "Recipe should have a machine");
+        assert!(recipe.get("inputs").is_some(), "Recipe should have inputs");
+        assert!(recipe.get("outputs").is_some(), "Recipe should have outputs");
+
+        let inputs = recipe["inputs"].as_array().unwrap();
+        for input in inputs {
+            assert!(input.get("item").is_some(), "Input should have an item");
+            assert!(input.get("quantity").is_some(), "Input should have a quantity");
+        }
+
+        let outputs = recipe["outputs"].as_array().unwrap();
+        for output in outputs {
+            assert!(output.get("item").is_some(), "Output should have an item");
+            assert!(output.get("quantity").is_some(), "Output should have a quantity");
+        }
+    }
+
+    let items_response = client
+        .get(format!("{}/api/game-data/items", server.base_url))
+        .send()
+        .await
+        .expect("Failed to get items");
+
+    let items: Value = assert_json_response(items_response).await;
+    assert!(items.is_array());
+    assert!(!items.as_array().unwrap().is_empty());
+
+    let machines_response = client
+        .get(format!("{}/api/game-data/machines", server.base_url))
+        .send()
+        .await
+        .expect("Failed to get machines");
+
+    let machines: Value = assert_json_response(machines_response).await;
+    assert!(machines.is_array());
+    assert!(!machines.as_array().unwrap().is_empty());
+
+    for machine in machines.as_array().unwrap() {
+        assert!(machine.get("name").is_some(), "Machine should have a name");
+        assert!(machine.get("base_power").is_some(), "Machine should have base_power");
+        assert!(machine.get("max_somersloop").is_some(), "Machine should have max_somersloop");
+
+        let base_power = machine["base_power"].as_f64().unwrap();
+        assert!(base_power >= 0.0, "Base power should be non-negative (Manual has 0)");
+    }
+
+    let extractor_response = client
+        .get(format!("{}/api/game-data/extractor-compatible-items", server.base_url))
+        .send()
+        .await
+        .expect("Failed to get extractor compatible items");
+
+    if extractor_response.status().as_u16() == 200 {
+        let extractors: Value = extractor_response.json().await.unwrap();
+        assert!(extractors.is_array());
+
+        for extractor in extractors.as_array().unwrap() {
+            assert!(extractor.get("extractor_type").is_some());
+            assert!(extractor.get("compatible_items").is_some());
+        }
+    }
+}
+
+// DASHBOARD SUMMARY TESTS
+#[tokio::test]
+async fn test_dashboard_summary_with_data() {
+    let server = create_test_server().await;
+    let client = create_test_client();
+
+    let factory_response = client
+        .post(format!("{}/api/factories", server.base_url))
+        .json(&json!({
+            "name": "Dashboard Test Factory",
+            "description": "Factory for testing dashboard with data"
+        }))
+        .send()
+        .await
+        .expect("Failed to create factory");
+
+    if factory_response.status().as_u16() == 201 {
+        let factory: Value = factory_response.json().await.unwrap();
+        let factory_id = factory["id"].as_str().unwrap().to_string();
+
+        let _ = client
+            .post(format!("{}/api/factories/{}/production-lines", server.base_url, factory_id))
+            .json(&json!({
+                "name": "Test Production Line",
+                "type": "recipe",
+                "recipe": "IronIngot",
+                "machine_groups": [
+                    {
+                        "number_of_machine": 4,
+                        "oc_value": 100.0,
+                        "somersloop": 0
+                    }
+                ]
+            }))
+            .send()
+            .await;
+
+        let _ = client
+            .post(format!("{}/api/factories/{}/power-generators", server.base_url, factory_id))
+            .json(&json!({
+                "generator_type": "Coal",
+                "fuel_type": "Coal",
+                "groups": [
+                    {
+                        "number_of_generators": 2,
+                        "clock_speed": 100.0
+                    }
+                ]
+            }))
+            .send()
+            .await;
+
+        let summary_response = client
+            .get(format!("{}/api/dashboard/summary", server.base_url))
+            .send()
+            .await
+            .expect("Failed to get dashboard summary");
+
+        if summary_response.status().as_u16() == 200 {
+            let summary: Value = summary_response.json().await.unwrap();
+
+            assert!(summary.get("total_factories").is_some());
+            assert!(summary.get("total_production_lines").is_some());
+            assert!(summary.get("total_logistics_lines").is_some());
+            assert!(summary.get("total_power_consumption").is_some());
+            assert!(summary.get("total_power_generation").is_some());
+            assert!(summary.get("net_power").is_some());
+
+            assert!(summary["total_factories"].as_u64().unwrap() >= 1);
+            assert!(summary["total_power_consumption"].as_f64().unwrap() >= 0.0);
+            assert!(summary["total_power_generation"].as_f64().unwrap() >= 0.0);
+        }
+
+        let items_response = client
+            .get(format!("{}/api/dashboard/items", server.base_url))
+            .send()
+            .await
+            .expect("Failed to get item balances");
+
+        if items_response.status().as_u16() == 200 {
+            let items: Value = items_response.json().await.unwrap();
+            assert!(items.is_array());
+
+            for item in items.as_array().unwrap() {
+                assert!(item.get("item").is_some());
+                assert!(item.get("balance").is_some());
+                assert!(item.get("state").is_some());
+
+                let state = item["state"].as_str().unwrap();
+                assert!(state == "overflow" || state == "underflow" || state == "balanced");
+            }
+        }
+
+        let power_response = client
+            .get(format!("{}/api/dashboard/power", server.base_url))
+            .send()
+            .await
+            .expect("Failed to get power statistics");
+
+        if power_response.status().as_u16() == 200 {
+            let power: Value = power_response.json().await.unwrap();
+
+            assert!(power.get("total_generation").is_some());
+            assert!(power.get("total_consumption").is_some());
+            assert!(power.get("power_balance").is_some());
+            assert!(power.get("has_surplus").is_some());
+            assert!(power.get("has_deficit").is_some());
+            assert!(power.get("is_balanced").is_some());
+            assert!(power.get("factory_stats").is_some());
+
+            assert!(power["has_surplus"].is_boolean());
+            assert!(power["has_deficit"].is_boolean());
+            assert!(power["is_balanced"].is_boolean());
+        }
+    }
+}
+
+// BLUEPRINT PREVIEW ENDPOINT TEST
+#[tokio::test]
+async fn test_blueprint_preview_endpoint() {
+    let server = create_test_server().await;
+    let client = create_test_client();
+
+    let blueprint_json = r#"{
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "name": "Preview Test Blueprint",
+        "description": "Blueprint for testing preview endpoint",
+        "production_lines": [
+            {
+                "id": "550e8400-e29b-41d4-a716-446655440001",
+                "name": "Complex Production Line",
+                "recipe": "Motor",
+                "machine_groups": [
+                    {
+                        "number_of_machine": 3,
+                        "oc_value": 150.0,
+                        "somersloop": 2
+                    }
+                ]
+            }
+        ]
+    }"#;
+
+    let preview_response = client
+        .post(format!("{}/api/blueprints/preview", server.base_url))
+        .json(&json!({
+            "blueprint_json": blueprint_json
+        }))
+        .send()
+        .await
+        .expect("Failed to preview blueprint");
+
+    if preview_response.status().as_u16() == 200 {
+        let preview: Value = preview_response.json().await.unwrap();
+
+        assert!(preview.get("name").is_some());
+        assert!(preview.get("description").is_some());
+        assert!(preview.get("total_machines").is_some());
+        assert!(preview.get("total_power").is_some());
+        assert!(preview.get("input_items").is_some());
+        assert!(preview.get("output_items").is_some());
+        assert!(preview.get("exported_at").is_some());
+
+        assert_eq!(preview["total_machines"], 3);
+        assert!(preview["total_power"].as_f64().unwrap() > 0.0);
+    }
+
+    let invalid_preview_response = client
+        .post(format!("{}/api/blueprints/preview", server.base_url))
+        .json(&json!({
+            "blueprint_json": "{ invalid json }"
+        }))
+        .send()
+        .await
+        .expect("Failed to send invalid preview request");
+
+    assert_bad_request(invalid_preview_response).await;
+}
+
+// COMPREHENSIVE BLUEPRINT TEMPLATE VALIDATION ERRORS
+#[tokio::test]
+async fn test_blueprint_template_validation_errors() {
+    let server = create_test_server().await;
+    let client = create_test_client();
+
+    let invalid_oc_response = client
+        .post(format!("{}/api/blueprints/templates", server.base_url))
+        .json(&json!({
+            "name": "Invalid OC Template",
+            "production_lines": [
+                {
+                    "name": "Bad Line",
+                    "recipe": "IronIngot",
+                    "machine_groups": [
+                        {
+                            "number_of_machine": 1,
+                            "oc_value": 300.0,
+                            "somersloop": 0
+                        }
+                    ]
+                }
+            ]
+        }))
+        .send()
+        .await
+        .expect("Failed to send invalid OC template request");
+
+    assert_bad_request(invalid_oc_response).await;
+
+    let zero_machine_response = client
+        .post(format!("{}/api/blueprints/templates", server.base_url))
+        .json(&json!({
+            "name": "Zero Machine Template",
+            "production_lines": [
+                {
+                    "name": "Empty Line",
+                    "recipe": "IronIngot",
+                    "machine_groups": [
+                        {
+                            "number_of_machine": 0,
+                            "oc_value": 100.0,
+                            "somersloop": 0
+                        }
+                    ]
+                }
+            ]
+        }))
+        .send()
+        .await
+        .expect("Failed to send zero machine template request");
+
+    assert_bad_request(zero_machine_response).await;
+
+    let invalid_recipe_response = client
+        .post(format!("{}/api/blueprints/templates", server.base_url))
+        .json(&json!({
+            "name": "Invalid Recipe Template",
+            "production_lines": [
+                {
+                    "name": "Bad Recipe Line",
+                    "recipe": "NonExistentRecipeABC123",
+                    "machine_groups": [
+                        {
+                            "number_of_machine": 1,
+                            "oc_value": 100.0,
+                            "somersloop": 0
+                        }
+                    ]
+                }
+            ]
+        }))
+        .send()
+        .await
+        .expect("Failed to send invalid recipe template request");
+
+    assert_bad_request(invalid_recipe_response).await;
+
+    let empty_lines_response = client
+        .post(format!("{}/api/blueprints/templates", server.base_url))
+        .json(&json!({
+            "name": "Empty Lines Template",
+            "production_lines": []
+        }))
+        .send()
+        .await
+        .expect("Failed to send empty lines template request");
+
+    assert_bad_request(empty_lines_response).await;
+
+    let invalid_import_response = client
+        .post(format!("{}/api/blueprints/templates/import", server.base_url))
+        .json(&json!({
+            "blueprint_json": "{ invalid json }",
+            "name": "Invalid Import"
+        }))
+        .send()
+        .await
+        .expect("Failed to send invalid import request");
+
+    assert_bad_request(invalid_import_response).await;
+}
+
+// RESET ENDPOINT TEST
+#[tokio::test]
+async fn test_reset_endpoint() {
+    let server = create_test_server().await;
+    let client = create_test_client();
+
+    let factory_response = client
+        .post(format!("{}/api/factories", server.base_url))
+        .json(&json!({
+            "name": "Factory To Reset",
+            "description": "This factory will be deleted by reset"
+        }))
+        .send()
+        .await
+        .expect("Failed to create factory");
+
+    if factory_response.status().as_u16() == 201 {
+        let factories_before = client
+            .get(format!("{}/api/factories", server.base_url))
+            .send()
+            .await
+            .expect("Failed to get factories before reset");
+
+        let factories_list: Value = factories_before.json().await.unwrap();
+        assert!(!factories_list.as_array().unwrap().is_empty());
+
+        let reset_response = client
+            .post(format!("{}/api/reset", server.base_url))
+            .send()
+            .await
+            .expect("Failed to reset engine");
+
+        if reset_response.status().as_u16() == 200 {
+            let reset_result: Value = reset_response.json().await.unwrap();
+            assert!(reset_result["message"].as_str().unwrap().contains("reset successfully"));
+
+            let factories_after = client
+                .get(format!("{}/api/factories", server.base_url))
+                .send()
+                .await
+                .expect("Failed to get factories after reset");
+
+            let factories_list_after: Value = factories_after.json().await.unwrap();
+            assert!(factories_list_after.as_array().unwrap().is_empty());
+        }
     }
 }

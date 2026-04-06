@@ -224,11 +224,10 @@ const availableFuels = computed(() => {
         item === 'Mycelia' ||
         item === 'Wood' ||
         item === 'AlienProtein' ||
-        item === 'AlienDNA' ||
         item === 'FlowerPetals' ||
         item === 'BaconAgaric' ||
         item === 'BerylNut' ||
-        item === 'Pollen'
+        item === 'Paleberry'
       )
     case 'Coal':
       return items.value.filter(item => item === 'Coal' || item === 'CompactedCoal')

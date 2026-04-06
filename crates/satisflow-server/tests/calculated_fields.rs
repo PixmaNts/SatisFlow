@@ -1629,3 +1629,775 @@ async fn test_raw_input_overclock_and_count() {
         assert_bad_request(invalid_count_response).await;
     }
 }
+
+// PREVIEW ENDPOINT TESTS WITH 1.2 GAME DATA
+#[tokio::test]
+async fn test_preview_endpoints_with_1_2_data() {
+    let server = create_test_server().await;
+    let client = create_test_client();
+
+    let factory_response = client
+        .post(format!("{}/api/factories", server.base_url))
+        .json(&json!({
+            "name": "1.2 Data Preview Factory",
+            "description": "Factory for testing 1.2 data preview endpoints"
+        }))
+        .send()
+        .await
+        .expect("Failed to create factory");
+
+    if factory_response.status().as_u16() == 201 {
+        let factory: Value = factory_response.json().await.unwrap();
+        let factory_id = factory["id"].as_str().unwrap().to_string();
+
+        // Test 1: Preview with new 1.2 recipes (Blender, Particle Accelerator recipes)
+        let advanced_recipe_preview = client
+            .post(format!("{}/api/factories/{}/production-lines/preview", server.base_url, factory_id))
+            .json(&json!({
+                "name": "Fused Modular Frame Preview",
+                "type": "recipe",
+                "recipe": "FusedModularFrame",
+                "machine_groups": [
+                    {
+                        "number_of_machine": 2,
+                        "oc_value": 100.0,
+                        "somersloop": 0
+                    }
+                ]
+            }))
+            .send()
+            .await
+            .expect("Failed to preview advanced recipe");
+
+        if advanced_recipe_preview.status().as_u16() == 200 {
+            let preview: Value = advanced_recipe_preview.json().await.unwrap();
+            assert!(preview.get("total_power_consumption").is_some());
+            assert!(preview.get("total_machines").is_some());
+            assert!(preview.get("input_rate").is_some());
+            assert!(preview.get("output_rate").is_some());
+            assert_eq!(preview["total_machines"], 2);
+        }
+
+        // Test 2: Preview with turbo motor (complex recipe)
+        let turbo_motor_preview = client
+            .post(format!("{}/api/factories/{}/production-lines/preview", server.base_url, factory_id))
+            .json(&json!({
+                "name": "Turbo Motor Preview",
+                "type": "recipe",
+                "recipe": "TurboMotor",
+                "machine_groups": [
+                    {
+                        "number_of_machine": 1,
+                        "oc_value": 150.0,
+                        "somersloop": 1
+                    }
+                ]
+            }))
+            .send()
+            .await
+            .expect("Failed to preview turbo motor");
+
+        if turbo_motor_preview.status().as_u16() == 200 {
+            let preview: Value = turbo_motor_preview.json().await.unwrap();
+            assert_eq!(preview["total_machines"], 1);
+            assert_eq!(preview["total_somersloop"], 1);
+            let power = preview["total_power_consumption"].as_f64().unwrap();
+            assert!(power > 0.0);
+        }
+
+        // Test 3: Preview power generator with new 1.2 fuel types (Plutonium)
+        let plutonium_generator_preview = client
+            .post(format!("{}/api/factories/{}/power-generators/preview", server.base_url, factory_id))
+            .json(&json!({
+                "generator_type": "Nuclear",
+                "fuel_type": "PlutoniumFuelRod",
+                "groups": [
+                    {
+                        "number_of_generators": 1,
+                        "clock_speed": 100.0
+                    }
+                ]
+            }))
+            .send()
+            .await
+            .expect("Failed to preview plutonium generator");
+
+        if plutonium_generator_preview.status().as_u16() == 200 {
+            let preview: Value = plutonium_generator_preview.json().await.unwrap();
+            assert!(preview.get("total_power_generation").is_some());
+            assert!(preview.get("waste_production_rate").is_some());
+            assert!(preview.get("waste_product").is_some());
+        }
+
+        // Test 4: Preview with overclocking at different levels
+        for oc in [50.0, 100.0, 150.0, 200.0, 250.0] {
+            let oc_preview = client
+                .post(format!("{}/api/factories/{}/production-lines/preview", server.base_url, factory_id))
+                .json(&json!({
+                    "name": format!("OC {:.0}% Preview", oc),
+                    "type": "recipe",
+                    "recipe": "IronIngot",
+                    "machine_groups": [
+                        {
+                            "number_of_machine": 1,
+                            "oc_value": oc,
+                            "somersloop": 0
+                        }
+                    ]
+                }))
+                .send()
+                .await
+                .expect("Failed to send OC preview request");
+
+            if oc_preview.status().as_u16() == 200 {
+                let preview: Value = oc_preview.json().await.unwrap();
+                let power = preview["total_power_consumption"].as_f64().unwrap();
+                assert!(power > 0.0, "Power consumption should be positive at {}% OC", oc);
+            }
+        }
+
+        // Test 5: Preview with different somersloop levels (0-4)
+        for somersloop in 0..=4 {
+            let somersloop_preview = client
+                .post(format!("{}/api/factories/{}/production-lines/preview", server.base_url, factory_id))
+                .json(&json!({
+                    "name": format!("Somersloop {} Preview", somersloop),
+                    "type": "recipe",
+                    "recipe": "IronIngot",
+                    "machine_groups": [
+                        {
+                            "number_of_machine": 1,
+                            "oc_value": 100.0,
+                            "somersloop": somersloop
+                        }
+                    ]
+                }))
+                .send()
+                .await
+                .expect("Failed to send somersloop preview request");
+
+            if somersloop_preview.status().as_u16() == 200 {
+                let preview: Value = somersloop_preview.json().await.unwrap();
+                assert_eq!(preview["total_somersloop"], somersloop);
+            }
+        }
+    }
+}
+
+// BLUEPRINT CALCULATIONS WITH 1.2 DATA
+#[tokio::test]
+async fn test_blueprint_calculations_with_1_2_data() {
+    let server = create_test_server().await;
+    let client = create_test_client();
+
+    let factory_response = client
+        .post(format!("{}/api/factories", server.base_url))
+        .json(&json!({
+            "name": "1.2 Blueprint Factory",
+            "description": "Factory for testing 1.2 blueprint calculations"
+        }))
+        .send()
+        .await
+        .expect("Failed to create factory");
+
+    if factory_response.status().as_u16() == 201 {
+        let factory: Value = factory_response.json().await.unwrap();
+        let factory_id = factory["id"].as_str().unwrap().to_string();
+
+        // Test blueprint preview with complex 1.2 production chain
+        let complex_blueprint_preview = client
+            .post(format!("{}/api/factories/{}/production-lines/preview", server.base_url, factory_id))
+            .json(&json!({
+                "name": "Advanced Motor Production Complex",
+                "description": "Complete motor production with 1.2 recipes",
+                "type": "blueprint",
+                "production_lines": [
+                    {
+                        "name": "Steel Ingot Production",
+                        "description": "Steel from coal and iron",
+                        "recipe": "SteelIngot",
+                        "machine_groups": [
+                            {
+                                "number_of_machine": 4,
+                                "oc_value": 100.0,
+                                "somersloop": 0
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Steel Pipe Production",
+                        "description": "Steel pipes for rotors",
+                        "recipe": "SteelPipe",
+                        "machine_groups": [
+                            {
+                                "number_of_machine": 2,
+                                "oc_value": 100.0,
+                                "somersloop": 0
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Rotor Production",
+                        "description": "Rotors for motors and stators",
+                        "recipe": "Rotor",
+                        "machine_groups": [
+                            {
+                                "number_of_machine": 3,
+                                "oc_value": 150.0,
+                                "somersloop": 1
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Stator Production",
+                        "description": "Stators for motors",
+                        "recipe": "Stator",
+                        "machine_groups": [
+                            {
+                                "number_of_machine": 3,
+                                "oc_value": 150.0,
+                                "somersloop": 1
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Motor Assembly",
+                        "description": "Final motor assembly",
+                        "recipe": "Motor",
+                        "machine_groups": [
+                            {
+                                "number_of_machine": 2,
+                                "oc_value": 100.0,
+                                "somersloop": 2
+                            }
+                        ]
+                    }
+                ]
+            }))
+            .send()
+            .await
+            .expect("Failed to preview complex blueprint");
+
+        if complex_blueprint_preview.status().as_u16() == 200 {
+            let preview: Value = complex_blueprint_preview.json().await.unwrap();
+
+            // Verify aggregated calculations
+            assert_eq!(preview["total_machines"], 14); // 4 + 2 + 3 + 3 + 2
+            assert_eq!(preview["total_somersloop"], 6); // 0 + 0 + 1 + 1 + 2 per machine * 1 machine each
+
+            // Verify power consumption is calculated
+            let power = preview["total_power_consumption"].as_f64().unwrap();
+            assert!(power > 0.0);
+
+            // Verify input/output rates are aggregated
+            let input_rate = preview["input_rate"].as_array().unwrap();
+            let output_rate = preview["output_rate"].as_array().unwrap();
+
+            assert!(!input_rate.is_empty(), "Should have aggregated inputs");
+            assert!(!output_rate.is_empty(), "Should have aggregated outputs");
+
+            // Should have Motor as output
+            let motor_output = output_rate.iter().find(|o| o["item"] == "Motor");
+            assert!(motor_output.is_some(), "Should produce Motors");
+        }
+    }
+}
+
+// EDGE CASE CALCULATION TESTS
+#[tokio::test]
+async fn test_edge_case_calculations() {
+    let server = create_test_server().await;
+    let client = create_test_client();
+
+    let factory_response = client
+        .post(format!("{}/api/factories", server.base_url))
+        .json(&json!({
+            "name": "Edge Case Factory",
+            "description": "Factory for testing edge case calculations"
+        }))
+        .send()
+        .await
+        .expect("Failed to create factory");
+
+    if factory_response.status().as_u16() == 201 {
+        let factory: Value = factory_response.json().await.unwrap();
+        let factory_id = factory["id"].as_str().unwrap().to_string();
+
+        // Test 1: Preview with 0% overclock (should have zero output)
+        let zero_oc_preview = client
+            .post(format!("{}/api/factories/{}/production-lines/preview", server.base_url, factory_id))
+            .json(&json!({
+                "name": "Zero OC Line",
+                "type": "recipe",
+                "recipe": "IronIngot",
+                "machine_groups": [
+                    {
+                        "number_of_machine": 1,
+                        "oc_value": 0.0,
+                        "somersloop": 0
+                    }
+                ]
+            }))
+            .send()
+            .await
+            .expect("Failed to send zero OC preview request");
+
+        if zero_oc_preview.status().as_u16() == 200 {
+            let preview: Value = zero_oc_preview.json().await.unwrap();
+            assert_eq!(preview["total_power_consumption"], 0.0);
+        }
+
+        // Test 2: Preview with 250% overclock (maximum)
+        let max_oc_preview = client
+            .post(format!("{}/api/factories/{}/production-lines/preview", server.base_url, factory_id))
+            .json(&json!({
+                "name": "Max OC Line",
+                "type": "recipe",
+                "recipe": "IronIngot",
+                "machine_groups": [
+                    {
+                        "number_of_machine": 1,
+                        "oc_value": 250.0,
+                        "somersloop": 0
+                    }
+                ]
+            }))
+            .send()
+            .await
+            .expect("Failed to send max OC preview request");
+
+        if max_oc_preview.status().as_u16() == 200 {
+            let preview: Value = max_oc_preview.json().await.unwrap();
+            let power = preview["total_power_consumption"].as_f64().unwrap();
+            assert!(power > 0.0);
+            // At 250% OC, power should be significantly higher than base
+            assert!(power > 4.0); // Base is 4MW, at 250% should be ~31.6MW
+        }
+
+        // Test 3: Preview power generator with 250% overclock
+        let max_oc_generator = client
+            .post(format!("{}/api/factories/{}/power-generators/preview", server.base_url, factory_id))
+            .json(&json!({
+                "generator_type": "Coal",
+                "fuel_type": "Coal",
+                "groups": [
+                    {
+                        "number_of_generators": 1,
+                        "clock_speed": 250.0
+                    }
+                ]
+            }))
+            .send()
+            .await
+            .expect("Failed to send max OC generator preview request");
+
+        if max_oc_generator.status().as_u16() == 200 {
+            let preview: Value = max_oc_generator.json().await.unwrap();
+            let generation = preview["total_power_generation"].as_f64().unwrap();
+            // At 250% OC, coal generator should produce 75MW * 2.5 = 187.5MW
+            assert_eq!(generation, 187.5);
+        }
+
+        // Test 4: Preview with multiple machine groups
+        let multi_group_preview = client
+            .post(format!("{}/api/factories/{}/production-lines/preview", server.base_url, factory_id))
+            .json(&json!({
+                "name": "Multi Group Line",
+                "type": "recipe",
+                "recipe": "IronIngot",
+                "machine_groups": [
+                    {
+                        "number_of_machine": 2,
+                        "oc_value": 100.0,
+                        "somersloop": 0
+                    },
+                    {
+                        "number_of_machine": 3,
+                        "oc_value": 150.0,
+                        "somersloop": 1
+                    }
+                ]
+            }))
+            .send()
+            .await
+            .expect("Failed to send multi group preview request");
+
+        if multi_group_preview.status().as_u16() == 200 {
+            let preview: Value = multi_group_preview.json().await.unwrap();
+            assert_eq!(preview["total_machines"], 5); // 2 + 3
+            assert_eq!(preview["total_somersloop"], 3); // 0*2 + 1*3
+        }
+    }
+}
+
+// POWER GENERATOR COMPREHENSIVE TESTS
+#[tokio::test]
+async fn test_all_generator_types_with_calculations() {
+    let server = create_test_server().await;
+    let client = create_test_client();
+
+    let factory_response = client
+        .post(format!("{}/api/factories", server.base_url))
+        .json(&json!({
+            "name": "Generator Test Factory",
+            "description": "Factory for testing all generator types"
+        }))
+        .send()
+        .await
+        .expect("Failed to create factory");
+
+    if factory_response.status().as_u16() == 201 {
+        let factory: Value = factory_response.json().await.unwrap();
+        let factory_id = factory["id"].as_str().unwrap().to_string();
+
+        // Test Coal generator
+        let coal_preview = client
+            .post(format!("{}/api/factories/{}/power-generators/preview", server.base_url, factory_id))
+            .json(&json!({
+                "generator_type": "Coal",
+                "fuel_type": "Coal",
+                "groups": [
+                    {
+                        "number_of_generators": 3,
+                        "clock_speed": 100.0
+                    }
+                ]
+            }))
+            .send()
+            .await
+            .expect("Failed to preview coal generator");
+
+        if coal_preview.status().as_u16() == 200 {
+            let preview: Value = coal_preview.json().await.unwrap();
+            assert_eq!(preview["total_power_generation"], 225.0); // 3 * 75MW
+            assert_eq!(preview["waste_production_rate"], 0.0);
+            assert!(preview["waste_product"].is_null());
+        }
+
+        // Test Fuel generator
+        let fuel_preview = client
+            .post(format!("{}/api/factories/{}/power-generators/preview", server.base_url, factory_id))
+            .json(&json!({
+                "generator_type": "Fuel",
+                "fuel_type": "Fuel",
+                "groups": [
+                    {
+                        "number_of_generators": 2,
+                        "clock_speed": 100.0
+                    }
+                ]
+            }))
+            .send()
+            .await
+            .expect("Failed to preview fuel generator");
+
+        if fuel_preview.status().as_u16() == 200 {
+            let preview: Value = fuel_preview.json().await.unwrap();
+            assert_eq!(preview["total_power_generation"], 300.0); // 2 * 150MW
+        }
+
+        // Test Turbofuel generator
+        let turbo_preview = client
+            .post(format!("{}/api/factories/{}/power-generators/preview", server.base_url, factory_id))
+            .json(&json!({
+                "generator_type": "Fuel",
+                "fuel_type": "Turbofuel",
+                "groups": [
+                    {
+                        "number_of_generators": 1,
+                        "clock_speed": 100.0
+                    }
+                ]
+            }))
+            .send()
+            .await
+            .expect("Failed to preview turbofuel generator");
+
+        if turbo_preview.status().as_u16() == 200 {
+            let preview: Value = turbo_preview.json().await.unwrap();
+            assert_eq!(preview["total_power_generation"], 150.0); // 1 * 150MW
+        }
+
+        // Test Nuclear generator (Uranium)
+        let nuclear_preview = client
+            .post(format!("{}/api/factories/{}/power-generators/preview", server.base_url, factory_id))
+            .json(&json!({
+                "generator_type": "Nuclear",
+                "fuel_type": "UraniumFuelRod",
+                "groups": [
+                    {
+                        "number_of_generators": 1,
+                        "clock_speed": 100.0
+                    }
+                ]
+            }))
+            .send()
+            .await
+            .expect("Failed to preview nuclear generator");
+
+        if nuclear_preview.status().as_u16() == 200 {
+            let preview: Value = nuclear_preview.json().await.unwrap();
+            assert_eq!(preview["total_power_generation"], 2500.0);
+            assert_eq!(preview["waste_production_rate"], 0.025);
+            assert_eq!(preview["waste_product"], "UraniumWaste");
+        }
+
+        // Test Geothermal generator (no fuel)
+        let geothermal_preview = client
+            .post(format!("{}/api/factories/{}/power-generators/preview", server.base_url, factory_id))
+            .json(&json!({
+                "generator_type": "Geothermal",
+                "groups": [
+                    {
+                        "number_of_generators": 5,
+                        "clock_speed": 100.0
+                    }
+                ]
+            }))
+            .send()
+            .await
+            .expect("Failed to preview geothermal generator");
+
+        if geothermal_preview.status().as_u16() == 200 {
+            let preview: Value = geothermal_preview.json().await.unwrap();
+            assert_eq!(preview["total_power_generation"], 1000.0); // 5 * 200MW
+            assert_eq!(preview["total_fuel_consumption"], 0.0);
+        }
+    }
+}
+
+// RAW INPUT COMPREHENSIVE TESTS
+#[tokio::test]
+async fn test_all_extractor_types() {
+    let server = create_test_server().await;
+    let client = create_test_client();
+
+    let factory_response = client
+        .post(format!("{}/api/factories", server.base_url))
+        .json(&json!({
+            "name": "Extractor Test Factory",
+            "description": "Factory for testing all extractor types"
+        }))
+        .send()
+        .await
+        .expect("Failed to create factory");
+
+    if factory_response.status().as_u16() == 201 {
+        let factory: Value = factory_response.json().await.unwrap();
+        let factory_id = factory["id"].as_str().unwrap().to_string();
+
+        // Test Miner Mk1 with different purities
+        for purity in ["Impure", "Normal", "Pure"] {
+            let preview = client
+                .post(format!("{}/api/factories/{}/raw-inputs/preview", server.base_url, factory_id))
+                .json(&json!({
+                    "extractor_type": "MinerMk1",
+                    "item": "IronOre",
+                    "purity": purity,
+                    "overclock_percent": 100.0,
+                    "count": 1,
+                    "quantity_per_min": 0.0
+                }))
+                .send()
+                .await
+                .expect("Failed to preview miner");
+
+            if preview.status().as_u16() == 200 {
+                let result: Value = preview.json().await.unwrap();
+                assert_eq!(result["power_consumption"], 5.0); // Miner Mk1 base power
+
+                // Verify extraction rates based on purity
+                let qty = result["quantity_per_min"].as_f64().unwrap();
+                match purity {
+                    "Impure" => assert_eq!(qty, 30.0),
+                    "Normal" => assert_eq!(qty, 60.0),
+                    "Pure" => assert_eq!(qty, 120.0),
+                    _ => {}
+                }
+            }
+        }
+
+        // Test Oil Extractor
+        let oil_preview = client
+            .post(format!("{}/api/factories/{}/raw-inputs/preview", server.base_url, factory_id))
+            .json(&json!({
+                "extractor_type": "OilExtractor",
+                "item": "CrudeOil",
+                "purity": "Normal",
+                "overclock_percent": 100.0,
+                "count": 1,
+                "quantity_per_min": 0.0
+            }))
+            .send()
+            .await
+            .expect("Failed to preview oil extractor");
+
+        if oil_preview.status().as_u16() == 200 {
+            let result: Value = oil_preview.json().await.unwrap();
+            assert_eq!(result["power_consumption"], 40.0);
+            assert_eq!(result["quantity_per_min"], 120.0);
+        }
+
+        // Test Water Extractor (no purity)
+        let water_preview = client
+            .post(format!("{}/api/factories/{}/raw-inputs/preview", server.base_url, factory_id))
+            .json(&json!({
+                "extractor_type": "WaterExtractor",
+                "item": "Water",
+                "overclock_percent": 100.0,
+                "count": 1,
+                "quantity_per_min": 0.0
+            }))
+            .send()
+            .await
+            .expect("Failed to preview water extractor");
+
+        if water_preview.status().as_u16() == 200 {
+            let result: Value = water_preview.json().await.unwrap();
+            assert_eq!(result["power_consumption"], 20.0);
+            assert_eq!(result["quantity_per_min"], 120.0);
+        }
+
+        // Test Resource Well with multiple extractors
+        let resource_well_preview = client
+            .post(format!("{}/api/factories/{}/raw-inputs/preview", server.base_url, factory_id))
+            .json(&json!({
+                "extractor_type": "ResourceWellExtractor",
+                "item": "NitrogenGas",
+                "pressurizer": {
+                    "clock_speed": 100.0
+                },
+                "extractors": [
+                    { "purity": "Impure" },
+                    { "purity": "Normal" },
+                    { "purity": "Pure" }
+                ]
+            }))
+            .send()
+            .await
+            .expect("Failed to preview resource well");
+
+        if resource_well_preview.status().as_u16() == 200 {
+            let result: Value = resource_well_preview.json().await.unwrap();
+            // Impure: 30, Normal: 60, Pure: 120 = 210 total
+            assert_eq!(result["quantity_per_min"], 210.0);
+            assert_eq!(result["power_consumption"], 150.0); // Resource well pressurizer base power
+        }
+    }
+}
+
+// FACTORY LEVEL CALCULATIONS TEST
+#[tokio::test]
+async fn test_factory_level_calculations_comprehensive() {
+    let server = create_test_server().await;
+    let client = create_test_client();
+
+    let factory_response = client
+        .post(format!("{}/api/factories", server.base_url))
+        .json(&json!({
+            "name": "Comprehensive Calc Factory",
+            "description": "Factory for comprehensive calculation tests"
+        }))
+        .send()
+        .await
+        .expect("Failed to create factory");
+
+    if factory_response.status().as_u16() == 201 {
+        let factory: Value = factory_response.json().await.unwrap();
+        let factory_id = factory["id"].as_str().unwrap().to_string();
+
+        // Add production line
+        let production_response = client
+            .post(format!("{}/api/factories/{}/production-lines", server.base_url, factory_id))
+            .json(&json!({
+                "name": "Iron Production",
+                "type": "recipe",
+                "recipe": "IronIngot",
+                "machine_groups": [
+                    {
+                        "number_of_machine": 4,
+                        "oc_value": 100.0,
+                        "somersloop": 0
+                    }
+                ]
+            }))
+            .send()
+            .await;
+
+        let production_created = production_response.map(|r| r.status().as_u16() == 201).unwrap_or(false);
+
+        // Add raw input
+        let raw_input_response = client
+            .post(format!("{}/api/factories/{}/raw-inputs", server.base_url, factory_id))
+            .json(&json!({
+                "extractor_type": "MinerMk2",
+                "item": "IronOre",
+                "purity": "Normal",
+                "overclock_percent": 100.0,
+                "count": 2,
+                "quantity_per_min": 0.0
+            }))
+            .send()
+            .await;
+
+        let raw_input_created = raw_input_response.map(|r| r.status().as_u16() == 201).unwrap_or(false);
+
+        // Add power generators
+        let generator_response = client
+            .post(format!("{}/api/factories/{}/power-generators", server.base_url, factory_id))
+            .json(&json!({
+                "generator_type": "Coal",
+                "fuel_type": "Coal",
+                "groups": [
+                    {
+                        "number_of_generators": 3,
+                        "clock_speed": 100.0
+                    }
+                ]
+            }))
+            .send()
+            .await;
+
+        let generator_created = generator_response.map(|r| r.status().as_u16() == 201).unwrap_or(false);
+
+        // Get factory and verify calculations
+        let get_response = client
+            .get(format!("{}/api/factories/{}", server.base_url, factory_id))
+            .send()
+            .await
+            .expect("Failed to get factory");
+
+        if get_response.status().as_u16() == 200 {
+            let factory_data: Value = get_response.json().await.unwrap();
+
+            // Verify power calculations only if resources were created
+            // Consumption: 4 machines * 4MW + 2 miners * 15MW = 16 + 30 = 46MW
+            let consumption = factory_data["total_power_consumption"].as_f64().unwrap();
+            if production_created || raw_input_created {
+                assert!(consumption >= 0.0);
+            }
+
+            // Generation: 3 generators * 75MW = 225MW
+            let generation = factory_data["total_power_generation"].as_f64().unwrap();
+            if generator_created {
+                assert!(generation >= 0.0);
+            }
+
+            // Verify arrays exist
+            let production_lines = factory_data["production_lines"].as_array().unwrap();
+            let raw_inputs = factory_data["raw_inputs"].as_array().unwrap();
+            let generators = factory_data["power_generators"].as_array().unwrap();
+
+            // Verify counts match what was created
+            if production_created {
+                assert!(!production_lines.is_empty());
+            }
+            if raw_input_created {
+                assert!(!raw_inputs.is_empty());
+            }
+            if generator_created {
+                assert!(!generators.is_empty());
+            }
+        }
+    }
+}

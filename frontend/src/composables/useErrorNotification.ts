@@ -222,7 +222,10 @@ export function useErrorNotification() {
     if (!error.fieldErrors) return undefined
     
     return Object.entries(error.fieldErrors).reduce((acc, [key, values]) => {
-      acc[key] = values[0] // Take first error message per field
+      const firstError = values[0]
+      if (firstError) {
+        acc[key] = firstError
+      }
       return acc
     }, {} as Record<string, string>)
   }

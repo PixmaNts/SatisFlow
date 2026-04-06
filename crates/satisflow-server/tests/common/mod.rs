@@ -286,6 +286,269 @@ pub mod test_data {
             "quantity_per_min": 0.0
         })
     }
+
+    /// Drone transport payload for testing aerial logistics.
+    pub fn drone_logistics_request(
+        from_factory: Uuid,
+        to_factory: Uuid,
+        item: &str,
+        quantity_per_min: f32,
+    ) -> serde_json::Value {
+        json!({
+            "from_factory": from_factory,
+            "to_factory": to_factory,
+            "transport_type": "Drone",
+            "item": item,
+            "quantity_per_min": quantity_per_min
+        })
+    }
+
+    /// Drone transport with explicit identifier.
+    pub fn drone_logistics_with_id_request(
+        from_factory: Uuid,
+        to_factory: Uuid,
+        item: &str,
+        quantity_per_min: f32,
+        drone_id: &str,
+    ) -> serde_json::Value {
+        json!({
+            "from_factory": from_factory,
+            "to_factory": to_factory,
+            "transport_type": "Drone",
+            "item": item,
+            "quantity_per_min": quantity_per_min,
+            "drone_id": drone_id
+        })
+    }
+
+    /// Blueprint template creation payload.
+    pub fn create_blueprint_template_request() -> serde_json::Value {
+        json!({
+            "name": "Test Blueprint Template",
+            "description": "A test blueprint for integration testing",
+            "production_lines": [
+                {
+                    "name": "Iron Ingot Production",
+                    "description": "Basic iron ingot production",
+                    "recipe": "IronIngot",
+                    "machine_groups": [
+                        {
+                            "number_of_machine": 4,
+                            "oc_value": 100.0,
+                            "somersloop": 0
+                        }
+                    ]
+                }
+            ]
+        })
+    }
+
+    /// Complex blueprint template with multiple production lines.
+    pub fn complex_blueprint_template_request() -> serde_json::Value {
+        json!({
+            "name": "Motor Production Complex",
+            "description": "Complete motor production from raw materials",
+            "production_lines": [
+                {
+                    "name": "Iron Ingot Production",
+                    "description": "Smelts iron ore into ingots",
+                    "recipe": "IronIngot",
+                    "machine_groups": [
+                        {
+                            "number_of_machine": 6,
+                            "oc_value": 100.0,
+                            "somersloop": 0
+                        }
+                    ]
+                },
+                {
+                    "name": "Screw Production",
+                    "description": "Creates screws from iron rods",
+                    "recipe": "Screw",
+                    "machine_groups": [
+                        {
+                            "number_of_machine": 3,
+                            "oc_value": 150.0,
+                            "somersloop": 0
+                        }
+                    ]
+                },
+                {
+                    "name": "Motor Assembly",
+                    "description": "Assembles motors from components",
+                    "recipe": "Motor",
+                    "machine_groups": [
+                        {
+                            "number_of_machine": 2,
+                            "oc_value": 100.0,
+                            "somersloop": 1
+                        }
+                    ]
+                }
+            ]
+        })
+    }
+
+    /// Invalid blueprint template (empty name).
+    pub fn invalid_blueprint_template_request() -> serde_json::Value {
+        json!({
+            "name": "",
+            "description": "Invalid template with empty name",
+            "production_lines": []
+        })
+    }
+
+    /// Blueprint template with invalid overclock value.
+    pub fn blueprint_with_invalid_oc_request() -> serde_json::Value {
+        json!({
+            "name": "Invalid OC Blueprint",
+            "production_lines": [
+                {
+                    "name": "Overclocked Line",
+                    "recipe": "IronIngot",
+                    "machine_groups": [
+                        {
+                            "number_of_machine": 1,
+                            "oc_value": 300.0,
+                            "somersloop": 0
+                        }
+                    ]
+                }
+            ]
+        })
+    }
+
+    /// Blueprint template with zero machines.
+    pub fn blueprint_with_zero_machines_request() -> serde_json::Value {
+        json!({
+            "name": "Zero Machines Blueprint",
+            "production_lines": [
+                {
+                    "name": "Empty Line",
+                    "recipe": "IronIngot",
+                    "machine_groups": [
+                        {
+                            "number_of_machine": 0,
+                            "oc_value": 100.0,
+                            "somersloop": 0
+                        }
+                    ]
+                }
+            ]
+        })
+    }
+
+    /// Blueprint template with invalid recipe name.
+    pub fn blueprint_with_invalid_recipe_request() -> serde_json::Value {
+        json!({
+            "name": "Invalid Recipe Blueprint",
+            "production_lines": [
+                {
+                    "name": "Invalid Line",
+                    "recipe": "NonExistentRecipe12345",
+                    "machine_groups": [
+                        {
+                            "number_of_machine": 1,
+                            "oc_value": 100.0,
+                            "somersloop": 0
+                        }
+                    ]
+                }
+            ]
+        })
+    }
+
+    /// Valid blueprint JSON string for import testing.
+    pub fn valid_blueprint_json() -> &'static str {
+        r#"{
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "name": "Test Blueprint",
+            "description": "Blueprint for testing import",
+            "production_lines": [
+                {
+                    "id": "550e8400-e29b-41d4-a716-446655440001",
+                    "name": "Iron Ingot Line",
+                    "description": "Basic iron ingot production",
+                    "recipe": "IronIngot",
+                    "machine_groups": [
+                        {
+                            "number_of_machine": 4,
+                            "oc_value": 100.0,
+                            "somersloop": 0
+                        }
+                    ]
+                }
+            ]
+        }"#
+    }
+
+    /// Invalid blueprint JSON string.
+    pub fn invalid_blueprint_json() -> &'static str {
+        r#"{ invalid json }"#
+    }
+
+    /// Blueprint JSON with invalid overclock.
+    pub fn blueprint_json_with_invalid_oc() -> &'static str {
+        r#"{
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "name": "Invalid OC Blueprint",
+            "production_lines": [
+                {
+                    "id": "550e8400-e29b-41d4-a716-446655440001",
+                    "name": "Bad Line",
+                    "recipe": "IronIngot",
+                    "machine_groups": [
+                        {
+                            "number_of_machine": 1,
+                            "oc_value": 300.0,
+                            "somersloop": 0
+                        }
+                    ]
+                }
+            ]
+        }"#
+    }
+
+    /// Save data request for testing save/load.
+    pub fn save_data_request() -> serde_json::Value {
+        json!({
+            "save_data": r#"{
+                "version": "0.1.0",
+                "created_at": "2025-01-01T00:00:00Z",
+                "last_modified": "2025-01-01T00:00:00Z",
+                "game_version": "1.2",
+                "engine": {
+                    "factories": {},
+                    "logistics_lines": {},
+                    "blueprint_templates": {}
+                }
+            }"#
+        })
+    }
+
+    /// Invalid save data request (malformed JSON).
+    pub fn invalid_save_data_request() -> serde_json::Value {
+        json!({
+            "save_data": "{ invalid json }"
+        })
+    }
+
+    /// Future version save data (should fail to load).
+    pub fn future_version_save_data_request() -> serde_json::Value {
+        json!({
+            "save_data": r#"{
+                "version": "999.0.0",
+                "created_at": "2025-01-01T00:00:00Z",
+                "last_modified": "2025-01-01T00:00:00Z",
+                "game_version": "1.2",
+                "engine": {
+                    "factories": {},
+                    "logistics_lines": {},
+                    "blueprint_templates": {}
+                }
+            }"#
+        })
+    }
 }
 
 /// Assertion helpers

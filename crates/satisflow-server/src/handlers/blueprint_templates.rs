@@ -456,6 +456,13 @@ pub async fn create_from_template(
 
 /// Validates a blueprint template
 fn validate_template(blueprint: &ProductionLineBlueprint) -> Result<(), AppError> {
+    // Validate blueprint has at least one production line
+    if blueprint.production_lines.is_empty() {
+        return Err(AppError::BadRequest(
+            "Blueprint must have at least 1 production line".to_string(),
+        ));
+    }
+
     for line in &blueprint.production_lines {
         for group in &line.machine_groups {
             // Check overclock range

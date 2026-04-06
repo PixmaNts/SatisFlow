@@ -12,7 +12,7 @@ pub mod version;
 use models::{
     factory::Factory,
     logistics::{LogisticsFlux, TransportType},
-    production_line::ProductionLineBlueprint,
+    production_line::{ProductionLine, ProductionLineBlueprint},
     FactoryId, Item, LogisticsId, PowerStats, ProductionLineId,
 };
 
@@ -310,6 +310,61 @@ impl SatisflowEngine {
         }
         self.blueprint_templates.remove(&id);
         Ok(())
+    }
+
+    /// Instantiate a blueprint template into a factory as a new production line.
+    ///
+    /// Creates an independent deep copy of the blueprint with new UUIDs assigned.
+    ///
+    /// # Arguments
+    ///
+    /// * `factory_id` - The ID of the target factory
+    /// * `blueprint_id` - The ID of the blueprint template to instantiate
+    /// * `custom_name` - Optional custom name for the instance (defaults to blueprint name)
+    ///
+    /// # Returns
+    ///
+    /// Result containing (instance_id, instance_name) on success
+    pub fn instantiate_blueprint_into_factory(
+        &mut self,
+        factory_id: FactoryId,
+        blueprint_id: ProductionLineId,
+        custom_name: Option<String>,
+    ) -> Result<(ProductionLineId, String), Box<dyn std::error::Error>> {
+        // Get the blueprint template
+        let blueprint = self
+            .get_blueprint_template(blueprint_id)
+            .ok_or_else(|| format!("Blueprint template {} not found", blueprint_id))?
+            .clone();
+
+        // Validate blueprint has at least one production line
+        if blueprint.production_lines.is_empty() {
+            return Err("Blueprint must have at least 1 production line".into());
+        }
+
+        // Get factory and add blueprint
+        let factory = self
+            .get_factory_mut(factory_id)
+            .ok_or_else(|| format!("Factory {} not found", factory_id))?;
+
+        // Deep clone and regenerate UUIDs
+        let mut instance = blueprint.clone();
+        instance.id = Uuid::new_v4();
+        for line in &mut instance.production_lines {
+            line.id = Uuid::new_v4();
+        }
+
+        // Override name if custom name provided
+        let instance_name = custom_name.unwrap_or(blueprint.name.clone());
+        instance.name = instance_name.clone();
+
+        let instance_id = instance.id;
+        factory.production_lines.insert(
+            instance_id,
+            ProductionLine::ProductionLineBlueprint(instance),
+        );
+
+        Ok((instance_id, instance_name))
     }
 
     /// Save the engine state to a JSON file
@@ -1053,5 +1108,243 @@ mod tests {
         // Verify still empty
         assert_eq!(engine.get_all_factories().len(), 0);
         assert_eq!(engine.get_all_logistics().len(), 0);
+    }
+
+    // =========================================================================
+    // Blueprint Template Tests
+    // =========================================================================
+
+    #[test]
+    fn test_blueprint_template_crud() {
+        let mut engine = SatisflowEngine::new();
+
+        // Create a blueprint template
+        let mut blueprint = ProductionLineBlueprint::new(
+            Uuid::new_v4(),
+            "Test Blueprint".to_string(),
+            Some("A test blueprint".to_string()),
+        );
+
+        // Add a production line to the blueprint
+        let line = ProductionLineRecipe::new(
+            Uuid::new_v4(),
+            "Iron Ingot Line".to_string(),
+            Some("Smelts ore".to_string()),
+            Recipe::IronIngot,
+        );
+        blueprint.add_production_line(line);
+
+        // Add to engine
+        let blueprint_id = engine.add_blueprint_template(blueprint.clone());
+        assert_eq!(blueprint.id, blueprint_id);
+
+        // Get all templates
+        let all_templates = engine.get_all_blueprint_templates();
+        assert_eq!(all_templates.len(), 1);
+        assert!(all_templates.contains_key(&blueprint_id));
+
+        // Get specific template
+        let retrieved = engine.get_blueprint_template(blueprint_id);
+        assert!(retrieved.is_some());
+        assert_eq!(retrieved.unwrap().name, "Test Blueprint");
+
+        // Remove template
+        let result = engine.remove_blueprint_template(blueprint_id);
+        assert!(result.is_ok());
+
+        // Verify removed
+        assert!(engine.get_blueprint_template(blueprint_id).is_none());
+        assert_eq!(engine.get_all_blueprint_templates().len(), 0);
+    }
+
+    #[test]
+    fn test_blueprint_template_remove_not_found() {
+        let mut engine = SatisflowEngine::new();
+        let missing_id = Uuid::new_v4();
+
+        let result = engine.remove_blueprint_template(missing_id);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("does not exist"));
+    }
+
+    #[test]
+    fn test_instantiate_blueprint_into_factory() {
+        let mut engine = SatisflowEngine::new();
+
+        // Create a factory
+        let factory_id = engine.create_factory("Test Factory".to_string(), None);
+
+        // Create a blueprint template with 2 production lines
+        let mut blueprint = ProductionLineBlueprint::new(
+            Uuid::new_v4(),
+            "Iron Ingot + Copper Ingot".to_string(),
+            None,
+        );
+
+        let line1 = ProductionLineRecipe::new(
+            Uuid::new_v4(),
+            "Iron Line".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        let line2 = ProductionLineRecipe::new(
+            Uuid::new_v4(),
+            "Copper Line".to_string(),
+            None,
+            Recipe::CopperIngot,
+        );
+        blueprint.add_production_line(line1);
+        blueprint.add_production_line(line2);
+
+        let blueprint_id = engine.add_blueprint_template(blueprint);
+
+        // Instantiate into factory
+        let result = engine.instantiate_blueprint_into_factory(factory_id, blueprint_id, None);
+        assert!(result.is_ok());
+        let (instance_id, instance_name) = result.unwrap();
+        assert_eq!(instance_name, "Iron Ingot + Copper Ingot");
+
+        // Verify factory now has the blueprint instance
+        let factory = engine.get_factory(factory_id).unwrap();
+        assert_eq!(factory.production_lines.len(), 1);
+
+        let instance = factory.production_lines.get(&instance_id).unwrap();
+        match instance {
+            ProductionLine::ProductionLineBlueprint(bp) => {
+                assert_eq!(bp.name, "Iron Ingot + Copper Ingot");
+                assert_eq!(bp.production_lines.len(), 2);
+            }
+            _ => panic!("Expected ProductionLineBlueprint variant"),
+        }
+    }
+
+    #[test]
+    fn test_instantiate_blueprint_twice_creates_independent_copies() {
+        let mut engine = SatisflowEngine::new();
+
+        // Create a factory
+        let factory_id = engine.create_factory("Test Factory".to_string(), None);
+
+        // Create a blueprint template
+        let mut blueprint =
+            ProductionLineBlueprint::new(Uuid::new_v4(), "Shared Blueprint".to_string(), None);
+
+        let line = ProductionLineRecipe::new(
+            Uuid::new_v4(),
+            "Iron Line".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        blueprint.add_production_line(line);
+
+        let blueprint_id = engine.add_blueprint_template(blueprint);
+
+        // Instantiate twice
+        let result1 = engine.instantiate_blueprint_into_factory(factory_id, blueprint_id, None);
+        let result2 = engine.instantiate_blueprint_into_factory(factory_id, blueprint_id, None);
+
+        assert!(result1.is_ok());
+        assert!(result2.is_ok());
+
+        let (id1, _) = result1.unwrap();
+        let (id2, _) = result2.unwrap();
+
+        // IDs should be different (independent copies)
+        assert_ne!(id1, id2);
+
+        // Factory should have 2 production lines
+        let factory = engine.get_factory(factory_id).unwrap();
+        assert_eq!(factory.production_lines.len(), 2);
+
+        // Both instances should be blueprints
+        let inst1 = factory.production_lines.get(&id1).unwrap();
+        let inst2 = factory.production_lines.get(&id2).unwrap();
+
+        match (inst1, inst2) {
+            (
+                ProductionLine::ProductionLineBlueprint(bp1),
+                ProductionLine::ProductionLineBlueprint(bp2),
+            ) => {
+                // Both should have independent IDs
+                assert_ne!(bp1.id, bp2.id);
+                // Both should have same structure but independent copies
+                assert_eq!(bp1.production_lines.len(), 1);
+                assert_eq!(bp2.production_lines.len(), 1);
+            }
+            _ => panic!("Expected ProductionLineBlueprint variants"),
+        }
+    }
+
+    #[test]
+    fn test_instantiate_blueprint_with_custom_name() {
+        let mut engine = SatisflowEngine::new();
+
+        let factory_id = engine.create_factory("Test Factory".to_string(), None);
+
+        let mut blueprint =
+            ProductionLineBlueprint::new(Uuid::new_v4(), "Original Name".to_string(), None);
+
+        // Add a production line (required for valid blueprint)
+        let line = ProductionLineRecipe::new(
+            Uuid::new_v4(),
+            "Iron Line".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        blueprint.add_production_line(line);
+
+        let blueprint_id = engine.add_blueprint_template(blueprint);
+
+        // Instantiate with custom name
+        let result = engine.instantiate_blueprint_into_factory(
+            factory_id,
+            blueprint_id,
+            Some("Custom Instance Name".to_string()),
+        );
+        assert!(result.is_ok());
+        let (_, instance_name) = result.unwrap();
+        assert_eq!(instance_name, "Custom Instance Name");
+    }
+
+    #[test]
+    fn test_instantiate_blueprint_not_found() {
+        let mut engine = SatisflowEngine::new();
+        let factory_id = engine.create_factory("Test Factory".to_string(), None);
+        let missing_blueprint_id = Uuid::new_v4();
+
+        let result =
+            engine.instantiate_blueprint_into_factory(factory_id, missing_blueprint_id, None);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("not found"));
+    }
+
+    #[test]
+    fn test_instantiate_blueprint_factory_not_found() {
+        let mut engine = SatisflowEngine::new();
+
+        let mut blueprint =
+            ProductionLineBlueprint::new(Uuid::new_v4(), "Test Blueprint".to_string(), None);
+
+        // Add a production line (required for valid blueprint)
+        let line = ProductionLineRecipe::new(
+            Uuid::new_v4(),
+            "Iron Line".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        blueprint.add_production_line(line);
+
+        let blueprint_id = engine.add_blueprint_template(blueprint);
+
+        let missing_factory_id = Uuid::new_v4();
+        let result =
+            engine.instantiate_blueprint_into_factory(missing_factory_id, blueprint_id, None);
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(
+            err_msg.contains("not found") || err_msg.contains("Factory"),
+            "Expected error about missing factory, got: {}",
+            err_msg
+        );
     }
 }
