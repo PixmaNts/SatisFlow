@@ -2,6 +2,7 @@
   <Modal
     :show="show"
     :title="isEditing ? 'Edit Power Generator' : 'Add Power Generator'"
+    size="xl"
     @close="handleClose"
   >
     <form @submit.prevent="handleSubmit">

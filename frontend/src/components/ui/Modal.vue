@@ -290,6 +290,7 @@ onUnmounted(() => {
 .modal-body {
   padding: var(--spacing-lg, 1rem) var(--spacing-xl, 1.25rem);
   overflow-y: auto;
+  scrollbar-gutter: stable;
   flex: 1;
   color: var(--color-text-primary, #e5e5e5);
   background-color: var(--color-surface, #252525);

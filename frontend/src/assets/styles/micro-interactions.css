@@ -238,10 +238,10 @@ html {
 }
 
 .checkbox-custom input:checked ~ .checkmark {
-  background-color: var(--color-primary);
-}
+    background-color: var(--color-ficsit-orange, #f58b00);
+  }
 
-.checkmark:after {
+  .checkmark:after {
   content: "";
   position: absolute;
   display: none;
@@ -311,34 +311,11 @@ html {
 }
 
 input:checked + .toggle-slider {
-  background-color: var(--color-primary);
+  background-color: var(--color-ficsit-orange, #f58b00);
 }
 
 input:checked + .toggle-slider:before {
   transform: translateX(26px);
-}
-
-/* Dark mode adjustments */
-@media (prefers-color-scheme: dark) {
-  .btn:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  }
-
-  .card:hover {
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-  }
-
-  .hover-glow:hover {
-    box-shadow: var(--shadow-glow-orange);
-  }
-
-  .checkmark {
-    background-color: #4a5568;
-  }
-
-  .checkbox-custom:hover input ~ .checkmark {
-    background-color: #718096;
-  }
 }
 
 /* Respect prefers-reduced-motion */

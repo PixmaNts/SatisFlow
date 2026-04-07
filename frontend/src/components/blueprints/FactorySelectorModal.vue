@@ -2,7 +2,7 @@
   <Modal
     :show="show"
     title="Select Factory"
-    size="md"
+    size="lg"
     @close="$emit('close')"
   >
     <div class="factory-selector">
@@ -12,7 +12,7 @@
       </div>
 
       <div v-else-if="error" class="error-state">
-        <Alert variant="error" :message="error" />
+        <Alert type="error" :message="error" />
         <Button @click="loadFactories" variant="primary">Retry</Button>
       </div>
 
@@ -174,60 +174,91 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .factory-selector {
-  @apply space-y-4;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4, 1rem);
 }
 
-.loading-state, .error-state, .empty-state {
-  @apply py-8;
+.loading-state,
+.error-state,
+.empty-state {
+  padding-top: var(--spacing-8, 2rem);
+  padding-bottom: var(--spacing-8, 2rem);
 }
 
 .loading-text {
-  @apply mt-4 text-center text-gray-600 dark:text-gray-400;
+  margin-top: var(--spacing-4, 1rem);
+  text-align: center;
+  color: var(--color-text-muted);
 }
 
 .factory-list {
-  @apply space-y-4;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4, 1rem);
 }
 
 .form-field {
-  @apply space-y-1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1, 0.25rem);
 }
 
 .field-label {
-  @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
+  display: block;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-1, 0.25rem);
 }
 
 .factory-preview {
-  @apply mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600;
+  margin-top: var(--spacing-4, 1rem);
+  padding: var(--spacing-4, 1rem);
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-lg, 0.5rem);
+  border: 1px solid var(--color-border);
 }
 
 .preview-title {
-  @apply text-lg font-semibold text-gray-900 dark:text-gray-100;
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary);
 }
 
 .preview-description {
-  @apply mt-2 text-sm text-gray-600 dark:text-gray-400;
+  margin-top: var(--spacing-2, 0.5rem);
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-muted);
 }
 
 .preview-stats {
-  @apply mt-3 flex gap-4;
+  margin-top: var(--spacing-3, 0.75rem);
+  display: flex;
+  gap: var(--spacing-4, 1rem);
 }
 
 .stat-item {
-  @apply flex flex-col;
+  display: flex;
+  flex-direction: column;
 }
 
 .stat-label {
-  @apply text-sm text-gray-600 dark:text-gray-400;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-muted);
 }
 
 .stat-value {
-  @apply text-base font-medium text-gray-900 dark:text-gray-100;
+  font-size: var(--font-size-base, 1rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-primary);
 }
 
 .modal-actions {
-  @apply flex gap-3 justify-end;
+  display: flex;
+  gap: var(--spacing-3, 0.75rem);
+  justify-content: flex-end;
 }
 </style>

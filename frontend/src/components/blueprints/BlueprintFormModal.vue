@@ -662,8 +662,8 @@ onMounted(() => {
   justify-content: center;
   width: 1.25rem;
   height: 1.25rem;
-  background: rgba(59, 130, 246, 0.2);
-  color: #93c5fd;
+  background: rgba(245, 139, 0, 0.2);
+  color: #f5c882;
   border-radius: 50%;
   font-size: 0.75rem;
   font-weight: 700;
@@ -699,8 +699,8 @@ onMounted(() => {
 
 .line-stats .stat {
   padding: 0.125rem 0.5rem;
-  background: rgba(59, 130, 246, 0.15);
-  color: #93c5fd;
+  background: rgba(245, 139, 0, 0.15);
+  color: #f5c882;
   border-radius: 0.25rem;
   white-space: nowrap;
 }
@@ -861,10 +861,10 @@ onMounted(() => {
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.875rem 1rem;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: rgba(245, 139, 0, 0.1);
+  border: 1px solid rgba(245, 139, 0, 0.3);
   border-radius: 0.5rem;
-  color: #93c5fd;
+  color: #f5c882;
 }
 
 .info-icon {

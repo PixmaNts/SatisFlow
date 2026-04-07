@@ -119,26 +119,36 @@ defineExpose({
 });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .collapsible {
-  @apply border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden
-         transition-all duration-200;
+  border: 1px solid var(--color-border, #404040);
+  border-radius: var(--border-radius-lg, 0.5rem);
+  overflow: hidden;
+  transition: all var(--transition-normal, 200ms) cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: var(--color-surface, #252525);
 }
 
 .collapsible--open {
-  @apply ring-1 ring-blue-500/20 border-blue-200 dark:border-blue-800;
+  box-shadow: var(--shadow-md, 0 4px 6px rgba(0, 0, 0, 0.35));
+  border-color: var(--color-ficsit-orange, #f58b00);
 }
 
 .collapsible-header {
-  @apply w-full px-3 py-2
-         bg-white dark:bg-gray-800
-         hover:bg-gray-50 dark:hover:bg-gray-750
-         cursor-pointer select-none
-         transition-colors duration-150;
+  width: 100%;
+  padding: var(--spacing-2, 0.5rem) var(--spacing-3, 0.75rem);
+  background-color: var(--color-surface, #252525);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--transition-fast, 150ms) ease;
+}
+
+.collapsible-header:hover {
+  background-color: var(--color-surface-hover, #2a2a2a);
 }
 
 .collapsible--open .collapsible-header {
-  @apply bg-gray-50 dark:bg-gray-750 border-b border-gray-200 dark:border-gray-700;
+  background-color: var(--color-surface-active, #303030);
+  border-bottom: 1px solid var(--color-border, #404040);
 }
 
 .header-content {
@@ -153,15 +163,16 @@ defineExpose({
 .header-left {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--spacing-2, 0.5rem);
   flex: 1 1 0;
   min-width: 0;
   overflow: hidden;
 }
 
 .chevron-icon {
-  @apply text-gray-500 dark:text-gray-400
-         transition-transform duration-200 flex-shrink-0;
+  color: var(--color-text-muted, #8a8a8a);
+  transition: transform var(--transition-fast, 150ms) ease;
+  flex-shrink: 0;
   font-size: 0.625rem;
   display: inline-flex;
   align-items: center;
@@ -174,34 +185,39 @@ defineExpose({
 }
 
 .header-title {
-  @apply text-base font-medium text-gray-900 dark:text-gray-100;
+  font-size: var(--font-size-base, 1rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 .header-right {
   display: flex !important;
   align-items: center !important;
-  gap: 0.5rem;
+  gap: var(--spacing-2, 0.5rem);
   flex-shrink: 0 !important;
   flex-wrap: nowrap !important;
   margin-left: auto;
 }
 
 .summary-content {
-  @apply mt-2 text-sm text-gray-600 dark:text-gray-400;
+  margin-top: var(--spacing-2, 0.5rem);
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-muted, #8a8a8a);
 }
 
 .collapsible-body {
-  @apply overflow-hidden;
+  overflow: hidden;
 }
 
 .body-content {
-  @apply p-3 bg-white dark:bg-gray-800;
+  padding: var(--spacing-3, 0.75rem);
+  background-color: var(--color-surface-inset, #1f1f1f);
 }
 
 /* Collapse animation */
 .collapse-enter-active,
 .collapse-leave-active {
-  @apply transition-all duration-300 ease-in-out;
+  transition: all var(--transition-slow, 300ms) ease-in-out;
   overflow: hidden;
 }
 

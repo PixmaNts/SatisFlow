@@ -83,38 +83,50 @@ defineEmits<{
 }>()
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .confirm-dialog {
-  @apply space-y-4;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4, 1rem);
 }
 
 .confirm-message {
-  @apply text-gray-700 dark:text-gray-300;
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .confirm-content {
-  @apply text-gray-700 dark:text-gray-300;
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .confirm-details {
-  @apply mt-4;
+  margin-top: var(--spacing-4, 1rem);
 }
 
 .confirm-details details {
-  @apply border border-gray-200 dark:border-gray-700 rounded-md p-2;
+  border: 1px solid var(--color-border, #404040);
+  border-radius: var(--border-radius-md, 0.375rem);
+  padding: var(--spacing-2, 0.5rem);
+  background-color: var(--color-surface-inset, #1f1f1f);
 }
 
 .confirm-details summary {
-  @apply cursor-pointer font-medium text-gray-700 dark:text-gray-300 mb-2;
+  cursor: pointer;
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-primary, #e5e5e5);
+  margin-bottom: var(--spacing-2, 0.5rem);
 }
 
 .confirm-details pre {
-  @apply text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap;
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-muted, #8a8a8a);
+  white-space: pre-wrap;
   max-height: 200px;
   overflow-y: auto;
 }
 
 .confirm-actions {
-  @apply flex gap-3 justify-end;
+  display: flex;
+  gap: var(--spacing-3, 0.75rem);
+  justify-content: flex-end;
 }
 </style>

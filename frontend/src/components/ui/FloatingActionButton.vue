@@ -176,7 +176,7 @@ onUnmounted(() => {
   outline: none;
 
   &:focus-visible {
-    outline: 2px solid var(--color-primary-500, #3b82f6);
+    outline: 2px solid var(--color-ficsit-orange, #f58b00);
     outline-offset: 2px;
   }
 
@@ -188,12 +188,12 @@ onUnmounted(() => {
 .fab-main {
   width: 56px;
   height: 56px;
-  background: linear-gradient(135deg, var(--color-primary-600, #2563eb) 0%, var(--color-primary-500, #3b82f6) 100%);
+  background: linear-gradient(135deg, var(--color-ficsit-orange, #f58b00) 0%, var(--color-ficsit-orange-dark, #cc6f00) 100%);
   color: #ffffff;
 
   &:hover {
-    background: linear-gradient(135deg, var(--color-primary-700, #1d4ed8) 0%, var(--color-primary-600, #2563eb) 100%);
-    box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04));
+    background: linear-gradient(135deg, var(--color-ficsit-orange-light, #ff9f1a) 0%, var(--color-ficsit-orange, #f58b00) 100%);
+    box-shadow: var(--shadow-glow-orange, 0 0 12px rgba(245, 139, 0, 0.3));
     transform: translateY(-2px);
   }
 }
@@ -211,16 +211,16 @@ onUnmounted(() => {
   min-width: 48px;
   height: 48px;
   padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 0.75rem);
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  color: var(--color-gray-700, #374151);
-  border: 1px solid var(--color-gray-200, #e5e7eb);
+  background: var(--color-surface, #252525);
+  color: var(--color-text-primary, #e5e5e5);
+  border: 1px solid var(--color-border, #404040);
   gap: var(--spacing-sm, 0.5rem);
   white-space: nowrap;
 
   &:hover {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-color: var(--color-primary-300, #93c5fd);
-    color: var(--color-primary-700, #1d4ed8);
+    background: var(--color-surface-hover, #2a2a2a);
+    border-color: var(--color-ficsit-orange, #f58b00);
+    color: var(--color-ficsit-orange, #f58b00);
     box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06));
     transform: translateX(-4px);
   }

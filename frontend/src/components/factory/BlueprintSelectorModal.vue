@@ -14,7 +14,7 @@
 
       <!-- Error State -->
       <div v-else-if="error" class="error-state">
-        <Alert variant="error" :message="error" />
+        <Alert type="error" :message="error" />
         <Button @click="loadTemplates" variant="primary">Retry</Button>
       </div>
 
@@ -234,148 +234,226 @@ watch(() => props.show, (show) => {
 });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .blueprint-selector {
-  @apply space-y-4;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4, 1rem);
 }
 
-.loading-state, .error-state, .empty-state {
-  @apply py-8;
+.loading-state,
+.error-state,
+.empty-state {
+  padding-top: var(--spacing-8, 2rem);
+  padding-bottom: var(--spacing-8, 2rem);
 }
 
 .loading-text {
-  @apply mt-4 text-center text-gray-600;
+  margin-top: var(--spacing-4, 1rem);
+  text-align: center;
+  color: var(--color-text-muted);
 }
 
 .template-list {
-  @apply space-y-4;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4, 1rem);
 }
 
 .list-header {
-  @apply flex items-center justify-between mb-4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-4, 1rem);
 }
 
 .list-title {
-  @apply text-lg font-semibold text-gray-900 dark:text-gray-100;
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary);
 }
 
 .template-count {
-  @apply text-sm text-gray-500 dark:text-gray-400;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-muted);
 }
 
 .template-grid {
-  @apply grid grid-cols-1 gap-4 max-h-96 overflow-y-auto;
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: var(--spacing-4, 1rem);
+  max-height: 24rem;
+  overflow-y: auto;
 }
 
 .template-card {
-  @apply p-4 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md;
+  padding: var(--spacing-4, 1rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg, 0.5rem);
+  cursor: pointer;
+  transition: all var(--transition-normal, 200ms) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .template-card:hover {
-  @apply border-primary-500 dark:border-primary-400;
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-ficsit-orange);
 }
 
 .template-card.selected {
-  @apply border-primary-500 dark:border-primary-400 bg-primary-50 dark:bg-primary-900/20;
+  border-color: var(--color-ficsit-orange);
+  background-color: rgba(245, 139, 0, 0.1);
 }
 
 .template-header {
-  @apply mb-3;
+  margin-bottom: var(--spacing-3, 0.75rem);
 }
 
 .template-name {
-  @apply text-base font-semibold text-gray-900 dark:text-gray-100;
+  font-size: var(--font-size-base, 1rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary);
 }
 
 .template-stats {
-  @apply flex gap-4 text-sm text-gray-600 dark:text-gray-400;
+  display: flex;
+  gap: var(--spacing-4, 1rem);
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-muted);
 }
 
 .stat-item {
-  @apply flex items-center gap-1;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1, 0.25rem);
 }
 
 .stat-icon {
-  @apply text-base;
+  font-size: var(--font-size-base, 1rem);
 }
 
 .template-description {
-  @apply text-sm text-gray-600 dark:text-gray-400 mb-3;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-3, 0.75rem);
 }
 
 .template-items {
-  @apply space-y-2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2, 0.5rem);
 }
 
 .items-section {
-  @apply space-y-1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1, 0.25rem);
 }
 
 .items-title {
-  @apply text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--spacing-1, 0.25rem);
 }
 
 .items-list {
-  @apply flex flex-wrap gap-1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-1, 0.25rem);
 }
 
 .item-tag {
-  @apply px-2 py-1 text-xs rounded-full font-medium;
+  padding: var(--spacing-1, 0.25rem) var(--spacing-2, 0.5rem);
+  font-size: var(--font-size-xs, 0.75rem);
+  border-radius: var(--border-radius-full, 9999px);
+  font-weight: var(--font-weight-medium, 500);
 }
 
 .input-item {
-  @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .output-item {
-  @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200;
+  background-color: rgba(34, 197, 94, 0.15);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
 .selected-details {
-  @apply mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700;
+  margin-top: var(--spacing-6, 1.5rem);
+  padding: var(--spacing-4, 1rem);
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-lg, 0.5rem);
+  border: 1px solid var(--color-border);
 }
 
 .details-title {
-  @apply text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3;
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-ficsit-orange);
+  margin-bottom: var(--spacing-3, 0.75rem);
 }
 
 .details-card {
-  @apply space-y-4;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4, 1rem);
 }
 
 .selected-name {
-  @apply text-xl font-bold text-gray-900 dark:text-gray-100;
+  font-size: var(--font-size-xl, 1.25rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-text-primary);
 }
 
 .selected-description {
-  @apply text-gray-600 dark:text-gray-400;
+  color: var(--color-text-muted);
 }
 
 .selected-stats {
-  @apply grid grid-cols-2 gap-4;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-4, 1rem);
 }
 
 .selected-stat {
-  @apply flex flex-col;
+  display: flex;
+  flex-direction: column;
 }
 
 .stat-label {
-  @apply text-sm font-medium text-gray-500 dark:text-gray-400;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-muted);
 }
 
 .stat-value {
-  @apply text-base font-semibold text-gray-900 dark:text-gray-100;
+  font-size: var(--font-size-base, 1rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary);
 }
 
 .name-override {
-  @apply space-y-2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2, 0.5rem);
 }
 
 .override-label {
-  @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
+  display: block;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-1, 0.25rem);
 }
 
 .modal-actions {
-  @apply flex gap-3 justify-end;
+  display: flex;
+  gap: var(--spacing-3, 0.75rem);
+  justify-content: flex-end;
 }
 </style>

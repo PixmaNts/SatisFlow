@@ -330,9 +330,9 @@ watch(
 // Watch for when recipes become available and modelValue is set
 // This ensures we emit the selected event when editing a production line
 watch(
-  () => [props.modelValue, normalizedRecipes.value.length],
+  () => [props.modelValue, normalizedRecipes.value.length] as const,
   ([value, recipeCount]) => {
-    if (value && recipeCount > 0 && value !== lastEmittedRecipe.value) {
+    if (value && typeof recipeCount === 'number' && recipeCount > 0 && value !== lastEmittedRecipe.value) {
       const matchingRecipe = normalizedRecipes.value.find(r => r.name === value)
       if (matchingRecipe) {
         lastEmittedRecipe.value = value
@@ -388,16 +388,16 @@ onBeforeUnmount(() => {
   width: 100%;
   padding: var(--spacing-sm, 0.5rem) calc(var(--spacing-lg, 1rem));
   padding-right: 2.25rem;
-  border: 1px solid var(--color-gray-300, #d1d5db);
+  border: 1px solid var(--color-border, #404040);
   border-radius: var(--border-radius-md, 0.375rem);
   font-size: var(--font-size-base, 1rem);
-  background-color: var(--color-white, #ffffff);
+  background-color: var(--color-surface-inset, #1f1f1f);
   transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 
   &:focus {
     outline: none;
-    border-color: var(--color-primary-500, #3b82f6);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--color-ficsit-orange, #f58b00);
+    box-shadow: 0 0 0 3px rgba(245, 139, 0, 0.1);
   }
 
   &::placeholder {
@@ -417,19 +417,19 @@ onBeforeUnmount(() => {
   padding: 0;
 
   &:hover {
-    color: var(--color-gray-600, #4b5563);
+    color: var(--color-text-muted, #8a8a8a);
   }
 }
 
 .suggestions {
   position: absolute;
-  z-index: 10;
+  z-index: 50;
   top: calc(100% + 0.25rem);
   left: 0;
   right: 0;
   max-height: 16rem;
   overflow-y: auto;
-  background-color: var(--color-white, #ffffff);
+  background-color: var(--color-surface-inset, #1f1f1f);
   border: 1px solid var(--color-gray-200, #e5e7eb);
   border-radius: var(--border-radius-md, 0.375rem);
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
@@ -465,7 +465,7 @@ onBeforeUnmount(() => {
 
 .suggestion-name {
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
   flex: 1;
 }
 
@@ -495,7 +495,7 @@ onBeforeUnmount(() => {
 
 .io-label {
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-muted, #8a8a8a);
 }
 
 .io-items {

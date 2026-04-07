@@ -320,13 +320,13 @@ const handleDeleteFactory = async () => {
   try {
     const success = await factoryStore.deleteFactory(currentFactory.value.id)
     if (success) {
-      toast.success(`Factory '${currentFactory.value.name}' deleted successfully`)
+      toast.showSuccess(`Factory '${currentFactory.value.name}' deleted successfully`)
       showDeleteDialog.value = false
     } else {
-      toast.error('Failed to delete factory')
+      toast.showError('Failed to delete factory')
     }
   } catch (err) {
-    toast.error('An unexpected error occurred while deleting the factory')
+    toast.showError('An unexpected error occurred while deleting the factory')
   } finally {
     isDeleting.value = false
   }
@@ -352,97 +352,115 @@ if (preferencesStore.selectedFactoryId && !currentFactory.value) {
 .factory-view {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg, 1rem);
+  gap: var(--spacing-lg);
 }
 
 .factory-content {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg, 1rem);
+  gap: var(--spacing-lg);
 }
 
 .factory-overview {
-  background-color: var(--color-surface, #252525);
-  border-radius: var(--border-radius-sm, 3px);
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-md);
   box-shadow: var(--shadow-inset);
-  border: 1px solid var(--color-border, #404040);
-  padding: var(--spacing-lg, 1rem);
+  border: 1px solid var(--color-border);
+  padding: var(--spacing-xl);
 }
 
 .overview-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--spacing-md, 0.75rem);
+  margin-bottom: var(--spacing-md);
   flex-wrap: wrap;
-  gap: var(--spacing-md, 0.75rem);
+  gap: var(--spacing-md);
 }
 
 .factory-name {
-  font-size: var(--font-size-xl, 1.25rem);
-  font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-text-primary, #e5e5e5);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
   margin: 0;
+  font-family: var(--font-family-sans);
+  letter-spacing: -0.01em;
 }
 
 .factory-name-row {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm, 0.5rem);
+  gap: var(--spacing-sm);
 }
 
+.edit-factory-btn,
 .delete-factory-btn {
   flex-shrink: 0;
+  transition: all var(--transition-normal);
+  
+  &:hover {
+    transform: translateY(-1px);
+  }
 }
 
 .factory-stats {
   display: flex;
-  gap: var(--spacing-lg, 1rem);
+  gap: var(--spacing-xl);
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-xs, 0.25rem);
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-surface-inset);
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--color-border-dark);
+  min-width: 100px;
 }
 
 .stat-label {
-  font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-text-secondary, #b8b8b8);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  font-weight: var(--font-weight-medium);
 }
 
 .stat-value {
-  font-size: var(--font-size-lg, 1.125rem);
-  font-weight: var(--font-weight-semibold, 600);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
   font-family: var(--font-family-mono);
 
   &.power-surplus {
-    color: var(--color-success, #22c55e);
+    color: var(--color-success);
+    text-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
   }
 
   &.power-deficit {
-    color: var(--color-error, #ef4444);
+    color: var(--color-error);
+    text-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
   }
 
   &.power-balanced {
-    color: var(--color-info-blue, #4a90a4);
+    color: var(--color-info-blue);
+    text-shadow: 0 0 8px rgba(74, 144, 164, 0.3);
   }
 }
 
 .factory-description {
-  color: var(--color-text-secondary, #b8b8b8);
+  color: var(--color-text-secondary);
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.6;
+  font-size: var(--font-size-base);
 }
 
 .factory-tabs {
-  background-color: var(--color-surface, #252525);
-  border-radius: var(--border-radius-sm, 3px);
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-md);
   box-shadow: var(--shadow-inset);
-  border: 1px solid var(--color-border, #404040);
+  border: 1px solid var(--color-border);
   overflow: hidden;
 }
 
@@ -451,66 +469,83 @@ if (preferencesStore.selectedFactoryId && !currentFactory.value) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--spacing-xl, 1.25rem);
+  padding: var(--spacing-3xl);
   text-align: center;
-  background-color: var(--color-surface, #252525);
-  border-radius: var(--border-radius-sm, 3px);
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-md);
   box-shadow: var(--shadow-inset);
-  border: 1px solid var(--color-border, #404040);
-  min-height: 300px;
+  border: 1px solid var(--color-border);
+  min-height: 400px;
 }
 
 .empty-icon {
-  color: var(--color-text-muted, #8a8a8a);
-  margin-bottom: var(--spacing-md, 0.75rem);
-  opacity: 0.4;
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.5;
+  transition: opacity var(--transition-normal);
+  
+  &:hover {
+    opacity: 0.7;
+  }
 }
 
 .empty-title {
-  font-size: var(--font-size-lg, 1.125rem);
-  font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-text-primary, #e5e5e5);
-  margin: 0 0 var(--spacing-sm, 0.5rem) 0;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-md) 0;
+  font-family: var(--font-family-sans);
 }
 
 .empty-description {
-  color: var(--color-text-secondary, #b8b8b8);
+  color: var(--color-text-secondary);
   margin: 0;
   max-width: 500px;
+  font-size: var(--font-size-base);
+  line-height: 1.6;
 }
 
 .button-icon {
-  margin-right: var(--spacing-xs, 0.25rem);
+  margin-right: var(--spacing-xs);
 }
 
 .delete-impact {
-  background-color: var(--color-surface, #1a1a1a);
-  border: 1px solid var(--color-border, #404040);
-  border-radius: var(--border-radius-sm, 3px);
-  padding: var(--spacing-md, 0.75rem);
+  background-color: var(--color-surface-inset);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-lg);
 }
 
 .impact-title {
-  font-size: var(--font-size-sm, 0.875rem);
-  font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-error, #ef4444);
-  margin: 0 0 var(--spacing-sm, 0.5rem) 0;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-error);
+  margin: 0 0 var(--spacing-md) 0;
 }
 
 .impact-list {
   margin: 0;
-  padding-left: var(--spacing-md, 0.75rem);
-  color: var(--color-text-secondary, #b8b8b8);
-  font-size: var(--font-size-sm, 0.875rem);
+  padding-left: var(--spacing-lg);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 
   li {
-    margin-bottom: var(--spacing-xs, 0.25rem);
+    margin-bottom: var(--spacing-xs);
+    line-height: 1.5;
   }
 }
 
 @media (max-width: 768px) {
   .button-icon {
     display: none;
+  }
+  
+  .factory-overview {
+    padding: var(--spacing-lg);
+  }
+  
+  .factory-name {
+    font-size: var(--font-size-xl);
   }
 }
 
@@ -524,10 +559,13 @@ if (preferencesStore.selectedFactoryId && !currentFactory.value) {
   .factory-stats {
     width: 100%;
     justify-content: space-around;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
   }
 
   .stat-item {
     min-width: 80px;
+    flex: 1;
   }
 }
 </style>

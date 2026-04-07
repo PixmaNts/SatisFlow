@@ -100,7 +100,7 @@
     <!-- Error Alert -->
     <Alert
       v-if="error"
-      variant="danger"
+      type="error"
       @close="clearError"
     >
       {{ error }}
@@ -286,97 +286,97 @@ defineExpose({
 <style scoped lang="scss">
 .power-generator-list {
   background-color: transparent;
-  border-radius: var(--border-radius-lg, 0.5rem);
+  border-radius: var(--border-radius-lg);
   overflow: hidden;
 }
 
 .generator-info {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs, 0.25rem);
+  gap: var(--spacing-xs);
 }
 
 .generator-type {
-  font-weight: var(--font-weight-medium, 500);
-  color: var(--color-text-primary, #e5e5e5);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-sans);
 }
 
 .fuel-type {
-  font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-text-secondary, #b8b8b8);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
   font-style: italic;
 }
 
 .generators-info {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs, 0.25rem);
+  gap: var(--spacing-xs);
 }
 
 .generator-count {
-  font-weight: var(--font-weight-medium, 500);
-  color: var(--color-text-primary, #e5e5e5);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-mono);
 }
 
 .group-count {
-  font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-text-secondary, #b8b8b8);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
 }
 
 .power-info {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs, 0.25rem);
+  gap: var(--spacing-xs);
 }
 
 .power-value {
-  font-weight: var(--font-weight-medium, 500);
-  color: var(--color-text-primary, #e5e5e5);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-mono);
 }
 
 .fuel-rate {
-  font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-text-secondary, #b8b8b8);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-family: var(--font-family-mono);
 }
 
 .action-buttons {
   display: flex;
-  gap: var(--spacing-xs, 0.25rem);
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
 }
 
 .delete-confirmation {
   text-align: center;
-  padding: var(--spacing-md, 0.75rem) 0;
+  padding: var(--spacing-lg) 0;
 }
 
 .generator-name {
-  margin: var(--spacing-sm, 0.5rem) 0;
-  color: var(--color-text-primary, #e5e5e5);
+  margin: var(--spacing-md) 0;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
 }
 
 .warning-text {
-  font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-red-600, #dc2626);
-  margin-top: var(--spacing-md, 0.75rem);
+  font-size: var(--font-size-sm);
+  color: var(--color-error);
+  margin-top: var(--spacing-md);
 }
 
 .modal-actions {
   display: flex;
-  gap: var(--spacing-sm, 0.5rem);
+  gap: var(--spacing-md);
   justify-content: flex-end;
 }
 
 // Responsive design
 @media (max-width: 768px) {
-  .list-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--spacing-sm, 0.5rem);
-  }
-
   .action-buttons {
     flex-direction: column;
-    gap: var(--spacing-xs, 0.25rem);
+    gap: var(--spacing-xs);
   }
 }
 </style>

@@ -2,6 +2,7 @@
   <Modal
     :show="show"
     :title="isEditing ? 'Edit Production Line' : 'Create Production Line'"
+    size="xl"
     @close="handleClose"
   >
     <form @submit.prevent="handleSubmit">
@@ -587,10 +588,10 @@ watch(
 
 // Watch for recipes to become available and ensure recipe is selected when editing
 watch(
-  () => [recipes.value.length, formData.value.recipe, props.productionLine],
+  () => [recipes.value.length, formData.value.recipe, props.productionLine] as const,
   ([recipeCount, recipeValue, productionLine]) => {
     // If we're editing and have a recipe but it's not selected yet, select it
-    if (productionLine && recipeValue && recipeCount > 0) {
+    if (productionLine && typeof recipeValue === 'string' && recipeValue && typeof recipeCount === 'number' && recipeCount > 0) {
       const recipeInfo = gameDataStore.getRecipeByName(recipeValue)
       if (recipeInfo) {
         // Always ensure recipe is selected when recipes become available
@@ -622,7 +623,7 @@ onMounted(async () => {
   display: block;
   font-size: var(--font-size-sm, 0.875rem);
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-700, #374151);
+  color: var(--color-text-secondary, #b8b8b8);
   margin-bottom: var(--spacing-xs, 0.25rem);
 }
 
@@ -631,15 +632,15 @@ onMounted(async () => {
 .form-textarea {
   width: 100%;
   padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 0.75rem);
-  border: 1px solid var(--color-gray-300, #d1d5db);
+  border: 1px solid var(--color-border, #404040);
   border-radius: var(--border-radius-md, 0.375rem);
   font-size: var(--font-size-base, 1rem);
   transition: border-color 0.2s ease-in-out;
 
   &:focus {
     outline: none;
-    border-color: var(--color-primary-500, #3b82f6);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--color-ficsit-orange, #f58b00);
+    box-shadow: 0 0 0 3px rgba(245, 139, 0, 0.1);
   }
 
   &::placeholder {
@@ -663,7 +664,7 @@ onMounted(async () => {
   gap: var(--spacing-xs, 0.25rem);
   cursor: pointer;
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-gray-700, #374151);
+  color: var(--color-text-secondary, #b8b8b8);
 
   input[type="radio"] {
     margin: 0;
@@ -680,7 +681,7 @@ onMounted(async () => {
 .machine-group {
   margin-bottom: var(--spacing-md, 0.75rem);
   padding: var(--spacing-md, 0.75rem);
-  background-color: var(--color-white, #ffffff);
+  background-color: var(--color-surface-inset, #1f1f1f);
   border-radius: var(--border-radius-md, 0.375rem);
   border: 1px solid var(--color-gray-200, #e5e7eb);
 
@@ -699,7 +700,7 @@ onMounted(async () => {
     margin: 0;
     font-size: var(--font-size-sm, 0.875rem);
     font-weight: var(--font-weight-medium, 500);
-    color: var(--color-gray-900, #111827);
+    color: var(--color-text-primary, #e5e5e5);
   }
 }
 
@@ -722,7 +723,7 @@ onMounted(async () => {
 .field-label {
   font-size: var(--font-size-xs, 0.75rem);
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-muted, #8a8a8a);
 }
 
 .label-with-icon {
@@ -759,13 +760,13 @@ onMounted(async () => {
 
 .preview-label {
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-muted, #8a8a8a);
 }
 
 .preview-value {
   font-size: var(--font-size-sm, 0.875rem);
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
 }
 
 .blueprint-notice {

@@ -95,7 +95,7 @@ const selectTransport = (transportType: TransportType) => {
   display: block;
   font-size: var(--font-size-sm, 0.875rem);
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-700, #374151);
+  color: var(--color-text-secondary, #b8b8b8);
   margin-bottom: var(--spacing-sm, 0.5rem);
 }
 
@@ -110,21 +110,21 @@ const selectTransport = (transportType: TransportType) => {
   align-items: flex-start;
   gap: var(--spacing-md, 0.75rem);
   padding: var(--spacing-md, 0.75rem);
-  border: 2px solid var(--color-gray-200, #e5e7eb);
+  border: 2px solid var(--color-border, #404040);
   border-radius: var(--border-radius-md, 0.375rem);
   cursor: pointer;
   transition: all 0.2s ease-in-out;
-  background-color: var(--color-white, #ffffff);
+  background-color: var(--color-surface-inset, #1f1f1f);
 
   &:hover {
-    border-color: var(--color-gray-300, #d1d5db);
-    background-color: var(--color-gray-50, #f9fafb);
+    border-color: var(--color-border-light);
+    background-color: var(--color-surface-hover);
   }
 
   &--selected {
-    border-color: var(--color-primary-500, #3b82f6);
-    background-color: var(--color-primary-50, #eff6ff);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--color-ficsit-orange);
+    background-color: var(--color-surface-inset);
+    box-shadow: 0 0 0 2px rgba(245, 139, 0, 0.2);
   }
 }
 
@@ -135,14 +135,14 @@ const selectTransport = (transportType: TransportType) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-gray-600, #4b5563);
-  background-color: var(--color-gray-100, #f3f4f6);
+  color: var(--color-text-secondary);
+  background-color: var(--color-surface-inset);
   border-radius: var(--border-radius-md, 0.375rem);
   transition: color 0.2s ease-in-out;
 
   .transport-option--selected & {
-    color: var(--color-primary-600, #2563eb);
-    background-color: var(--color-primary-100, #dbeafe);
+    color: var(--color-ficsit-orange);
+    background-color: rgba(245, 139, 0, 0.1);
   }
 }
 
@@ -154,13 +154,13 @@ const selectTransport = (transportType: TransportType) => {
 .transport-name {
   font-size: var(--font-size-base, 1rem);
   font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
   margin: 0 0 var(--spacing-xs, 0.25rem) 0;
 }
 
 .transport-description {
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-muted, #8a8a8a);
   margin: 0;
   line-height: 1.4;
 }

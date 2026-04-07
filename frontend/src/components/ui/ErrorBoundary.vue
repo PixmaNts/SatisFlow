@@ -277,7 +277,7 @@ const copyErrorDetails = async () => {
 
 .error-fallback-default {
   background-color: var(--color-background, #ffffff);
-  color: var(--color-text-primary, #111827);
+  color: var(--color-text-primary, #e5e5e5);
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }

@@ -2,6 +2,7 @@
   <Modal
     :show="show"
     title="Edit Factory"
+    size="lg"
     @close="handleClose"
   >
     <form @submit.prevent="handleSubmit">
@@ -169,57 +170,61 @@ watch(() => props.show, (show) => {
 
 <style scoped lang="scss">
 .form-group {
-  margin-bottom: var(--spacing-md, 0.75rem);
+  margin-bottom: var(--spacing-lg);
 }
 
 .form-label {
   display: block;
-  font-size: var(--font-size-sm, 0.875rem);
-  font-weight: var(--font-weight-medium, 500);
-  color: var(--color-text-secondary, #b8b8b8);
-  margin-bottom: var(--spacing-xs, 0.25rem);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xs);
 }
 
 .form-input,
 .form-textarea {
   width: 100%;
-  padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 0.75rem);
-  border: 1px solid var(--color-border, #404040);
-  border-radius: var(--border-radius-sm, 3px);
-  font-size: var(--font-size-base, 1rem);
-  background-color: var(--color-surface, #252525);
-  color: var(--color-text-primary, #e5e5e5);
-  transition: border-color 0.2s ease-in-out;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-base);
+  background-color: var(--color-surface-inset);
+  color: var(--color-text-primary);
+  transition: all var(--transition-normal);
+  font-family: var(--font-family-sans);
 
   &:focus {
     outline: none;
-    border-color: var(--color-ficsit-orange, #f58b00);
-    box-shadow: 0 0 0 3px rgba(245, 139, 0, 0.1);
+    border-color: var(--color-ficsit-orange);
+    box-shadow: 0 0 0 3px rgba(245, 139, 0, 0.2);
+    background-color: var(--color-surface);
   }
 
   &::placeholder {
-    color: var(--color-text-muted, #8a8a8a);
+    color: var(--color-text-muted);
   }
 }
 
 .form-textarea {
   resize: vertical;
-  min-height: 60px;
+  min-height: 100px;
+  line-height: 1.5;
 }
 
 .form-actions {
   display: flex;
-  gap: var(--spacing-sm, 0.5rem);
+  gap: var(--spacing-md);
   justify-content: flex-end;
-  margin-top: var(--spacing-lg, 1rem);
-  padding-top: var(--spacing-lg, 1rem);
-  border-top: 1px solid var(--color-border, #404040);
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border-dark);
 }
 
 // Responsive design
 @media (max-width: 640px) {
   .form-actions {
     flex-direction: column;
+    gap: var(--spacing-md);
   }
 
   .form-actions button {

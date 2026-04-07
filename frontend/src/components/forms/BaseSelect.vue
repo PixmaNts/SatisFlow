@@ -138,56 +138,96 @@ defineExpose({
 });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .base-select {
-  @apply mb-4;
+  margin-bottom: var(--spacing-md, 0.75rem);
 }
 
 .base-select__label {
-  @apply block text-sm font-medium text-gray-700 mb-1;
+  display: block;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-secondary, #b8b8b8);
+  margin-bottom: var(--spacing-xs, 0.25rem);
 }
 
 .base-select__required {
-  @apply text-red-500 ml-1;
+  color: var(--color-error, #ef4444);
+  margin-left: var(--spacing-xs, 0.25rem);
 }
 
 .base-select__wrapper {
-  @apply relative;
+  position: relative;
 }
 
 .base-select__field {
-  @apply w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white;
-}
+  width: 100%;
+  padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 0.75rem);
+  padding-right: 2.5rem;
+  border: 1px solid var(--color-border, #404040);
+  border-radius: var(--border-radius-md, 0.375rem);
+  box-shadow: var(--shadow-sm);
+  appearance: none;
+  background: var(--color-surface, #252525);
+  color: var(--color-text-primary, #e5e5e5);
+  font-size: var(--font-size-sm, 0.875rem);
+  transition: border-color var(--transition-fast, 150ms), box-shadow var(--transition-fast, 150ms);
+  cursor: pointer;
 
-.base-select__field--invalid {
-  @apply border-red-300 focus:ring-red-500 focus:border-red-500;
-}
+  &:focus {
+    outline: none;
+    border-color: var(--color-info-blue, #4a90a4);
+    box-shadow: 0 0 0 2px rgba(74, 144, 164, 0.2);
+  }
 
-.base-select__field--disabled {
-  @apply bg-gray-50 text-gray-500 cursor-not-allowed;
-}
+  &--invalid {
+    border-color: var(--color-error, #ef4444);
 
-.base-select__field--placeholder {
-  @apply text-gray-500;
+    &:focus {
+      border-color: var(--color-error, #ef4444);
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+    }
+  }
+
+  &--disabled {
+    background: var(--color-surface-inset, #1f1f1f);
+    color: var(--color-text-muted, #8a8a8a);
+    cursor: not-allowed;
+  }
+
+  &--placeholder {
+    color: var(--color-text-muted, #8a8a8a);
+  }
 }
 
 .base-select__arrow {
-  @apply absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  padding-right: var(--spacing-sm, 0.5rem);
+  pointer-events: none;
 }
 
 .base-select__error {
-  @apply mt-1 text-sm text-red-600;
+  margin-top: var(--spacing-xs, 0.25rem);
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-error, #ef4444);
 }
 
 .base-select__hint {
-  @apply mt-1 text-sm text-gray-500;
+  margin-top: var(--spacing-xs, 0.25rem);
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .base-select--has-error .base-select__label {
-  @apply text-red-700;
+  color: var(--color-error, #ef4444);
 }
 
 .base-select--disabled .base-select__label {
-  @apply text-gray-500;
+  color: var(--color-text-muted, #8a8a8a);
 }
 </style>

@@ -200,6 +200,55 @@ const resetForm = () => {
   transportConfig.value = null
 }
 
+// Reconstruct config from the items array when transport_details is not valid JSON
+// (legacy logistics lines stored plain strings like "Iron Ingot Bus")
+const reconstructConfigFromItems = (
+  transportType: TransportType,
+  items: Array<{ item: Item; quantity_per_min: number }>
+): TransportConfig => {
+  switch (transportType) {
+    case 'Bus': {
+      const conveyors = items.map((flow, i) => ({
+        line_id: `CV-${String(i + 1).padStart(3, '0')}`,
+        conveyor_type: 'Mk1' as const,
+        item: flow.item,
+        quantity_per_min: flow.quantity_per_min,
+      }))
+      return {
+        transport_type: 'Bus',
+        conveyors,
+        pipelines: [],
+      } as BusConfig
+    }
+    case 'Train': {
+      const wagons = items.map((flow, i) => ({
+        wagon_id: `WG-${String(i + 1).padStart(3, '0')}`,
+        wagon_type: 'Cargo' as const,
+        item: flow.item,
+        quantity_per_min: flow.quantity_per_min,
+      }))
+      return {
+        transport_type: 'Train',
+        wagons,
+      } as TrainConfig
+    }
+    case 'Truck':
+      return {
+        transport_type: 'Truck',
+        item: items[0]?.item ?? ('' as Item),
+        quantity_per_min: items[0]?.quantity_per_min ?? 0,
+        truck_id: 'TRK-001',
+      } as TruckConfig
+    case 'Drone':
+      return {
+        transport_type: 'Drone',
+        item: items[0]?.item ?? ('' as Item),
+        quantity_per_min: items[0]?.quantity_per_min ?? 0,
+        drone_id: 'DRN-001',
+      } as DroneConfig
+  }
+}
+
 // Load logistics line into form for editing
 const loadLogisticsLine = () => {
   if (!props.logisticsLine) return
@@ -213,15 +262,19 @@ const loadLogisticsLine = () => {
   // Set transport type
   selectedTransportType.value = logistics.transport_type
 
-  // Parse transport details from JSON
+  // Try parsing transport_details as JSON first (new format)
+  // Fall back to reconstructing from items array (legacy format)
   try {
     const details = JSON.parse(logistics.transport_details)
-    transportConfig.value = details as TransportConfig
-    formData.value.transport_config = details as TransportConfig
-  } catch (e) {
-    console.error('Failed to parse transport details:', e)
-    // Fallback: create empty config based on type
-    handleTransportTypeChange(logistics.transport_type)
+    // Backend transport_details JSON does not include transport_type — inject it
+    const config = { ...details, transport_type: logistics.transport_type } as TransportConfig
+    transportConfig.value = config
+    formData.value.transport_config = config
+  } catch {
+    // Legacy format: transport_details is a plain string, reconstruct from items
+    const config = reconstructConfigFromItems(logistics.transport_type, logistics.items)
+    transportConfig.value = config
+    formData.value.transport_config = config
   }
 }
 

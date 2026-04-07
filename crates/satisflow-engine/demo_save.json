@@ -1,21 +1,21 @@
 {
   "version": "0.1.0",
-  "created_at": "2025-10-25T16:55:47.939216Z",
-  "last_modified": "2025-10-25T16:55:47.939216Z",
-  "game_version": null,
+  "created_at": "2026-04-07T12:00:00Z",
+  "last_modified": "2026-04-07T12:00:00Z",
+  "game_version": "1.0",
   "engine": {
     "factories": {
-      "b1e8c374-b2f4-42c3-af5e-fd3ca7b29b66": {
-        "id": "b1e8c374-b2f4-42c3-af5e-fd3ca7b29b66",
-        "name": "Iron Processing Plant",
-        "description": "Main iron smelting facility",
+      "580e967f-3e14-43c8-a4da-cabddd5da640": {
+        "id": "580e967f-3e14-43c8-a4da-cabddd5da640",
+        "name": "Iron Ore Processing Hub",
+        "description": "Main iron smelting and processing facility",
         "notes": null,
         "production_lines": {
-          "a31dda0e-c3c3-4752-9b87-a9283033a4a6": {
+          "5d0345d3-49c0-45f4-8ca4-fef7d77be39d": {
             "ProductionLineRecipe": {
-              "id": "a31dda0e-c3c3-4752-9b87-a9283033a4a6",
+              "id": "5d0345d3-49c0-45f4-8ca4-fef7d77be39d",
               "name": "Iron Ingot Production",
-              "description": "Smelting iron ore",
+              "description": "Smelting iron ore into ingots",
               "recipe": "IronIngot",
               "machine_groups": [
                 {
@@ -26,24 +26,24 @@
               ]
             }
           },
-          "b42eeb1f-d4d4-5863-ac98-b0394144b5b7": {
+          "90d0a367-b717-47b9-9033-ec7c2fa492f3": {
             "ProductionLineRecipe": {
-              "id": "b42eeb1f-d4d4-5863-ac98-b0394144b5b7",
+              "id": "90d0a367-b717-47b9-9033-ec7c2fa492f3",
               "name": "Iron Plate Production",
               "description": "Manufacturing iron plates",
               "recipe": "IronPlate",
               "machine_groups": [
                 {
                   "number_of_machine": 8,
-                  "oc_value": 150.0,
+                  "oc_value": 100.0,
                   "somersloop": 0
                 }
               ]
             }
           },
-          "c53ffc2a-e5e5-6974-bd09-c14a5255c6c8": {
+          "2e7d1fed-dbc4-4338-aebc-aac0f5837f81": {
             "ProductionLineRecipe": {
-              "id": "c53ffc2a-e5e5-6974-bd09-c14a5255c6c8",
+              "id": "2e7d1fed-dbc4-4338-aebc-aac0f5837f81",
               "name": "Iron Rod Production",
               "description": "Creating iron rods",
               "recipe": "IronRod",
@@ -58,32 +58,32 @@
           }
         },
         "raw_inputs": {
-          "6f63ccd0-f4d8-4f88-987e-144bdebc3376": {
-            "id": "6f63ccd0-f4d8-4f88-987e-144bdebc3376",
-            "extractor_type": "MinerMk2",
+          "d6e09600-4b02-41ad-bc95-6135efb946a4": {
+            "id": "d6e09600-4b02-41ad-bc95-6135efb946a4",
+            "extractor_type": "MinerMk3",
             "item": "IronOre",
             "purity": "Pure",
-            "quantity_per_min": 240.0,
+            "quantity_per_min": 480.0,
             "overclock_percent": 100.0,
             "count": 1,
             "pressurizer": null,
             "extractors": []
           },
-          "7a74dd1e-a5e9-5a99-a98f-255cefcd4487": {
-            "id": "7a74dd1e-a5e9-5a99-a98f-255cefcd4487",
-            "extractor_type": "MinerMk3",
+          "63d60471-ddbd-45d4-8ef6-29f80340fca6": {
+            "id": "63d60471-ddbd-45d4-8ef6-29f80340fca6",
+            "extractor_type": "MinerMk2",
             "item": "IronOre",
             "purity": "Normal",
             "quantity_per_min": 120.0,
-            "overclock_percent": 150.0,
+            "overclock_percent": 100.0,
             "count": 1,
             "pressurizer": null,
             "extractors": []
           }
         },
         "power_generators": {
-          "12feebda-0a74-40d9-974d-5bc663ca3cd1": {
-            "id": "12feebda-0a74-40d9-974d-5bc663ca3cd1",
+          "95092d9d-a330-4762-840b-25c735c69b9f": {
+            "id": "95092d9d-a330-4762-840b-25c735c69b9f",
             "generator_type": "Coal",
             "fuel_type": "Coal",
             "groups": [
@@ -96,37 +96,52 @@
         },
         "items": {}
       },
-      "13f4543f-a381-4de9-a994-e87a3bc1c642": {
-        "id": "13f4543f-a381-4de9-a994-e87a3bc1c642",
-        "name": "Steel Processing Plant",
-        "description": "Advanced steel production",
+      "40f0dcb3-3648-4609-8fc0-09fad0c5bf53": {
+        "id": "40f0dcb3-3648-4609-8fc0-09fad0c5bf53",
+        "name": "Copper Processing Facility",
+        "description": "Copper smelting and wire production",
         "notes": null,
         "production_lines": {
-          "5e17a3b7-db12-43a3-8864-25d781a1e8e4": {
+          "281c1dd3-8d9c-4dad-ab3b-3d1375d8f305": {
             "ProductionLineRecipe": {
-              "id": "5e17a3b7-db12-43a3-8864-25d781a1e8e4",
-              "name": "Steel Ingot Production",
-              "description": "Making steel from iron and coal",
-              "recipe": "SteelIngot",
+              "id": "281c1dd3-8d9c-4dad-ab3b-3d1375d8f305",
+              "name": "Copper Ingot Production",
+              "description": "Smelting copper ore",
+              "recipe": "CopperIngot",
               "machine_groups": [
                 {
-                  "number_of_machine": 5,
+                  "number_of_machine": 8,
                   "oc_value": 100.0,
                   "somersloop": 0
                 }
               ]
             }
           },
-          "6f28b4c8-ec23-54b4-9975-36e892b2f9f5": {
+          "bd462230-ace1-4e41-bf0d-f52ef5ffc579": {
             "ProductionLineRecipe": {
-              "id": "6f28b4c8-ec23-54b4-9975-36e892b2f9f5",
-              "name": "Steel Beam Production",
-              "description": "Manufacturing steel beams",
-              "recipe": "SteelBeam",
+              "id": "bd462230-ace1-4e41-bf0d-f52ef5ffc579",
+              "name": "Wire Production",
+              "description": "Manufacturing copper wire",
+              "recipe": "Wire",
+              "machine_groups": [
+                {
+                  "number_of_machine": 6,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          },
+          "e12de116-920d-47f1-b853-08d80725208e": {
+            "ProductionLineRecipe": {
+              "id": "e12de116-920d-47f1-b853-08d80725208e",
+              "name": "Copper Sheet Production",
+              "description": "Manufacturing copper sheets",
+              "recipe": "CopperSheet",
               "machine_groups": [
                 {
                   "number_of_machine": 4,
-                  "oc_value": 125.0,
+                  "oc_value": 100.0,
                   "somersloop": 0
                 }
               ]
@@ -134,22 +149,22 @@
           }
         },
         "raw_inputs": {
-          "f4ecf3ed-c4f1-4683-bc97-d1c7b9c11a19": {
-            "id": "f4ecf3ed-c4f1-4683-bc97-d1c7b9c11a19",
-            "extractor_type": "MinerMk1",
-            "item": "Coal",
-            "purity": "Normal",
-            "quantity_per_min": 60.0,
+          "cc70a631-5dfe-4e6c-ba11-a3624411c97f": {
+            "id": "cc70a631-5dfe-4e6c-ba11-a3624411c97f",
+            "extractor_type": "MinerMk3",
+            "item": "CopperOre",
+            "purity": "Pure",
+            "quantity_per_min": 480.0,
             "overclock_percent": 100.0,
             "count": 1,
             "pressurizer": null,
             "extractors": []
           },
-          "a5fdf4fe-d5a2-5794-cd08-e2d8cac22a2a": {
-            "id": "a5fdf4fe-d5a2-5794-cd08-e2d8cac22a2a",
+          "cbd9eb08-6f11-4f96-a468-0e1272025e1e": {
+            "id": "cbd9eb08-6f11-4f96-a468-0e1272025e1e",
             "extractor_type": "MinerMk2",
-            "item": "Coal",
-            "purity": "Pure",
+            "item": "CopperOre",
+            "purity": "Normal",
             "quantity_per_min": 120.0,
             "overclock_percent": 100.0,
             "count": 1,
@@ -158,99 +173,8 @@
           }
         },
         "power_generators": {
-          "04adef47-a96c-4167-b859-b5f6e79efdda": {
-            "id": "04adef47-a96c-4167-b859-b5f6e79efdda",
-            "generator_type": "Fuel",
-            "fuel_type": "Fuel",
-            "groups": [
-              {
-                "number_of_generators": 4,
-                "clock_speed": 100.0
-              }
-            ]
-          }
-        },
-        "items": {}
-      },
-      "24a5654a-b492-5ef0-b0a5-f98b4cd2d753": {
-        "id": "24a5654a-b492-5ef0-b0a5-f98b4cd2d753",
-        "name": "Copper Processing Facility",
-        "description": "Copper smelting and sheet production",
-        "notes": "High efficiency copper processing",
-        "production_lines": {
-          "7a39c5d9-fe34-65c5-ba86-47f9a3c3a9a6": {
-            "ProductionLineRecipe": {
-              "id": "7a39c5d9-fe34-65c5-ba86-47f9a3c3a9a6",
-              "name": "Copper Ingot Production",
-              "description": "Smelting copper ore",
-              "recipe": "CopperIngot",
-              "machine_groups": [
-                {
-                  "number_of_machine": 12,
-                  "oc_value": 100.0,
-                  "somersloop": 0
-                }
-              ]
-            }
-          },
-          "8b4ad6ea-af45-76d6-cb97-58a0b4d4a0a7": {
-            "ProductionLineRecipe": {
-              "id": "8b4ad6ea-af45-76d6-cb97-58a0b4d4a0a7",
-              "name": "Copper Sheet Production",
-              "description": "Manufacturing copper sheets",
-              "recipe": "CopperSheet",
-              "machine_groups": [
-                {
-                  "number_of_machine": 10,
-                  "oc_value": 150.0,
-                  "somersloop": 0
-                }
-              ]
-            }
-          },
-          "9c5be7fb-ba56-87e7-dc08-69b1c5e5b1b8": {
-            "ProductionLineRecipe": {
-              "id": "9c5be7fb-ba56-87e7-dc08-69b1c5e5b1b8",
-              "name": "Wire Production",
-              "description": "Creating copper wire",
-              "recipe": "Wire",
-              "machine_groups": [
-                {
-                  "number_of_machine": 15,
-                  "oc_value": 100.0,
-                  "somersloop": 0
-                }
-              ]
-            }
-          }
-        },
-        "raw_inputs": {
-          "a6aef4af-e6a3-6805-dea9-366df0de5598": {
-            "id": "a6aef4af-e6a3-6805-dea9-366df0de5598",
-            "extractor_type": "MinerMk2",
-            "item": "CopperOre",
-            "purity": "Pure",
-            "quantity_per_min": 300.0,
-            "overclock_percent": 100.0,
-            "count": 1,
-            "pressurizer": null,
-            "extractors": []
-          },
-          "b7bfa5ba-f7b4-7916-efba-477ea1ef66a9": {
-            "id": "b7bfa5ba-f7b4-7916-efba-477ea1ef66a9",
-            "extractor_type": "MinerMk3",
-            "item": "CopperOre",
-            "purity": "Normal",
-            "quantity_per_min": 180.0,
-            "overclock_percent": 150.0,
-            "count": 1,
-            "pressurizer": null,
-            "extractors": []
-          }
-        },
-        "power_generators": {
-          "15bfef58-b07d-5278-c96e-c6d7748bfeeb": {
-            "id": "15bfef58-b07d-5278-c96e-c6d7748bfeeb",
+          "b86ad6df-761b-43b2-9c53-3be751a2f180": {
+            "id": "b86ad6df-761b-43b2-9c53-3be751a2f180",
             "generator_type": "Coal",
             "fuel_type": "Coal",
             "groups": [
@@ -263,51 +187,51 @@
         },
         "items": {}
       },
-      "35b6765b-c5a3-6fa1-c1b6-a09c5de3e864": {
-        "id": "35b6765b-c5a3-6fa1-c1b6-a09c5de3e864",
-        "name": "Electronics Manufacturing",
-        "description": "Circuit boards and advanced electronics",
-        "notes": "High-tech production facility",
+      "6e98b503-abb3-4f97-8a11-d108405b76cf": {
+        "id": "6e98b503-abb3-4f97-8a11-d108405b76cf",
+        "name": "Steel Foundry Complex",
+        "description": "Advanced steel production facility",
+        "notes": null,
         "production_lines": {
-          "a6a4c8ac-af67-98f8-ed19-7ab2d6f6a2a9": {
+          "ea0b51ea-c614-4e94-be82-c379511195ad": {
             "ProductionLineRecipe": {
-              "id": "a6a4c8ac-af67-98f8-ed19-7ab2d6f6a2a9",
-              "name": "Cable Production",
-              "description": "Manufacturing cables",
-              "recipe": "Cable",
+              "id": "ea0b51ea-c614-4e94-be82-c379511195ad",
+              "name": "Steel Ingot Production",
+              "description": "Making steel from iron and coal",
+              "recipe": "SteelIngot",
               "machine_groups": [
                 {
-                  "number_of_machine": 8,
+                  "number_of_machine": 6,
                   "oc_value": 100.0,
                   "somersloop": 0
                 }
               ]
             }
           },
-          "b7b5d9bd-ba78-a9a9-fe2a-8bc3e7a7b3ba": {
+          "f73203f9-50c7-485a-b610-24de952f7ca1": {
             "ProductionLineRecipe": {
-              "id": "b7b5d9bd-ba78-a9a9-fe2a-8bc3e7a7b3ba",
-              "name": "Circuit Board Production",
-              "description": "Creating circuit boards",
-              "recipe": "CircuitBoard",
+              "id": "f73203f9-50c7-485a-b610-24de952f7ca1",
+              "name": "Steel Beam Production",
+              "description": "Manufacturing steel beams",
+              "recipe": "SteelBeam",
               "machine_groups": [
                 {
-                  "number_of_machine": 6,
-                  "oc_value": 150.0,
+                  "number_of_machine": 4,
+                  "oc_value": 100.0,
                   "somersloop": 0
                 }
               ]
             }
           },
-          "c8c6eace-cb89-bab0-af3b-9cd4f8a8c4cb": {
+          "b009e05f-6148-4be1-b03a-40be6a60d647": {
             "ProductionLineRecipe": {
-              "id": "c8c6eace-cb89-bab0-af3b-9cd4f8a8c4cb",
-              "name": "Computer Production",
-              "description": "Manufacturing computers",
-              "recipe": "Computer",
+              "id": "b009e05f-6148-4be1-b03a-40be6a60d647",
+              "name": "Steel Pipe Production",
+              "description": "Manufacturing steel pipes",
+              "recipe": "SteelPipe",
               "machine_groups": [
                 {
-                  "number_of_machine": 3,
+                  "number_of_machine": 5,
                   "oc_value": 100.0,
                   "somersloop": 0
                 }
@@ -316,12 +240,23 @@
           }
         },
         "raw_inputs": {
-          "a8aef6ae-a8a5-8a26-afcb-588fa2af77ba": {
-            "id": "a8aef6ae-a8a5-8a26-afcb-588fa2af77ba",
-            "extractor_type": "MinerMk1",
-            "item": "CateriumOre",
+          "f7f5599f-71f7-4556-b184-b478fd9df6ae": {
+            "id": "f7f5599f-71f7-4556-b184-b478fd9df6ae",
+            "extractor_type": "MinerMk2",
+            "item": "IronOre",
+            "purity": "Pure",
+            "quantity_per_min": 240.0,
+            "overclock_percent": 100.0,
+            "count": 1,
+            "pressurizer": null,
+            "extractors": []
+          },
+          "885c16f8-edc5-44e8-a3d8-4e81813ecacd": {
+            "id": "885c16f8-edc5-44e8-a3d8-4e81813ecacd",
+            "extractor_type": "MinerMk2",
+            "item": "Coal",
             "purity": "Normal",
-            "quantity_per_min": 60.0,
+            "quantity_per_min": 120.0,
             "overclock_percent": 100.0,
             "count": 1,
             "pressurizer": null,
@@ -329,13 +264,13 @@
           }
         },
         "power_generators": {
-          "26cafaa9-c18e-6389-d07f-d7e8859caffc": {
-            "id": "26cafaa9-c18e-6389-d07f-d7e8859caffc",
-            "generator_type": "Fuel",
-            "fuel_type": "Fuel",
+          "ddb8bb92-a844-440e-8b49-943c7a9c34cc": {
+            "id": "ddb8bb92-a844-440e-8b49-943c7a9c34cc",
+            "generator_type": "Coal",
+            "fuel_type": "Coal",
             "groups": [
               {
-                "number_of_generators": 5,
+                "number_of_generators": 10,
                 "clock_speed": 100.0
               }
             ]
@@ -343,15 +278,15 @@
         },
         "items": {}
       },
-      "46b7876b-d6b4-7fa2-d2c7-a1ad6ef4f975": {
-        "id": "46b7876b-d6b4-7fa2-d2c7-a1ad6ef4f975",
-        "name": "Concrete Production Plant",
-        "description": "Large-scale concrete manufacturing",
+      "a8e9cfbf-2e97-4c6c-85fa-8acafd5abb6a": {
+        "id": "a8e9cfbf-2e97-4c6c-85fa-8acafd5abb6a",
+        "name": "Limestone & Concrete Plant",
+        "description": "Limestone quarrying and concrete production",
         "notes": null,
         "production_lines": {
-          "d9a7fbaf-ba90-cbb1-aa4c-adb5a9a9a5ac": {
+          "2a5ed4d2-0938-4985-8c96-736e1c654d1d": {
             "ProductionLineRecipe": {
-              "id": "d9a7fbaf-ba90-cbb1-aa4c-adb5a9a9a5ac",
+              "id": "2a5ed4d2-0938-4985-8c96-736e1c654d1d",
               "name": "Concrete Production",
               "description": "Manufacturing concrete",
               "recipe": "Concrete",
@@ -371,8 +306,8 @@
           }
         },
         "raw_inputs": {
-          "a9aef7af-a9a6-9b37-afdc-699ab3af88cb": {
-            "id": "a9aef7af-a9a6-9b37-afdc-699ab3af88cb",
+          "b9fb4c63-e49f-43b1-a015-023167986be6": {
+            "id": "b9fb4c63-e49f-43b1-a015-023167986be6",
             "extractor_type": "MinerMk2",
             "item": "Limestone",
             "purity": "Pure",
@@ -382,21 +317,21 @@
             "pressurizer": null,
             "extractors": []
           },
-          "b0baf8ba-b0a7-ac48-afed-7a0ba4ba99dc": {
-            "id": "b0baf8ba-b0a7-ac48-afed-7a0ba4ba99dc",
+          "68d9a663-7199-4775-94a8-c2e659ef8cc2": {
+            "id": "68d9a663-7199-4775-94a8-c2e659ef8cc2",
             "extractor_type": "MinerMk3",
             "item": "Limestone",
             "purity": "Normal",
             "quantity_per_min": 120.0,
-            "overclock_percent": 150.0,
+            "overclock_percent": 100.0,
             "count": 1,
             "pressurizer": null,
             "extractors": []
           }
         },
         "power_generators": {
-          "37dafaa7-d29f-74a0-e18a-e8f9a6adaaad": {
-            "id": "37dafaa7-d29f-74a0-e18a-e8f9a6adaaad",
+          "3fbd9614-ff15-4f30-9e1b-cd85ac0e7e79": {
+            "id": "3fbd9614-ff15-4f30-9e1b-cd85ac0e7e79",
             "generator_type": "Coal",
             "fuel_type": "Coal",
             "groups": [
@@ -409,21 +344,116 @@
         },
         "items": {}
       },
-      "57c8987c-e7c5-8ab3-e3d8-b2be7af5a086": {
-        "id": "57c8987c-e7c5-8ab3-e3d8-b2be7af5a086",
-        "name": "Screw Manufacturing Hub",
-        "description": "Mass production of screws",
-        "notes": "Efficient screw production",
+      "7a30ff21-86ee-4ffd-90a1-3a894280ace8": {
+        "id": "7a30ff21-86ee-4ffd-90a1-3a894280ace8",
+        "name": "Caterium Processing",
+        "description": "Caterium ore processing and quickwire production",
+        "notes": null,
         "production_lines": {
-          "e0a8acaa-abab-adc2-aa5d-beba6a0a0a6a": {
+          "03b6953f-6b28-4764-96c0-4d320ccd21a6": {
             "ProductionLineRecipe": {
-              "id": "e0a8acaa-abab-adc2-aa5d-beba6a0a0a6a",
-              "name": "Screw Production",
-              "description": "Manufacturing screws from iron rods",
-              "recipe": "Screw",
+              "id": "03b6953f-6b28-4764-96c0-4d320ccd21a6",
+              "name": "Caterium Ingot Production",
+              "description": "Smelting caterium ore",
+              "recipe": "CateriumIngot",
               "machine_groups": [
                 {
-                  "number_of_machine": 25,
+                  "number_of_machine": 4,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          },
+          "7a7c607f-fb0b-447d-b703-ff336f6cec93": {
+            "ProductionLineRecipe": {
+              "id": "7a7c607f-fb0b-447d-b703-ff336f6cec93",
+              "name": "Quickwire Production",
+              "description": "Manufacturing quickwire",
+              "recipe": "Quickwire",
+              "machine_groups": [
+                {
+                  "number_of_machine": 8,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          }
+        },
+        "raw_inputs": {
+          "ccbe2acd-2e1c-447e-87f0-34e06bd793c3": {
+            "id": "ccbe2acd-2e1c-447e-87f0-34e06bd793c3",
+            "extractor_type": "MinerMk2",
+            "item": "CateriumOre",
+            "purity": "Pure",
+            "quantity_per_min": 240.0,
+            "overclock_percent": 100.0,
+            "count": 1,
+            "pressurizer": null,
+            "extractors": []
+          }
+        },
+        "power_generators": {
+          "fa17c026-8390-46db-951b-5419e22328ca": {
+            "id": "fa17c026-8390-46db-951b-5419e22328ca",
+            "generator_type": "Coal",
+            "fuel_type": "Coal",
+            "groups": [
+              {
+                "number_of_generators": 4,
+                "clock_speed": 100.0
+              }
+            ]
+          }
+        },
+        "items": {}
+      },
+      "34c8a4b5-7a4d-4ff8-b441-4fd8c65f3c65": {
+        "id": "34c8a4b5-7a4d-4ff8-b441-4fd8c65f3c65",
+        "name": "Rotor & Motor Assembly",
+        "description": "Rotor, stator and motor manufacturing",
+        "notes": null,
+        "production_lines": {
+          "cc6dadb7-9987-4dfd-9215-9a5b455ee3a9": {
+            "ProductionLineRecipe": {
+              "id": "cc6dadb7-9987-4dfd-9215-9a5b455ee3a9",
+              "name": "Rotor Production",
+              "description": "Manufacturing rotors",
+              "recipe": "Rotor",
+              "machine_groups": [
+                {
+                  "number_of_machine": 3,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          },
+          "76f59777-d10c-4069-84d4-44623b72fd36": {
+            "ProductionLineRecipe": {
+              "id": "76f59777-d10c-4069-84d4-44623b72fd36",
+              "name": "Stator Production",
+              "description": "Manufacturing stators",
+              "recipe": "Stator",
+              "machine_groups": [
+                {
+                  "number_of_machine": 3,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          },
+          "c2547aec-da50-4e6d-9671-2a92c046e5e5": {
+            "ProductionLineRecipe": {
+              "id": "c2547aec-da50-4e6d-9671-2a92c046e5e5",
+              "name": "Motor Production",
+              "description": "Assembling motors",
+              "recipe": "Motor",
+              "machine_groups": [
+                {
+                  "number_of_machine": 2,
                   "oc_value": 100.0,
                   "somersloop": 0
                 }
@@ -433,8 +463,8 @@
         },
         "raw_inputs": {},
         "power_generators": {
-          "48eaaba8-e3aa-85b1-f2aa-f9a0b7beaabe": {
-            "id": "48eaaba8-e3aa-85b1-f2aa-f9a0b7beaabe",
+          "2262d2e4-313e-4c20-8e6c-51e2e2516a04": {
+            "id": "2262d2e4-313e-4c20-8e6c-51e2e2516a04",
             "generator_type": "Coal",
             "fuel_type": "Coal",
             "groups": [
@@ -446,17 +476,415 @@
           }
         },
         "items": {}
+      },
+      "54c5f5a5-184e-46f2-8682-72e541834d99": {
+        "id": "54c5f5a5-184e-46f2-8682-72e541834d99",
+        "name": "Modular Frame Factory",
+        "description": "Reinforced iron plate and modular frame production",
+        "notes": null,
+        "production_lines": {
+          "5a0b4241-1c00-4429-92cd-9d1a5ef841cb": {
+            "ProductionLineRecipe": {
+              "id": "5a0b4241-1c00-4429-92cd-9d1a5ef841cb",
+              "name": "Reinforced Iron Plate Production",
+              "description": "Manufacturing reinforced iron plates",
+              "recipe": "ReinforcedIronPlate",
+              "machine_groups": [
+                {
+                  "number_of_machine": 2,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          },
+          "56539d2b-ebf3-4a76-84de-f09527890ecf": {
+            "ProductionLineRecipe": {
+              "id": "56539d2b-ebf3-4a76-84de-f09527890ecf",
+              "name": "Modular Frame Production",
+              "description": "Manufacturing modular frames",
+              "recipe": "ModularFrame",
+              "machine_groups": [
+                {
+                  "number_of_machine": 2,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          }
+        },
+        "raw_inputs": {},
+        "power_generators": {
+          "95b11e98-ef74-45dd-9b16-68d0c5c3296c": {
+            "id": "95b11e98-ef74-45dd-9b16-68d0c5c3296c",
+            "generator_type": "Coal",
+            "fuel_type": "Coal",
+            "groups": [
+              {
+                "number_of_generators": 3,
+                "clock_speed": 100.0
+              }
+            ]
+          }
+        },
+        "items": {}
+      },
+      "027cb250-cadb-4b08-bcc6-32b305843905": {
+        "id": "027cb250-cadb-4b08-bcc6-32b305843905",
+        "name": "Electronics Complex",
+        "description": "Circuit boards, AI limiters and computer manufacturing",
+        "notes": null,
+        "production_lines": {
+          "77234942-6308-4a3b-9cc9-ef254ae3361b": {
+            "ProductionLineRecipe": {
+              "id": "77234942-6308-4a3b-9cc9-ef254ae3361b",
+              "name": "Circuit Board Production",
+              "description": "Manufacturing circuit boards",
+              "recipe": "CircuitBoard",
+              "machine_groups": [
+                {
+                  "number_of_machine": 3,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          },
+          "e8389760-ebd3-4326-889e-7b96b84ced0f": {
+            "ProductionLineRecipe": {
+              "id": "e8389760-ebd3-4326-889e-7b96b84ced0f",
+              "name": "AI Limiter Production",
+              "description": "Manufacturing AI limiters",
+              "recipe": "AILimiter",
+              "machine_groups": [
+                {
+                  "number_of_machine": 2,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          },
+          "dfa0c220-552f-42f8-83d0-0b368f3957ac": {
+            "ProductionLineRecipe": {
+              "id": "dfa0c220-552f-42f8-83d0-0b368f3957ac",
+              "name": "High Speed Connector Production",
+              "description": "Manufacturing high speed connectors",
+              "recipe": "HighSpeedConnector",
+              "machine_groups": [
+                {
+                  "number_of_machine": 2,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          },
+          "cfc29a67-126c-42be-8256-ed957ecdcbfc": {
+            "ProductionLineRecipe": {
+              "id": "cfc29a67-126c-42be-8256-ed957ecdcbfc",
+              "name": "Computer Production",
+              "description": "Assembling computers",
+              "recipe": "Computer",
+              "machine_groups": [
+                {
+                  "number_of_machine": 1,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          }
+        },
+        "raw_inputs": {},
+        "power_generators": {
+          "a9040427-07ef-4cf1-a601-ec82e542034b": {
+            "id": "a9040427-07ef-4cf1-a601-ec82e542034b",
+            "generator_type": "Coal",
+            "fuel_type": "Coal",
+            "groups": [
+              {
+                "number_of_generators": 6,
+                "clock_speed": 100.0
+              }
+            ]
+          }
+        },
+        "items": {}
+      },
+      "8fb54435-bf96-4727-a049-e936d1260da3": {
+        "id": "8fb54435-bf96-4727-a049-e936d1260da3",
+        "name": "Heavy Frame Manufacturing",
+        "description": "Encased industrial beams and heavy modular frames",
+        "notes": null,
+        "production_lines": {
+          "bf345262-b14f-4bef-95a2-e3bf704dda27": {
+            "ProductionLineRecipe": {
+              "id": "bf345262-b14f-4bef-95a2-e3bf704dda27",
+              "name": "Encased Industrial Beam Production",
+              "description": "Manufacturing encased industrial beams",
+              "recipe": "EncasedIndustrialBeam",
+              "machine_groups": [
+                {
+                  "number_of_machine": 4,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          },
+          "5bdc6f70-d30c-42ab-830e-2e0fa725f34e": {
+            "ProductionLineRecipe": {
+              "id": "5bdc6f70-d30c-42ab-830e-2e0fa725f34e",
+              "name": "Heavy Modular Frame Production",
+              "description": "Manufacturing heavy modular frames",
+              "recipe": "HeavyModularFrame",
+              "machine_groups": [
+                {
+                  "number_of_machine": 1,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          }
+        },
+        "raw_inputs": {},
+        "power_generators": {
+          "589156db-b451-4eba-8259-87466ca4c636": {
+            "id": "589156db-b451-4eba-8259-87466ca4c636",
+            "generator_type": "Coal",
+            "fuel_type": "Coal",
+            "groups": [
+              {
+                "number_of_generators": 4,
+                "clock_speed": 100.0
+              }
+            ]
+          }
+        },
+        "items": {}
+      },
+      "e71317d0-f901-47d0-963a-27263c3cb208": {
+        "id": "e71317d0-f901-47d0-963a-27263c3cb208",
+        "name": "Oil Processing",
+        "description": "Crude oil refining into plastic, rubber and fuel",
+        "notes": null,
+        "production_lines": {
+          "73b780a9-083c-459b-88b8-87ad5511d470": {
+            "ProductionLineRecipe": {
+              "id": "73b780a9-083c-459b-88b8-87ad5511d470",
+              "name": "Plastic Production",
+              "description": "Refining crude oil into plastic",
+              "recipe": "Plastic",
+              "machine_groups": [
+                {
+                  "number_of_machine": 4,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          },
+          "e55e6dd2-16d6-48ae-b25a-c643329089a4": {
+            "ProductionLineRecipe": {
+              "id": "e55e6dd2-16d6-48ae-b25a-c643329089a4",
+              "name": "Rubber Production",
+              "description": "Refining crude oil into rubber",
+              "recipe": "Rubber",
+              "machine_groups": [
+                {
+                  "number_of_machine": 3,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          },
+          "f801f6dc-e6a3-437e-9baf-546055c9a279": {
+            "ProductionLineRecipe": {
+              "id": "f801f6dc-e6a3-437e-9baf-546055c9a279",
+              "name": "Fuel Production",
+              "description": "Producing fuel from crude oil",
+              "recipe": "Fuel",
+              "machine_groups": [
+                {
+                  "number_of_machine": 2,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          }
+        },
+        "raw_inputs": {
+          "20a61e1c-d59c-4712-a401-7e95e678e1ce": {
+            "id": "20a61e1c-d59c-4712-a401-7e95e678e1ce",
+            "extractor_type": "OilExtractor",
+            "item": "CrudeOil",
+            "purity": "Normal",
+            "quantity_per_min": 120.0,
+            "overclock_percent": 100.0,
+            "count": 1,
+            "pressurizer": null,
+            "extractors": []
+          }
+        },
+        "power_generators": {
+          "6ca57ded-9bfc-46ba-92c9-9d534bd41432": {
+            "id": "6ca57ded-9bfc-46ba-92c9-9d534bd41432",
+            "generator_type": "Fuel",
+            "fuel_type": "Fuel",
+            "groups": [
+              {
+                "number_of_generators": 4,
+                "clock_speed": 100.0
+              }
+            ]
+          }
+        },
+        "items": {}
+      },
+      "64a38685-9910-49dc-97e0-10dd87d5bb01": {
+        "id": "64a38685-9910-49dc-97e0-10dd87d5bb01",
+        "name": "Supercomputer Facility",
+        "description": "Supercomputer manufacturing",
+        "notes": null,
+        "production_lines": {
+          "436c1a7d-1477-4a18-89d8-3944a2fd6b94": {
+            "ProductionLineRecipe": {
+              "id": "436c1a7d-1477-4a18-89d8-3944a2fd6b94",
+              "name": "Supercomputer Production",
+              "description": "Assembling supercomputers",
+              "recipe": "Supercomputer",
+              "machine_groups": [
+                {
+                  "number_of_machine": 1,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          }
+        },
+        "raw_inputs": {},
+        "power_generators": {
+          "c804499b-ed95-4110-9a1d-2f8889914305": {
+            "id": "c804499b-ed95-4110-9a1d-2f8889914305",
+            "generator_type": "Fuel",
+            "fuel_type": "Fuel",
+            "groups": [
+              {
+                "number_of_generators": 2,
+                "clock_speed": 100.0
+              }
+            ]
+          }
+        },
+        "items": {}
+      },
+      "7d3c93cf-7709-40e9-81ba-48d637bea666": {
+        "id": "7d3c93cf-7709-40e9-81ba-48d637bea666",
+        "name": "South Expansion Hub",
+        "description": "Secondary iron and copper processing",
+        "notes": null,
+        "production_lines": {
+          "5e510f02-b72a-4c06-a775-eac944fbf498": {
+            "ProductionLineRecipe": {
+              "id": "5e510f02-b72a-4c06-a775-eac944fbf498",
+              "name": "Iron Ingot Production",
+              "description": "Smelting iron ore",
+              "recipe": "IronIngot",
+              "machine_groups": [
+                {
+                  "number_of_machine": 4,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          },
+          "c6bafd28-b3ca-4543-a746-fc6fdeb2214b": {
+            "ProductionLineRecipe": {
+              "id": "c6bafd28-b3ca-4543-a746-fc6fdeb2214b",
+              "name": "Copper Ingot Production",
+              "description": "Smelting copper ore",
+              "recipe": "CopperIngot",
+              "machine_groups": [
+                {
+                  "number_of_machine": 3,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          },
+          "67b5c362-ee0c-4d9a-b3d4-385517ef3785": {
+            "ProductionLineRecipe": {
+              "id": "67b5c362-ee0c-4d9a-b3d4-385517ef3785",
+              "name": "Wire Production",
+              "description": "Manufacturing copper wire",
+              "recipe": "Wire",
+              "machine_groups": [
+                {
+                  "number_of_machine": 2,
+                  "oc_value": 100.0,
+                  "somersloop": 0
+                }
+              ]
+            }
+          }
+        },
+        "raw_inputs": {
+          "bf5250f6-31f9-46be-97c6-03ef461e3a4f": {
+            "id": "bf5250f6-31f9-46be-97c6-03ef461e3a4f",
+            "extractor_type": "MinerMk1",
+            "item": "IronOre",
+            "purity": "Normal",
+            "quantity_per_min": 60.0,
+            "overclock_percent": 100.0,
+            "count": 1,
+            "pressurizer": null,
+            "extractors": []
+          },
+          "0e06e41f-af2e-4ce1-b057-45fb88153631": {
+            "id": "0e06e41f-af2e-4ce1-b057-45fb88153631",
+            "extractor_type": "MinerMk1",
+            "item": "CopperOre",
+            "purity": "Normal",
+            "quantity_per_min": 60.0,
+            "overclock_percent": 100.0,
+            "count": 1,
+            "pressurizer": null,
+            "extractors": []
+          }
+        },
+        "power_generators": {
+          "867a9e23-e376-4e54-8b4d-545788dcdf25": {
+            "id": "867a9e23-e376-4e54-8b4d-545788dcdf25",
+            "generator_type": "Coal",
+            "fuel_type": "Coal",
+            "groups": [
+              {
+                "number_of_generators": 2,
+                "clock_speed": 100.0
+              }
+            ]
+          }
+        },
+        "items": {}
       }
     },
     "logistics_lines": {
-      "3e96f616-349a-480b-8210-3f0cb8bfc3c7": {
-        "id": "3e96f616-349a-480b-8210-3f0cb8bfc3c7",
-        "from_factory": "b1e8c374-b2f4-42c3-af5e-fd3ca7b29b66",
-        "to_factory": "13f4543f-a381-4de9-a994-e87a3bc1c642",
+      "3b40ca53-82eb-40a9-bfb6-656e87a442cf": {
+        "id": "3b40ca53-82eb-40a9-bfb6-656e87a442cf",
+        "from_factory": "580e967f-3e14-43c8-a4da-cabddd5da640",
+        "to_factory": "6e98b503-abb3-4f97-8a11-d108405b76cf",
         "transport_type": {
           "Bus": {
             "bus_id": 1,
-            "bus_name": "Iron Ingot Bus",
+            "bus_name": "Iron Ingot to Steel Foundry",
             "lines": [
               {
                 "line_id": 1,
@@ -468,29 +896,16 @@
             "pipelines": []
           }
         },
-        "transport_details": "Iron Ingot Bus"
+        "transport_details": "Iron Ingot to Steel Foundry"
       },
-      "55389022-a344-403b-9291-60c5cc9e6151": {
-        "id": "55389022-a344-403b-9291-60c5cc9e6151",
-        "from_factory": "13f4543f-a381-4de9-a994-e87a3bc1c642",
-        "to_factory": "b1e8c374-b2f4-42c3-af5e-fd3ca7b29b66",
-        "transport_type": {
-          "Truck": {
-            "truck_id": 2,
-            "item": "Coal",
-            "quantity_per_min": 60.0
-          }
-        },
-        "transport_details": "Coal Truck Route"
-      },
-      "6649a133-b455-514c-a3a2-71d6dd9f7262": {
-        "id": "6649a133-b455-514c-a3a2-71d6dd9f7262",
-        "from_factory": "24a5654a-b492-5ef0-b0a5-f98b4cd2d753",
-        "to_factory": "35b6765b-c5a3-6fa1-c1b6-a09c5de3e864",
+      "f6eb015e-db10-4cfa-8eea-51ade6050f84": {
+        "id": "f6eb015e-db10-4cfa-8eea-51ade6050f84",
+        "from_factory": "40f0dcb3-3648-4609-8fc0-09fad0c5bf53",
+        "to_factory": "027cb250-cadb-4b08-bcc6-32b305843905",
         "transport_type": {
           "Bus": {
-            "bus_id": 3,
-            "bus_name": "Copper Wire Bus",
+            "bus_id": 2,
+            "bus_name": "Copper to Electronics Complex",
             "lines": [
               {
                 "line_id": 2,
@@ -508,32 +923,40 @@
             "pipelines": []
           }
         },
-        "transport_details": "Copper Wire Bus"
+        "transport_details": "Copper to Electronics Complex"
       },
-      "775ab244-c566-625d-b4b3-82e7eeaa8373": {
-        "id": "775ab244-c566-625d-b4b3-82e7eeaa8373",
-        "from_factory": "b1e8c374-b2f4-42c3-af5e-fd3ca7b29b66",
-        "to_factory": "35b6765b-c5a3-6fa1-c1b6-a09c5de3e864",
-        "transport_type": {
-          "Truck": {
-            "truck_id": 4,
-            "item": "IronPlate",
-            "quantity_per_min": 160.0
-          }
-        },
-        "transport_details": "Iron Plate Truck"
-      },
-      "886bc355-d677-736e-c5c4-93f8ffba9484": {
-        "id": "886bc355-d677-736e-c5c4-93f8ffba9484",
-        "from_factory": "b1e8c374-b2f4-42c3-af5e-fd3ca7b29b66",
-        "to_factory": "57c8987c-e7c5-8ab3-e3d8-b2be7af5a086",
+      "c9a512d8-4c7a-4aec-9212-1cd70126e529": {
+        "id": "c9a512d8-4c7a-4aec-9212-1cd70126e529",
+        "from_factory": "580e967f-3e14-43c8-a4da-cabddd5da640",
+        "to_factory": "54c5f5a5-184e-46f2-8682-72e541834d99",
         "transport_type": {
           "Bus": {
-            "bus_id": 4,
-            "bus_name": "Iron Rod Bus",
+            "bus_id": 3,
+            "bus_name": "Iron Plate to Frame Factory",
             "lines": [
               {
                 "line_id": 4,
+                "speed": "Mk3",
+                "item": "IronPlate",
+                "quantity_per_min": 160.0
+              }
+            ],
+            "pipelines": []
+          }
+        },
+        "transport_details": "Iron Plate to Frame Factory"
+      },
+      "eb2c6860-3e78-438c-a1ae-5382159cd61c": {
+        "id": "eb2c6860-3e78-438c-a1ae-5382159cd61c",
+        "from_factory": "580e967f-3e14-43c8-a4da-cabddd5da640",
+        "to_factory": "34c8a4b5-7a4d-4ff8-b441-4fd8c65f3c65",
+        "transport_type": {
+          "Bus": {
+            "bus_id": 4,
+            "bus_name": "Iron Rod to Motor Assembly",
+            "lines": [
+              {
+                "line_id": 5,
                 "speed": "Mk2",
                 "item": "IronRod",
                 "quantity_per_min": 90.0
@@ -542,28 +965,208 @@
             "pipelines": []
           }
         },
-        "transport_details": "Iron Rod Bus"
+        "transport_details": "Iron Rod to Motor Assembly"
       },
-      "997cd466-e788-847f-d6d5-a4a9aacc0595": {
-        "id": "997cd466-e788-847f-d6d5-a4a9aacc0595",
-        "from_factory": "35b6765b-c5a3-6fa1-c1b6-a09c5de3e864",
-        "to_factory": "13f4543f-a381-4de9-a994-e87a3bc1c642",
+      "46ab4682-2f27-4aaf-895a-1c99b04ad7ed": {
+        "id": "46ab4682-2f27-4aaf-895a-1c99b04ad7ed",
+        "from_factory": "a8e9cfbf-2e97-4c6c-85fa-8acafd5abb6a",
+        "to_factory": "8fb54435-bf96-4727-a049-e936d1260da3",
         "transport_type": {
-          "Drone": {
-            "drone_id": 1,
-            "item": "CircuitBoard",
-            "quantity_per_min": 15.0
+          "Bus": {
+            "bus_id": 5,
+            "bus_name": "Concrete to Heavy Frames",
+            "lines": [
+              {
+                "line_id": 6,
+                "speed": "Mk4",
+                "item": "Concrete",
+                "quantity_per_min": 480.0
+              }
+            ],
+            "pipelines": []
           }
         },
-        "transport_details": "Circuit Board Drone"
+        "transport_details": "Concrete to Heavy Frames"
       },
-      "aa8de577-f899-958a-e7e6-b5a0aabd16a6": {
-        "id": "aa8de577-f899-958a-e7e6-b5a0aabd16a6",
-        "from_factory": "46b7876b-d6b4-7fa2-d2c7-a1ad6ef4f975",
-        "to_factory": "b1e8c374-b2f4-42c3-af5e-fd3ca7b29b66",
+      "30a9f62e-58e5-471b-b861-bc54cf675ac8": {
+        "id": "30a9f62e-58e5-471b-b861-bc54cf675ac8",
+        "from_factory": "7a30ff21-86ee-4ffd-90a1-3a894280ace8",
+        "to_factory": "027cb250-cadb-4b08-bcc6-32b305843905",
+        "transport_type": {
+          "Bus": {
+            "bus_id": 6,
+            "bus_name": "Quickwire to Electronics",
+            "lines": [
+              {
+                "line_id": 7,
+                "speed": "Mk3",
+                "item": "Quickwire",
+                "quantity_per_min": 270.0
+              }
+            ],
+            "pipelines": []
+          }
+        },
+        "transport_details": "Quickwire to Electronics"
+      },
+      "8b526960-17ec-4309-8f40-69319062a568": {
+        "id": "8b526960-17ec-4309-8f40-69319062a568",
+        "from_factory": "54c5f5a5-184e-46f2-8682-72e541834d99",
+        "to_factory": "8fb54435-bf96-4727-a049-e936d1260da3",
+        "transport_type": {
+          "Bus": {
+            "bus_id": 7,
+            "bus_name": "Modular Frame to Heavy Frames",
+            "lines": [
+              {
+                "line_id": 8,
+                "speed": "Mk2",
+                "item": "ModularFrame",
+                "quantity_per_min": 120.0
+              }
+            ],
+            "pipelines": []
+          }
+        },
+        "transport_details": "Modular Frame to Heavy Frames"
+      },
+      "076ca3b0-96b2-44e3-86ed-df9099f25071": {
+        "id": "076ca3b0-96b2-44e3-86ed-df9099f25071",
+        "from_factory": "6e98b503-abb3-4f97-8a11-d108405b76cf",
+        "to_factory": "8fb54435-bf96-4727-a049-e936d1260da3",
         "transport_type": {
           "Train": {
             "train_id": 1,
+            "train_name": "Steel Express",
+            "wagons": [
+              {
+                "wagon_id": 1,
+                "wagon_type": "Cargo",
+                "item": "SteelBeam",
+                "quantity_per_min": 300.0
+              },
+              {
+                "wagon_id": 2,
+                "wagon_type": "Cargo",
+                "item": "SteelPipe",
+                "quantity_per_min": 400.0
+              }
+            ]
+          }
+        },
+        "transport_details": "Steel Express"
+      },
+      "fbdb8c0e-f0fc-4963-98aa-3939dbcb9b16": {
+        "id": "fbdb8c0e-f0fc-4963-98aa-3939dbcb9b16",
+        "from_factory": "6e98b503-abb3-4f97-8a11-d108405b76cf",
+        "to_factory": "34c8a4b5-7a4d-4ff8-b441-4fd8c65f3c65",
+        "transport_type": {
+          "Truck": {
+            "truck_id": 1,
+            "item": "SteelPipe",
+            "quantity_per_min": 120.0
+          }
+        },
+        "transport_details": "Steel Pipe Delivery"
+      },
+      "0cc76112-a6f8-4312-b1af-8fe6984ba46f": {
+        "id": "0cc76112-a6f8-4312-b1af-8fe6984ba46f",
+        "from_factory": "580e967f-3e14-43c8-a4da-cabddd5da640",
+        "to_factory": "34c8a4b5-7a4d-4ff8-b441-4fd8c65f3c65",
+        "transport_type": {
+          "Truck": {
+            "truck_id": 2,
+            "item": "IronRod",
+            "quantity_per_min": 80.0
+          }
+        },
+        "transport_details": "Iron Rod Truck Route"
+      },
+      "8925388c-2299-4c74-b8f1-2d8ada691fdd": {
+        "id": "8925388c-2299-4c74-b8f1-2d8ada691fdd",
+        "from_factory": "e71317d0-f901-47d0-963a-27263c3cb208",
+        "to_factory": "027cb250-cadb-4b08-bcc6-32b305843905",
+        "transport_type": {
+          "Truck": {
+            "truck_id": 3,
+            "item": "Plastic",
+            "quantity_per_min": 60.0
+          }
+        },
+        "transport_details": "Plastic to Electronics"
+      },
+      "a440ca69-9285-492d-82db-c6598d187430": {
+        "id": "a440ca69-9285-492d-82db-c6598d187430",
+        "from_factory": "e71317d0-f901-47d0-963a-27263c3cb208",
+        "to_factory": "64a38685-9910-49dc-97e0-10dd87d5bb01",
+        "transport_type": {
+          "Truck": {
+            "truck_id": 4,
+            "item": "Plastic",
+            "quantity_per_min": 52.5
+          }
+        },
+        "transport_details": "Plastic to Supercomputer"
+      },
+      "4daec1b9-5d0e-4ada-accc-788a2595f735": {
+        "id": "4daec1b9-5d0e-4ada-accc-788a2595f735",
+        "from_factory": "027cb250-cadb-4b08-bcc6-32b305843905",
+        "to_factory": "64a38685-9910-49dc-97e0-10dd87d5bb01",
+        "transport_type": {
+          "Drone": {
+            "drone_id": 1,
+            "item": "Computer",
+            "quantity_per_min": 5.0
+          }
+        },
+        "transport_details": "Computer Delivery"
+      },
+      "7587ba32-b578-4731-bfae-d6f37ae45670": {
+        "id": "7587ba32-b578-4731-bfae-d6f37ae45670",
+        "from_factory": "027cb250-cadb-4b08-bcc6-32b305843905",
+        "to_factory": "64a38685-9910-49dc-97e0-10dd87d5bb01",
+        "transport_type": {
+          "Drone": {
+            "drone_id": 2,
+            "item": "AILimiter",
+            "quantity_per_min": 3.75
+          }
+        },
+        "transport_details": "AI Limiter Express"
+      },
+      "c199b110-2e41-49c1-8497-33c9da88aba5": {
+        "id": "c199b110-2e41-49c1-8497-33c9da88aba5",
+        "from_factory": "027cb250-cadb-4b08-bcc6-32b305843905",
+        "to_factory": "64a38685-9910-49dc-97e0-10dd87d5bb01",
+        "transport_type": {
+          "Drone": {
+            "drone_id": 3,
+            "item": "HighSpeedConnector",
+            "quantity_per_min": 5.625
+          }
+        },
+        "transport_details": "HSC Drone Route"
+      },
+      "a3958568-befb-4530-9a8a-fb1731188c44": {
+        "id": "a3958568-befb-4530-9a8a-fb1731188c44",
+        "from_factory": "40f0dcb3-3648-4609-8fc0-09fad0c5bf53",
+        "to_factory": "027cb250-cadb-4b08-bcc6-32b305843905",
+        "transport_type": {
+          "Drone": {
+            "drone_id": 4,
+            "item": "Wire",
+            "quantity_per_min": 22.5
+          }
+        },
+        "transport_details": "Wire Drone"
+      },
+      "43ee1c20-9e07-4160-b150-b3af99e4a13e": {
+        "id": "43ee1c20-9e07-4160-b150-b3af99e4a13e",
+        "from_factory": "a8e9cfbf-2e97-4c6c-85fa-8acafd5abb6a",
+        "to_factory": "8fb54435-bf96-4727-a049-e936d1260da3",
+        "transport_type": {
+          "Train": {
+            "train_id": 2,
             "train_name": "Concrete Express",
             "wagons": [
               {
@@ -571,11 +1174,38 @@
                 "wagon_type": "Cargo",
                 "item": "Concrete",
                 "quantity_per_min": 600.0
+              },
+              {
+                "wagon_id": 2,
+                "wagon_type": "Cargo",
+                "item": "Limestone",
+                "quantity_per_min": 200.0
               }
             ]
           }
         },
         "transport_details": "Concrete Express Train"
+      },
+      "4d73f797-bb80-40fe-9939-2d1762a9b3f7": {
+        "id": "4d73f797-bb80-40fe-9939-2d1762a9b3f7",
+        "from_factory": "7d3c93cf-7709-40e9-81ba-48d637bea666",
+        "to_factory": "34c8a4b5-7a4d-4ff8-b441-4fd8c65f3c65",
+        "transport_type": {
+          "Bus": {
+            "bus_id": 8,
+            "bus_name": "South Wire Supply",
+            "lines": [
+              {
+                "line_id": 9,
+                "speed": "Mk2",
+                "item": "Wire",
+                "quantity_per_min": 120.0
+              }
+            ],
+            "pipelines": []
+          }
+        },
+        "transport_details": "South Wire Supply"
       }
     }
   }

@@ -172,7 +172,7 @@
     <!-- Error Alert -->
     <Alert
       v-if="error"
-      variant="danger"
+      type="error"
       @close="clearError"
     >
       {{ error }}
@@ -567,118 +567,132 @@ defineExpose({
 <style scoped lang="scss">
 .production-line-list {
   background-color: transparent;
-  border-radius: var(--border-radius-lg, 0.5rem);
+  border-radius: var(--border-radius-lg);
   overflow: hidden;
 }
 
 .production-line-name {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs, 0.25rem);
+  gap: var(--spacing-xs);
 }
 
 .name {
-  font-weight: var(--font-weight-medium, 500);
-  color: var(--color-text-primary, #e5e5e5);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-sans);
 }
 
 .description {
-  font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-text-secondary, #b8b8b8);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
   font-style: italic;
+  line-height: 1.4;
 }
 
 .recipe-name {
-  font-family: var(--font-family-mono, 'Courier New', monospace);
-  font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-text-secondary, #b8b8b8);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  background-color: var(--color-surface-inset);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  display: inline-block;
 }
 
 .machine-info {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs, 0.25rem);
+  gap: var(--spacing-xs);
 }
 
 .machine-count {
-  font-weight: var(--font-weight-medium, 500);
-  color: var(--color-text-primary, #e5e5e5);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-mono);
 }
 
 .machine-details {
-  font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-text-secondary, #b8b8b8);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
 }
 
 .power-info {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs, 0.25rem);
+  gap: var(--spacing-xs);
 }
 
 .power-value {
-  font-weight: var(--font-weight-medium, 500);
-  color: var(--color-text-primary, #e5e5e5);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-mono);
 }
 
 .somersloop-count {
-  font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-amber-600, #d97706);
-  font-weight: var(--font-weight-medium, 500);
+  font-size: var(--font-size-xs);
+  color: var(--color-warning);
+  font-weight: var(--font-weight-medium);
+  background-color: rgba(245, 158, 11, 0.1);
+  padding: var(--spacing-2xs) var(--spacing-xs);
+  border-radius: var(--border-radius-sm);
+  display: inline-block;
 }
 
 .consumed-items,
 .produced-items {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs, 0.25rem);
+  gap: var(--spacing-xs);
 }
 
 .consumed-item,
 .produced-item {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs, 0.25rem);
+  gap: var(--spacing-xs);
 }
 
 .consumed-quantity,
 .produced-quantity {
-  font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-text-secondary, #b8b8b8);
-  font-family: var(--font-family-mono, 'Courier New', monospace);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-mono);
 }
 
 .no-input,
 .no-output {
-  font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-text-secondary, #b8b8b8);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
   font-style: italic;
 }
 
 .action-buttons {
   display: flex;
-  gap: var(--spacing-xs, 0.25rem);
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
 }
 
 .delete-confirmation {
   text-align: center;
-  padding: var(--spacing-md, 0.75rem) 0;
+  padding: var(--spacing-lg) 0;
 }
 
 .line-name {
-  margin: var(--spacing-sm, 0.5rem) 0;
-  color: var(--color-text-primary, #e5e5e5);
+  margin: var(--spacing-md) 0;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
 }
 
 .warning-text {
-  font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-red-600, #dc2626);
-  margin-top: var(--spacing-md, 0.75rem);
+  font-size: var(--font-size-sm);
+  color: var(--color-error);
+  margin-top: var(--spacing-md);
 }
 
 .modal-actions {
   display: flex;
-  gap: var(--spacing-sm, 0.5rem);
+  gap: var(--spacing-md);
   justify-content: flex-end;
 }
 
@@ -692,10 +706,10 @@ defineExpose({
   display: inline-block;
   width: 0;
   height: 0;
-  margin-left: 8px;
+  margin-left: var(--spacing-xs);
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
-  border-top: 6px solid var(--color-gray-400, #9ca3af);
+  border-top: 6px solid var(--color-text-muted);
   transform: translateY(2px);
 }
 
@@ -703,51 +717,43 @@ defineExpose({
   position: absolute;
   top: 100%;
   left: 0;
-  z-index: 10;
-  background-color: var(--color-white, #ffffff);
-  border: 1px solid var(--color-gray-200, #e5e7eb);
-  border-radius: var(--border-radius-md, 0.375rem);
-  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+  z-index: 50;
+  background-color: var(--color-surface-inset);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-lg);
   min-width: 200px;
+  overflow: hidden;
 }
 
 .dropdown-item {
   display: flex;
   align-items: center;
-  padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 0.75rem);
+  padding: var(--spacing-md) var(--spacing-lg);
   cursor: pointer;
-  transition: background-color 0.2s;
-}
+  transition: all var(--transition-normal);
+  color: var(--color-text-primary);
 
-.dropdown-item:hover {
-  background-color: var(--color-gray-50, #f9fafb);
+  &:hover {
+    background-color: var(--color-surface-hover);
+    color: var(--color-ficsit-orange);
+  }
 }
 
 .dropdown-icon {
-  margin-right: var(--spacing-xs, 0.25rem);
+  margin-right: var(--spacing-sm);
 }
 
 // Responsive design
 @media (max-width: 768px) {
-  .list-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--spacing-sm, 0.5rem);
-  }
-
-  .header-actions {
-    flex-direction: column;
-    width: 100%;
-  }
-
   .action-buttons {
     flex-direction: column;
-    gap: var(--spacing-xs, 0.25rem);
+    gap: var(--spacing-xs);
   }
 
   .production-line-type-selector {
     width: 100%;
-    margin-bottom: var(--spacing-sm, 0.5rem);
+    margin-bottom: var(--spacing-sm);
   }
 
   .dropdown-menu {
@@ -756,7 +762,8 @@ defineExpose({
     border: none;
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-xs, 0.25rem);
+    gap: var(--spacing-xs);
+    background-color: transparent;
   }
 
   .dropdown-arrow {

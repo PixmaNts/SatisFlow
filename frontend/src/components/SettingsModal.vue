@@ -2,6 +2,7 @@
   <Modal
     :show="open"
     title="Settings"
+    size="lg"
     @close="$emit('close')"
     @update:show="$emit('close')"
   >
@@ -369,7 +370,7 @@ watch(
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--color-gray-300, #d1d5db);
+  background-color: var(--color-border, #404040);
   transition: var(--transition-normal, 300ms ease-in-out);
   border-radius: var(--border-radius-full, 9999px);
 

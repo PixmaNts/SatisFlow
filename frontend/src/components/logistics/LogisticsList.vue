@@ -541,8 +541,8 @@ watch(() => props.refreshTrigger, () => {
 
 .create-button {
   padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 0.75rem);
-  background-color: var(--color-primary-600, #2563eb);
-  color: var(--color-white, #ffffff);
+  background-color: var(--color-ficsit-orange, #f58b00);
+  color: var(--color-text-primary, #e5e5e5);
   border: none;
   border-radius: var(--border-radius-sm, 0.25rem);
   font-size: var(--font-size-sm, 0.875rem);
@@ -551,7 +551,7 @@ watch(() => props.refreshTrigger, () => {
   transition: background-color 0.2s ease-in-out;
 
   &:hover {
-    background-color: var(--color-primary-700, #1d4ed8);
+    background-color: var(--color-ficsit-orange-light, #ff9f1a);
   }
 }
 

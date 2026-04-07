@@ -2,6 +2,7 @@
   <Modal
     :show="show"
     title="Import Blueprint"
+    size="lg"
     :closable="true"
     :close-on-overlay="true"
     @close="emit('close')"
@@ -172,10 +173,10 @@ const formatDate = (dateString: string): string => {
 .section-title {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--color-gray-900, #111827);
+  color: var(--color-ficsit-orange);
   margin: 0;
   padding-bottom: 0.5rem;
-  border-bottom: 2px solid var(--color-gray-200, #e5e7eb);
+  border-bottom: 2px solid var(--color-border);
 }
 
 .info-grid {
@@ -197,12 +198,12 @@ const formatDate = (dateString: string): string => {
 .info-label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-muted);
 }
 
 .info-value {
   font-size: 1rem;
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary);
 }
 
 .stats-grid {
@@ -216,9 +217,9 @@ const formatDate = (dateString: string): string => {
   align-items: center;
   gap: 0.75rem;
   padding: 1rem;
-  background-color: var(--color-gray-50, #f9fafb);
+  background-color: var(--color-surface);
   border-radius: var(--border-radius-lg, 0.5rem);
-  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border: 1px solid var(--color-border);
 }
 
 .stat-icon {
@@ -231,11 +232,11 @@ const formatDate = (dateString: string): string => {
   border-radius: var(--border-radius-full, 9999px);
 
   &.machines {
-    background-color: #dbeafe;
+    background-color: rgba(74, 144, 164, 0.2);
   }
 
   &.power {
-    background-color: #fef3c7;
+    background-color: rgba(245, 139, 0, 0.2);
   }
 }
 
@@ -248,14 +249,14 @@ const formatDate = (dateString: string): string => {
 .stat-value {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary);
   line-height: 1;
 }
 
 .stat-label {
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -273,16 +274,16 @@ const formatDate = (dateString: string): string => {
   justify-content: space-between;
   align-items: center;
   padding: 0.625rem;
-  background-color: var(--color-gray-50, #f9fafb);
+  background-color: var(--color-surface);
   border-radius: var(--border-radius-md, 0.375rem);
-  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border: 1px solid var(--color-border);
 }
 
 .item-rate {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--color-gray-900, #111827);
-  font-family: 'Monaco', 'Courier New', monospace;
+  color: var(--color-text-primary);
+  font-family: var(--font-family-mono);
 }
 
 .form-field {
@@ -294,25 +295,26 @@ const formatDate = (dateString: string): string => {
 .field-label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--color-gray-700, #374151);
+  color: var(--color-text-secondary, #b8b8b8);
 }
 
 .field-input {
   padding: 0.625rem;
-  border: 1px solid var(--color-gray-300, #d1d5db);
+  border: 1px solid var(--color-border);
   border-radius: var(--border-radius-md, 0.375rem);
   font-size: 0.875rem;
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface-inset);
   transition: all 0.2s ease-in-out;
 
   &:focus {
     outline: none;
-    border-color: var(--color-primary-500, #3b82f6);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--color-ficsit-orange);
+    box-shadow: var(--shadow-glow-orange);
   }
 
   &::placeholder {
-    color: var(--color-gray-400, #9ca3af);
+    color: var(--color-text-muted);
   }
 }
 

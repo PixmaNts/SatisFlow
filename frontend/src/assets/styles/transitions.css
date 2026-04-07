@@ -316,10 +316,10 @@
 /* Glow animation */
 @keyframes glow {
   0%, 100% {
-    box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 5px rgba(245, 139, 0, 0.5);
   }
   50% {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+    box-shadow: 0 0 20px rgba(245, 139, 0, 0.8);
   }
 }
 
@@ -393,7 +393,7 @@
 /* Focus effects */
 .focus-ring:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 0 3px rgba(245, 139, 0, 0.3);
 }
 
 .focus-ring:focus-visible {

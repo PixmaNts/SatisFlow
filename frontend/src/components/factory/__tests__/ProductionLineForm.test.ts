@@ -81,15 +81,15 @@ describe('ProductionLineForm', () => {
   const mockRecipe1: RecipeInfo = {
     name: 'Iron Plate',
     machine: 'Constructor',
-    inputs: [{ item: 'Iron Ingot', quantity: 30 }],
-    outputs: [{ item: 'Iron Plate', quantity: 20 }],
+    inputs: [{ item: 'IronIngot', quantity: 30 }],
+    outputs: [{ item: 'IronPlate', quantity: 20 }],
   }
 
   const mockRecipe2: RecipeInfo = {
     name: 'Copper Ingot',
     machine: 'Smelter',
-    inputs: [{ item: 'Copper Ore', quantity: 30 }],
-    outputs: [{ item: 'Copper Ingot', quantity: 30 }],
+    inputs: [{ item: 'CopperOre', quantity: 30 }],
+    outputs: [{ item: 'CopperIngot', quantity: 30 }],
   }
 
   const mockMachineInfo: MachineInfo = {

@@ -226,8 +226,8 @@ describe('BlueprintFormModal', () => {
 
       const saveEvents = wrapper.emitted('save')
       expect(saveEvents).toBeTruthy()
-      expect(saveEvents![0][0]).toHaveProperty('id', 'template-1')
-      expect(saveEvents![0][0].name).toBe('Test Blueprint')
+      expect(saveEvents![0][0]!).toHaveProperty('id', 'template-1')
+      expect(saveEvents![0][0]!.name).toBe('Test Blueprint')
     })
 
     it('should NOT include id in save data when creating new', async () => {
@@ -253,8 +253,8 @@ describe('BlueprintFormModal', () => {
 
       const saveEvents = wrapper.emitted('save')
       expect(saveEvents).toBeTruthy()
-      expect(saveEvents![0][0]).not.toHaveProperty('id')
-      expect(saveEvents![0][0].name).toBe('New Blueprint')
+      expect(saveEvents![0][0]!).not.toHaveProperty('id')
+      expect(saveEvents![0][0]!.name).toBe('New Blueprint')
     })
 
     it('should not emit save when form is invalid', async () => {

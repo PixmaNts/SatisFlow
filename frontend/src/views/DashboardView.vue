@@ -94,7 +94,7 @@
         >
           <template #cell-item="{ row }">
             <div class="item-name">
-              <ItemDisplay :item="row.item" :show-name="false" size="sm" />
+              <ItemDisplay :item="String(row.item)" :show-name="false" size="sm" />
               <span class="item-text">{{ formatItemName(String(row.item)) }}</span>
             </div>
           </template>
@@ -472,15 +472,15 @@ watch([autoRefreshEnabled, refreshInterval], () => {
 .filter-select,
 .filter-input {
   padding: var(--spacing-xs, 0.25rem) var(--spacing-sm, 0.5rem);
-  border: 1px solid var(--color-gray-300, #d1d5db);
+  border: 1px solid var(--color-border, #404040);
   border-radius: var(--border-radius-md, 0.375rem);
   font-size: var(--font-size-sm, 0.875rem);
-  background-color: var(--color-white, #ffffff);
+  background-color: var(--color-surface-inset, #1f1f1f);
 
   &:focus {
     outline: none;
-    border-color: var(--color-primary-500, #3b82f6);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--color-ficsit-orange, #f58b00);
+    box-shadow: 0 0 0 3px var(--color-ficsit-orange-glow);
   }
 }
 
@@ -527,19 +527,19 @@ watch([autoRefreshEnabled, refreshInterval], () => {
   border: 1px solid;
 
   &.overflow {
-    background-color: rgba(34, 197, 94, 0.1);
+    background-color: var(--color-green-100);
     color: var(--color-success, #22c55e);
     border-color: var(--color-success, #22c55e);
   }
 
   &.underflow {
-    background-color: rgba(239, 68, 68, 0.1);
+    background-color: var(--color-red-100);
     color: var(--color-error, #ef4444);
     border-color: var(--color-error, #ef4444);
   }
 
   &.balanced {
-    background-color: rgba(245, 158, 11, 0.1);
+    background-color: var(--color-amber-50);
     color: var(--color-warning, #f59e0b);
     border-color: var(--color-warning, #f59e0b);
   }

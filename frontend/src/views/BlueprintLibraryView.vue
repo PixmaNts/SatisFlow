@@ -45,7 +45,7 @@
     <!-- Error State -->
     <div v-else-if="error" class="error-container">
       <div class="error-content-wrapper">
-        <Alert variant="error" :message="error" />
+        <Alert type="error" :message="error" />
         <Button @click="fetchTemplates" variant="primary" class="mt-4">
           <template #icon>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
@@ -437,73 +437,105 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .blueprint-library-view {
-  padding: 1.5rem 1.5rem 1.5rem 2rem;
+  padding: var(--spacing-6, 1.5rem) var(--spacing-6, 1.5rem) var(--spacing-6, 1.5rem) var(--spacing-8, 2rem);
   max-width: 80rem;
   margin: 0 auto;
   min-height: calc(100vh - 200px);
 }
 
 .header-actions {
-  @apply flex gap-3 flex-wrap;
+  display: flex;
+  gap: var(--spacing-3, 0.75rem);
+  flex-wrap: wrap;
 }
 
 .loading-container {
-  @apply flex flex-col items-center justify-center py-24;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: var(--spacing-24, 6rem);
+  padding-bottom: var(--spacing-24, 6rem);
   min-height: 400px;
 }
 
 .loading-text {
-  @apply mt-4 text-gray-500 dark:text-gray-400 text-lg;
+  margin-top: var(--spacing-4, 1rem);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-lg, 1.125rem);
 }
 
 .error-container {
-  @apply py-16 px-4 flex flex-col items-center justify-center;
+  padding: var(--spacing-16, 4rem) var(--spacing-4, 1rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   min-height: 400px;
 }
 
 .error-content-wrapper {
-  @apply max-w-md w-full flex flex-col items-center;
+  max-width: 28rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .empty-state-container {
-  @apply py-12 px-4;
+  padding: var(--spacing-12, 3rem) var(--spacing-4, 1rem);
   display: flex;
   align-items: flex-start;
   justify-content: center;
 }
 
 .empty-state-content {
-  @apply max-w-2xl w-full;
+  max-width: 42rem;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 2rem 1rem;
+  padding: var(--spacing-8, 2rem) var(--spacing-4, 1rem);
 }
 
 .empty-title {
-  @apply text-2xl font-semibold mb-3;
+  font-size: var(--font-size-2xl, 1.5rem);
+  font-weight: var(--font-weight-semibold, 600);
+  margin-bottom: var(--spacing-3, 0.75rem);
   color: var(--color-text-primary, #e5e5e5);
 }
 
 .empty-description {
-  @apply text-base mb-8;
+  font-size: var(--font-size-base, 1rem);
+  margin-bottom: var(--spacing-8, 2rem);
   color: var(--color-text-secondary, #b8b8b8);
   max-width: 500px;
   line-height: 1.6;
 }
 
 .empty-state-buttons {
-  @apply flex flex-col sm:flex-row gap-3 items-center justify-center w-full;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3, 0.75rem);
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .empty-state-buttons {
+    flex-direction: row;
+  }
 }
 
 .blueprint-grid {
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-top: 2rem;
+  gap: var(--spacing-3, 0.75rem);
+  margin-top: var(--spacing-8, 2rem);
   animation: fade-in 0.3s ease-out;
 }
 
@@ -544,15 +576,15 @@ onMounted(() => {
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .blueprint-library-view {
-    @apply p-4;
+    padding: var(--spacing-4, 1rem);
   }
-  
+
   .header-actions {
-    @apply w-full;
+    width: 100%;
   }
-  
+
   .header-actions > * {
-    @apply flex-1;
+    flex: 1 1 0%;
   }
 }
 </style>

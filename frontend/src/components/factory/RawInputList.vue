@@ -112,7 +112,7 @@
     <!-- Error Alert -->
     <Alert
       v-if="error"
-      variant="danger"
+      type="error"
       @close="clearError"
     >
       {{ error }}
@@ -298,145 +298,146 @@ defineExpose({
 <style scoped lang="scss">
 .raw-input-list {
   background-color: transparent;
-  border-radius: var(--border-radius-lg, 0.5rem);
+  border-radius: var(--border-radius-lg);
   overflow: hidden;
 }
 
 .resource-info {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs, 0.25rem);
+  gap: var(--spacing-xs);
 }
 
 .resource-name {
-  font-weight: var(--font-weight-medium, 500);
-  color: var(--color-text-primary, #e5e5e5);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-sans);
 }
 
 .extractor-type {
-  font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-text-secondary, #b8b8b8);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
   font-style: italic;
 }
 
 .purity-badge {
   display: inline-block;
-  padding: var(--spacing-xs, 0.25rem) var(--spacing-sm, 0.5rem);
-  border-radius: var(--border-radius-full, 9999px);
-  font-size: var(--font-size-xs, 0.75rem);
-  font-weight: var(--font-weight-medium, 500);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
+  letter-spacing: 0.02em;
 
   &.purity-impure {
-    background-color: rgba(239, 68, 68, 0.2);
-    color: var(--color-error, #ef4444);
-    border: 1px solid var(--color-error, #ef4444);
+    background-color: rgba(239, 68, 68, 0.15);
+    color: var(--color-error);
+    border: 1px solid rgba(239, 68, 68, 0.3);
   }
 
   &.purity-normal {
-    background-color: rgba(184, 184, 184, 0.2);
-    color: var(--color-text-secondary, #b8b8b8);
-    border: 1px solid var(--color-border, #404040);
+    background-color: rgba(138, 138, 138, 0.15);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
   }
 
   &.purity-pure {
-    background-color: rgba(34, 197, 94, 0.2);
-    color: var(--color-success, #22c55e);
-    border: 1px solid var(--color-success, #22c55e);
+    background-color: rgba(34, 197, 94, 0.15);
+    color: var(--color-success);
+    border: 1px solid rgba(34, 197, 94, 0.3);
   }
 }
 
 .purity-none {
-  color: var(--color-text-secondary, #b8b8b8);
+  color: var(--color-text-muted);
   font-style: italic;
 }
 
 .rate-info {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs, 0.25rem);
+  gap: var(--spacing-xs);
 }
 
 .rate-value {
-  font-weight: var(--font-weight-medium, 500);
-  color: var(--color-text-primary, #e5e5e5);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-mono);
 }
 
 .pressurized-indicator {
-  color: var(--color-amber-500, #f59e0b);
-  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-warning);
+  font-size: var(--font-size-sm);
 }
 
 .power-info {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs, 0.25rem);
+  gap: var(--spacing-xs);
 }
 
 .power-value {
-  font-weight: var(--font-weight-medium, 500);
-  color: var(--color-text-primary, #e5e5e5);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-mono);
 }
 
 .extractor-count {
-  font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-text-secondary, #b8b8b8);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
 }
 
 .count-badge {
   display: inline-block;
-  padding: 0.125rem 0.375rem;
-  border-radius: var(--border-radius-sm, 0.25rem);
-  font-size: var(--font-size-xs, 0.75rem);
-  font-weight: var(--font-weight-medium, 500);
-  background-color: rgba(59, 130, 246, 0.2);
-  color: var(--color-primary-400, #60a5fa);
-  border: 1px solid var(--color-primary-500, #3b82f6);
+  padding: var(--spacing-2xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  background-color: rgba(245, 139, 0, 0.15);
+  color: var(--color-primary-400);
+  border: 1px solid rgba(245, 139, 0, 0.3);
 }
 
 .oc-value {
-  font-weight: var(--font-weight-medium, 500);
-  color: var(--color-text-primary, #e5e5e5);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-mono);
 }
 
 .action-buttons {
   display: flex;
-  gap: var(--spacing-xs, 0.25rem);
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
 }
 
 .delete-confirmation {
   text-align: center;
-  padding: var(--spacing-md, 0.75rem) 0;
+  padding: var(--spacing-lg) 0;
 }
 
 .input-name {
-  margin: var(--spacing-sm, 0.5rem) 0;
-  color: var(--color-text-primary, #e5e5e5);
+  margin: var(--spacing-md) 0;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
 }
 
 .warning-text {
-  font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-red-600, #dc2626);
-  margin-top: var(--spacing-md, 0.75rem);
+  font-size: var(--font-size-sm);
+  color: var(--color-error);
+  margin-top: var(--spacing-md);
 }
 
 .modal-actions {
   display: flex;
-  gap: var(--spacing-sm, 0.5rem);
+  gap: var(--spacing-md);
   justify-content: flex-end;
 }
 
 // Responsive design
 @media (max-width: 768px) {
-  .list-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--spacing-sm, 0.5rem);
-  }
-
   .action-buttons {
     flex-direction: column;
-    gap: var(--spacing-xs, 0.25rem);
+    gap: var(--spacing-xs);
   }
 }
 </style>

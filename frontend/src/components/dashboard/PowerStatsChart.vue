@@ -492,7 +492,7 @@ const getFactoryConsumptionPercentage = (factory: { generation: number; consumpt
   &:hover {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     transform: translateY(-1px);
-    border-color: rgba(59, 130, 246, 0.2);
+    border-color: rgba(245, 139, 0, 0.2);
   }
 }
 

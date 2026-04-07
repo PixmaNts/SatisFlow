@@ -2,6 +2,7 @@
   <Modal
     :show="show"
     title="Keyboard Shortcuts"
+    size="lg"
     @close="handleClose"
   >
     <div class="shortcuts-modal">
@@ -165,7 +166,7 @@ const handleClose = () => {
 .category-title {
   font-size: var(--font-size-lg, 1.125rem);
   font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
   margin: 0 0 var(--spacing-md, 0.75rem) 0;
   padding-bottom: var(--spacing-xs, 0.25rem);
   border-bottom: 2px solid var(--color-gray-200, #e5e7eb);
@@ -199,20 +200,20 @@ const handleClose = () => {
   min-width: 24px;
   height: 24px;
   padding: 0 var(--spacing-xs, 0.25rem);
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  border: 1px solid var(--color-gray-300, #d1d5db);
+  background: linear-gradient(135deg, var(--color-surface-inset, #1f1f1f) 0%, var(--color-surface, #252525) 100%);
+  border: 1px solid var(--color-border, #404040);
   border-radius: var(--border-radius-md, 0.375rem);
   font-size: var(--font-size-xs, 0.75rem);
   font-weight: var(--font-weight-semibold, 600);
   font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
-  color: var(--color-gray-900, #111827);
+  color: var(--color-text-primary, #e5e5e5);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   line-height: 1;
 }
 
 .shortcut-description {
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-gray-700, #374151);
+  color: var(--color-text-secondary, #b8b8b8);
   text-align: right;
   flex: 1;
 }
@@ -225,7 +226,7 @@ const handleClose = () => {
 
 .footer-note {
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-muted, #8a8a8a);
   margin: 0;
   text-align: center;
   display: flex;
@@ -238,12 +239,12 @@ const handleClose = () => {
 :global(.dark-theme) {
   .category-title {
     color: var(--color-gray-100, #f3f4f6);
-    border-bottom-color: var(--color-gray-700, #374151);
+    border-bottom-color: var(--color-text-secondary, #b8b8b8);
   }
 
   .shortcut-key {
-    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
-    border-color: var(--color-gray-600, #4b5563);
+    background: linear-gradient(135deg, var(--color-surface-inset, #1f1f1f) 0%, var(--color-surface, #252525) 100%);
+    border-color: var(--color-border, #404040);
     color: var(--color-gray-100, #f3f4f6);
   }
 
@@ -252,7 +253,7 @@ const handleClose = () => {
   }
 
   .shortcuts-footer {
-    border-top-color: var(--color-gray-700, #374151);
+    border-top-color: var(--color-text-secondary, #b8b8b8);
   }
 
   .footer-note {

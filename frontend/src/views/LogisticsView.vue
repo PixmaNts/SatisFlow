@@ -162,6 +162,7 @@ onUnmounted(() => {
     <Modal
       v-model:show="showCreateModal"
       title="Create Logistics Line"
+      size="xl"
       @close="handleCloseCreateModal"
     >
       <LogisticsLineForm
@@ -174,6 +175,7 @@ onUnmounted(() => {
     <Modal
       v-model:show="showEditModal"
       title="Edit Logistics Line"
+      size="xl"
       @close="handleCloseEditModal"
     >
       <LogisticsLineForm
@@ -226,11 +228,13 @@ onUnmounted(() => {
 }
 
 .header-title h1 {
-  font-size: var(--font-size-2xl, 1.5rem);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-3xl, 1.875rem);
   font-weight: var(--font-weight-bold, 700);
+  line-height: var(--line-height-tight, 1.2);
+  letter-spacing: var(--letter-spacing-tight, -0.01em);
   color: var(--color-ficsit-orange, #f58b00);
   margin: 0;
-  letter-spacing: -0.01em;
 }
 
 .header-subtitle {
@@ -256,7 +260,7 @@ onUnmounted(() => {
   }
 
   .header-title h1 {
-    font-size: var(--font-size-xl, 1.25rem);
+    font-size: var(--font-size-2xl, 1.5rem);
   }
 }
 

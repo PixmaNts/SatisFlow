@@ -186,101 +186,155 @@ const formatItemName = (item: string): string => {
 };
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .blueprint-details {
-  @apply space-y-6;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6, 1.5rem);
 }
 
 .detail-section {
-  @apply space-y-4;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4, 1rem);
 }
 
 .description {
-  @apply text-base text-gray-700 dark:text-gray-300 leading-relaxed;
+  font-size: var(--font-size-base, 1rem);
+  color: var(--color-text-secondary);
+  line-height: 1.625;
 }
 
 .section-title {
-  @apply text-lg font-semibold text-gray-900 dark:text-gray-100;
-  color: var(--color-ficsit-orange, #f58b00);
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-ficsit-orange);
 }
 
 .stats-grid {
-  @apply grid grid-cols-3 gap-4;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-4, 1rem);
 }
 
 .stat-card {
-  @apply bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 flex items-center gap-3;
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-md, 0.375rem);
+  padding: var(--spacing-4, 1rem);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3, 0.75rem);
 }
 
 .stat-icon {
-  @apply w-8 h-8 text-gray-500 dark:text-gray-400 flex-shrink-0;
+  width: var(--spacing-8, 2rem);
+  height: var(--spacing-8, 2rem);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
 }
 
 .stat-content {
-  @apply flex flex-col;
+  display: flex;
+  flex-direction: column;
 }
 
 .stat-value {
-  @apply text-xl font-bold text-gray-900 dark:text-gray-100;
+  font-size: var(--font-size-xl, 1.25rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-text-primary);
 }
 
 .stat-label {
-  @apply text-sm text-gray-500 dark:text-gray-400;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-muted);
 }
 
 .items-grid {
-  @apply grid grid-cols-2 md:grid-cols-3 gap-3;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-3, 0.75rem);
+}
+
+@media (min-width: 768px) {
+  .items-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .item-card {
-  @apply rounded-lg p-3 flex items-center gap-3;
+  border-radius: var(--border-radius-lg, 0.5rem);
+  padding: var(--spacing-3, 0.75rem);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3, 0.75rem);
 }
 
 .input-item {
-  @apply bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800;
+  background-color: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .output-item {
-  @apply bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800;
+  background-color: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
 .item-info {
-  @apply flex flex-col;
+  display: flex;
+  flex-direction: column;
 }
 
 .item-name {
-  @apply text-sm font-medium text-gray-900 dark:text-gray-100;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-primary);
 }
 
 .item-rate {
-  @apply text-xs text-gray-500 dark:text-gray-400;
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-muted);
 }
 
 .production-lines-list {
-  @apply space-y-2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2, 0.5rem);
 }
 
 .production-line-item {
-  @apply bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3;
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-lg, 0.5rem);
+  padding: var(--spacing-3, 0.75rem);
 }
 
 .line-header {
-  @apply flex items-center justify-between mb-1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-1, 0.25rem);
 }
 
 .line-number {
-  @apply text-sm font-semibold text-gray-700 dark:text-gray-300;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-secondary);
 }
 
 .line-recipe {
-  @apply text-sm text-gray-600 dark:text-gray-400;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-muted);
 }
 
 .line-machines {
-  @apply text-xs text-gray-500 dark:text-gray-400;
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-muted);
 }
 
 .modal-actions {
-  @apply flex items-center justify-end gap-2 flex-wrap;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-2, 0.5rem);
+  flex-wrap: wrap;
 }
 </style>

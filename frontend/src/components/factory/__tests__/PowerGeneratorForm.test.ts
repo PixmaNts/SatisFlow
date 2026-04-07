@@ -533,7 +533,7 @@ describe('PowerGeneratorForm', () => {
         generator_type: 'Geothermal',
         groups: [{ number_of_generators: 1, clock_speed: 100 }],
       })
-      const calledPayload = createSpy.mock.calls[0][1]
+      const calledPayload = createSpy.mock.calls[0][1]!
       expect('fuel_type' in calledPayload).toBe(false)
     })
   })

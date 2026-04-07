@@ -258,7 +258,12 @@ describe('RawInputForm', () => {
       // This simulates what would happen if the validation somehow failed or was bypassed
       
       // Create the payload as the component would (simulating the bug)
-      const payload = {
+      const payload: {
+        extractor_type: any
+        item: any
+        quantity_per_min: any
+        purity?: number
+      } = {
         extractor_type: vm.formData.extractor_type,
         item: vm.formData.item,
         quantity_per_min: vm.formData.quantity_per_min,
@@ -280,8 +285,8 @@ describe('RawInputForm', () => {
       expect(createRawInputSpy).toHaveBeenCalled()
 
       // Verify that purity is undefined in the payload (the bug)
-      const callArgs = createRawInputSpy.mock.calls[0]
-      const actualPayload = callArgs[1]
+      const callArgs = createRawInputSpy.mock.calls[0]!
+      const actualPayload = callArgs[1]!
       expect(actualPayload.extractor_type).toBe('MinerMk2')
       expect(actualPayload.item).toBe('IronOre')
       expect(actualPayload.purity).toBeUndefined() // This is the bug - purity should be required for miners

@@ -24,47 +24,66 @@ interface Props {
 defineProps<Props>()
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .page-header {
-  @apply mb-8 pb-6 border-b border-gray-200 dark:border-gray-700;
+  margin-bottom: var(--spacing-8, 2rem);
+  padding-bottom: var(--spacing-6, 1.5rem);
   padding-left: 0;
+  border-bottom: 1px solid var(--color-border, #404040);
 }
 
 .header-content {
-  @apply flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4, 1rem);
+}
+
+@media (min-width: 640px) {
+  .header-content {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
 }
 
 .header-text {
-  @apply flex-1;
+  flex: 1 1 0%;
 }
 
 .page-title {
-  @apply text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2;
+  font-size: var(--font-size-3xl, 1.875rem);
+  font-weight: var(--font-weight-bold, 700);
   color: var(--color-ficsit-orange, #f58b00);
+  margin-bottom: var(--spacing-2, 0.5rem);
   letter-spacing: -0.02em;
 }
 
 .page-subtitle {
-  @apply text-base text-gray-600 dark:text-gray-400;
+  font-size: var(--font-size-base, 1rem);
+  color: var(--color-text-secondary, #b8b8b8);
   line-height: 1.5;
 }
 
 .header-actions {
-  @apply flex items-center gap-3 flex-shrink-0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3, 0.75rem);
+  flex-shrink: 0;
 }
 
 /* Responsive adjustments */
 @media (max-width: 640px) {
   .page-header {
-    @apply mb-6 pb-4;
+    margin-bottom: var(--spacing-6, 1.5rem);
+    padding-bottom: var(--spacing-4, 1rem);
   }
-  
+
   .page-title {
-    @apply text-2xl;
+    font-size: var(--font-size-2xl, 1.5rem);
   }
-  
+
   .page-subtitle {
-    @apply text-sm;
+    font-size: var(--font-size-sm, 0.875rem);
   }
 }
 </style>

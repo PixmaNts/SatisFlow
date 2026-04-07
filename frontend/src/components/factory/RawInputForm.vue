@@ -2,6 +2,7 @@
   <Modal
     :show="show"
     :title="isEditing ? 'Edit Raw Input' : 'Add Raw Input'"
+    size="xl"
     @close="handleClose"
   >
     <form @submit.prevent="handleSubmit">
@@ -972,7 +973,7 @@ onMounted(async () => {
   display: block;
   font-size: var(--font-size-sm, 0.875rem);
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-700, #374151);
+  color: var(--color-text-secondary, #b8b8b8);
   margin-bottom: var(--spacing-xs, 0.25rem);
 }
 
@@ -981,15 +982,15 @@ onMounted(async () => {
 .form-textarea {
   width: 100%;
   padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 0.75rem);
-  border: 1px solid var(--color-gray-300, #d1d5db);
+  border: 1px solid var(--color-border, #404040);
   border-radius: var(--border-radius-md, 0.375rem);
   font-size: var(--font-size-base, 1rem);
   transition: border-color 0.2s ease-in-out;
 
   &:focus {
     outline: none;
-    border-color: var(--color-primary-500, #3b82f6);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--color-ficsit-orange, #f58b00);
+    box-shadow: 0 0 0 3px rgba(245, 139, 0, 0.1);
   }
 
   &::placeholder {
@@ -998,7 +999,7 @@ onMounted(async () => {
 
   &[readonly] {
     background-color: var(--color-gray-100, #f3f4f6);
-    color: var(--color-gray-600, #4b5563);
+    color: var(--color-text-muted, #8a8a8a);
   }
 }
 
@@ -1013,7 +1014,7 @@ onMounted(async () => {
   gap: var(--spacing-xs, 0.25rem);
   cursor: pointer;
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-gray-700, #374151);
+  color: var(--color-text-secondary, #b8b8b8);
 
   input[type="radio"] {
     margin: 0;
@@ -1033,7 +1034,7 @@ onMounted(async () => {
   label {
     font-size: var(--font-size-sm, 0.875rem);
     font-weight: var(--font-weight-medium, 500);
-    color: var(--color-gray-700, #374151);
+color: var(--color-text-secondary, #b8b8b8);
     cursor: pointer;
   }
 }
@@ -1079,7 +1080,7 @@ onMounted(async () => {
 .field-label {
   font-size: var(--font-size-xs, 0.75rem);
   font-weight: var(--font-weight-medium, 500);
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-muted, #8a8a8a);
 }
 
 .rate-unit {
@@ -1135,7 +1136,7 @@ onMounted(async () => {
     width: 1.25rem;
     height: 1.25rem;
     border-radius: 50%;
-    background: var(--color-primary-500, #3b82f6);
+    background: var(--color-ficsit-orange, #f58b00);
     cursor: pointer;
   }
 
@@ -1143,7 +1144,7 @@ onMounted(async () => {
     width: 1.25rem;
     height: 1.25rem;
     border-radius: 50%;
-    background: var(--color-primary-500, #3b82f6);
+    background: var(--color-ficsit-orange, #f58b00);
     cursor: pointer;
     border: none;
   }
@@ -1205,7 +1206,7 @@ onMounted(async () => {
 .power-hint {
   margin-top: var(--spacing-xs, 0.25rem);
   font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-gray-600, #4b5563);
+  color: var(--color-text-muted, #8a8a8a);
 }
 
 // Responsive design

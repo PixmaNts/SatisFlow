@@ -2,7 +2,7 @@
   <Modal
     :show="show"
     title="Import Blueprint"
-    size="md"
+    size="xl"
     @close="$emit('close')"
   >
     <div class="import-form">
@@ -163,48 +163,85 @@ const onImport = async () => {
 watch(blueprintJson, () => parseBlueprint());
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .import-form {
-  @apply space-y-4;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4, 1rem);
 }
 
 .form-field {
-  @apply space-y-2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2, 0.5rem);
 }
 
 .field-label {
-  @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
+  display: block;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-1, 0.25rem);
 }
 
 .json-textarea {
-  @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white font-mono text-sm;
+  width: 100%;
+  padding: var(--spacing-2, 0.5rem) var(--spacing-3, 0.75rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md, 0.375rem);
+  box-shadow: var(--shadow-sm);
+  background-color: var(--color-surface-inset);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-mono, 'JetBrains Mono', monospace);
+  font-size: var(--font-size-sm, 0.875rem);
+  resize: vertical;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-ficsit-orange);
+    box-shadow: var(--shadow-glow-orange);
+  }
 }
 
 .preview-section {
-  @apply mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg;
+  margin-top: var(--spacing-4, 1rem);
+  padding: var(--spacing-4, 1rem);
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-lg, 0.5rem);
 }
 
 .preview-title {
-  @apply text-base font-medium text-gray-900 dark:text-gray-100 mb-2;
+  font-size: var(--font-size-base, 1rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-2, 0.5rem);
 }
 
 .preview-stats {
-  @apply space-y-2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2, 0.5rem);
 }
 
 .stat-item {
-  @apply flex justify-between;
+  display: flex;
+  justify-content: space-between;
 }
 
 .stat-label {
-  @apply text-sm text-gray-600 dark:text-gray-400;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-muted);
 }
 
 .stat-value {
-  @apply text-sm font-medium text-gray-900 dark:text-gray-100;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-primary);
 }
 
 .modal-actions {
-  @apply flex gap-3 justify-end;
+  display: flex;
+  gap: var(--spacing-3, 0.75rem);
+  justify-content: flex-end;
 }
 </style>

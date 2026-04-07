@@ -321,10 +321,10 @@ watch(() => props.modelValue, (newValue) => {
   border-radius: 9999px;
   background: linear-gradient(
     to right,
-    rgb(59, 130, 246) 0%,
-    rgb(59, 130, 246) var(--slider-percentage),
-    rgb(55, 65, 81) var(--slider-percentage),
-    rgb(55, 65, 81) 100%
+    var(--color-ficsit-orange, #f58b00) 0%,
+    var(--color-ficsit-orange, #f58b00) var(--slider-percentage),
+    var(--color-border, #404040) var(--slider-percentage),
+    var(--color-border, #404040) 100%
   );
   outline: none;
   transition: background 0.2s;
@@ -345,7 +345,7 @@ watch(() => props.modelValue, (newValue) => {
   width: 1.25rem;
   height: 1.25rem;
   border-radius: 50%;
-  background: rgb(59, 130, 246);
+  background: var(--color-ficsit-orange, #f58b00);
   border: 2px solid rgb(255, 255, 255);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   cursor: pointer;
@@ -375,7 +375,7 @@ watch(() => props.modelValue, (newValue) => {
   width: 1.25rem;
   height: 1.25rem;
   border-radius: 50%;
-  background: rgb(59, 130, 246);
+  background: var(--color-ficsit-orange, #f58b00);
   border: 2px solid rgb(255, 255, 255);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   cursor: pointer;
@@ -436,7 +436,7 @@ watch(() => props.modelValue, (newValue) => {
 }
 
 .marker-button--active .marker-dot {
-  background: rgb(59, 130, 246);
+  background: var(--color-ficsit-orange, #f58b00);
   transform: scale(1.5);
 }
 
@@ -481,9 +481,9 @@ watch(() => props.modelValue, (newValue) => {
 }
 
 .preset-button--active {
-  background-color: rgba(59, 130, 246, 0.1);
-  border-color: rgb(59, 130, 246);
-  color: rgb(147, 197, 253);
+  background-color: rgba(245, 139, 0, 0.1);
+  border-color: var(--color-ficsit-orange, #f58b00);
+  color: var(--color-ficsit-orange, #f58b00);
 }
 
 .error-message {
