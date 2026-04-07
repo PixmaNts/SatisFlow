@@ -237,6 +237,16 @@
         <p>Loading logistics lines...</p>
       </div>
     </div>
+
+    <ConfirmDialog
+      :show="showDeleteConfirm"
+      title="Delete Logistics Line"
+      message="Are you sure you want to delete this logistics line?"
+      variant="danger"
+      confirm-text="Delete"
+      @confirm="confirmDeleteLogistics"
+      @cancel="showDeleteConfirm = false"
+    />
   </div>
 </template>
 
@@ -246,6 +256,7 @@ import { useFactoryStore } from '@/stores/factory'
 import { useLogisticsStore } from '@/stores/logistics'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import ItemDisplay from '@/components/ui/ItemDisplay.vue'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import { useItemIcon } from '@/composables/useItemIcon'
 import type { LogisticsResponse, Item } from '@/api/types'
 
@@ -268,6 +279,8 @@ const logisticsStore = useLogisticsStore()
 
 // State
 const loading = ref(false)
+const deleteTarget = ref<LogisticsResponse | null>(null)
+const showDeleteConfirm = ref(false)
 
 // Filters
 const filters = ref({
@@ -379,11 +392,18 @@ const clearFilters = () => {
   }
 }
 
-const handleDeleteLogistics = async (logistics: LogisticsResponse) => {
-  if (confirm(`Are you sure you want to delete this logistics line?`)) {
-    await logisticsStore.deleteLogistics(logistics.id)
-    emit('delete-logistics', logistics)
+const handleDeleteLogistics = (logistics: LogisticsResponse) => {
+  deleteTarget.value = logistics
+  showDeleteConfirm.value = true
+}
+
+const confirmDeleteLogistics = async () => {
+  if (deleteTarget.value) {
+    await logisticsStore.deleteLogistics(deleteTarget.value.id)
+    emit('delete-logistics', deleteTarget.value)
+    deleteTarget.value = null
   }
+  showDeleteConfirm.value = false
 }
 
 const fetchLogistics = async () => {

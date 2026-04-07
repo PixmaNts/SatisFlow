@@ -278,8 +278,8 @@ const machineStats = computed(() => {
 })
 
 // Event handlers
-const onRecipeSelected = (recipe: RecipeInfo) => {
-  console.log('Recipe selected:', recipe)
+const onRecipeSelected = (_recipe: RecipeInfo) => {
+  // Recipe selected handler
 }
 
 const trySearch = (term: string) => {

@@ -145,7 +145,6 @@ const copyErrorDetails = async () => {
   try {
     await navigator.clipboard.writeText(errorDetails.value)
     // Show success feedback (you could use the toast system here)
-    console.log('Error details copied to clipboard')
   } catch (error) {
     console.error('Failed to copy error details:', error)
   }

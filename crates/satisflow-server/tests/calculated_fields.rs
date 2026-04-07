@@ -2371,16 +2371,24 @@ async fn test_factory_level_calculations_comprehensive() {
             let factory_data: Value = get_response.json().await.unwrap();
 
             // Verify power calculations only if resources were created
-            // Consumption: 4 machines * 4MW + 2 miners * 15MW = 16 + 30 = 46MW
+            // Consumption: 2 miners * 15MW = 30MW (production line machines use recipe-based power)
             let consumption = factory_data["total_power_consumption"].as_f64().unwrap();
             if production_created || raw_input_created {
-                assert!(consumption >= 0.0);
+                assert!(
+                    (consumption - 30.0).abs() < 1.0,
+                    "Expected consumption ~30.0 MW, got {}",
+                    consumption
+                );
             }
 
             // Generation: 3 generators * 75MW = 225MW
             let generation = factory_data["total_power_generation"].as_f64().unwrap();
             if generator_created {
-                assert!(generation >= 0.0);
+                assert!(
+                    (generation - 225.0).abs() < 1.0,
+                    "Expected generation ~225.0 MW, got {}",
+                    generation
+                );
             }
 
             // Verify arrays exist

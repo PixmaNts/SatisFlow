@@ -143,7 +143,7 @@ async fn test_factory_error_cases() {
         .expect("Failed to send request");
 
     // This might be 400 (Bad Request) or still return "Not implemented yet"
-    assert!(response.status().as_u16() == 400 || response.status().as_u16() == 400);
+    assert!(response.status().as_u16() == 400 || response.status().as_u16() == 422, "Expected 400 or 422, got {}", response.status());
 }
 
 // LOGISTICS TESTS
@@ -408,6 +408,12 @@ async fn test_dashboard_endpoints() {
     assert!(summary.get("total_power_consumption").is_some());
     assert!(summary.get("total_power_generation").is_some());
     assert!(summary.get("net_power").is_some());
+    assert!(summary.get("total_factories").unwrap().is_number(), "total_factories should be a number");
+    assert!(summary.get("total_production_lines").unwrap().is_number(), "total_production_lines should be a number");
+    assert!(summary.get("total_logistics_lines").unwrap().is_number(), "total_logistics_lines should be a number");
+    assert!(summary.get("total_power_consumption").unwrap().is_number(), "total_power_consumption should be a number");
+    assert!(summary.get("total_power_generation").unwrap().is_number(), "total_power_generation should be a number");
+    assert!(summary.get("net_power").unwrap().is_number(), "net_power should be a number");
 
     // Test 2: Get item balances
     let response = client
@@ -513,11 +519,21 @@ async fn test_cors_headers() {
         cors_origin.is_some(),
         "CORS origin header should be present"
     );
+    assert_eq!(
+        cors_origin.unwrap().to_str().unwrap(),
+        "*",
+        "CORS origin should be wildcard in development mode"
+    );
 
     let cors_methods = response.headers().get("Access-Control-Allow-Methods");
     assert!(
         cors_methods.is_some(),
         "CORS methods header should be present"
+    );
+    let methods_str = cors_methods.unwrap().to_str().unwrap();
+    assert!(
+        methods_str.contains("GET") && methods_str.contains("POST") && methods_str.contains("PUT") && methods_str.contains("DELETE"),
+        "CORS methods should include GET, POST, PUT, DELETE, got: {}", methods_str
     );
 
     // Test actual request with Origin header
@@ -532,6 +548,11 @@ async fn test_cors_headers() {
     assert!(
         cors_origin.is_some(),
         "CORS origin header should be present on actual request"
+    );
+    assert_eq!(
+        cors_origin.unwrap().to_str().unwrap(),
+        "*",
+        "CORS origin on actual request should be * in development mode"
     );
 }
 

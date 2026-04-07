@@ -38,6 +38,40 @@ impl Factory {
         self.production_lines.insert(line.id(), line);
     }
 
+    /// Get a production line by ID
+    pub fn get_production_line(&self, id: ProductionLineId) -> Option<&ProductionLine> {
+        self.production_lines.get(&id)
+    }
+
+    /// Get a mutable reference to a production line by ID
+    pub fn get_production_line_mut(&mut self, id: ProductionLineId) -> Option<&mut ProductionLine> {
+        self.production_lines.get_mut(&id)
+    }
+
+    /// Remove a production line by ID
+    pub fn remove_production_line(&mut self, id: ProductionLineId) -> Option<ProductionLine> {
+        self.production_lines.remove(&id)
+    }
+
+    /// Set the factory name. Validates that the name is not empty.
+    pub fn set_name(&mut self, name: String) -> Result<(), String> {
+        if name.trim().is_empty() {
+            return Err("Factory name cannot be empty".to_string());
+        }
+        self.name = name;
+        Ok(())
+    }
+
+    /// Set the factory description. Accepts None to clear.
+    pub fn set_description(&mut self, description: Option<String>) {
+        self.description = description;
+    }
+
+    /// Set the factory notes. Accepts None to clear.
+    pub fn set_notes(&mut self, notes: Option<String>) {
+        self.notes = notes;
+    }
+
     /// Add a raw input to this factory
     pub fn add_raw_input(&mut self, raw_input: RawInput) -> Result<(), String> {
         // Validate the raw input before adding

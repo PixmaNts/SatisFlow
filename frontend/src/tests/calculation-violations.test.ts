@@ -89,7 +89,6 @@ describe('Frontend Calculation Violations', () => {
       }
       return exists
     })
-    console.log(`Scanning ${scannedFiles.length} critical files:`, scannedFiles.map(f => path.basename(f)))
   })
 
   it('should scan all relevant frontend files', () => {

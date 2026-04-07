@@ -37,18 +37,15 @@ const handleSelectLogistics = (logistics: LogisticsResponse) => {
 const handleDeleteLogistics = (logistics: LogisticsResponse) => {
   // The list component already handles the deletion
   // Just refresh the list
-  console.log(`Deleted logistics line: ${logistics.id}`)
   refreshTrigger.value++
 }
 
 const handleLogisticsCreated = (logistics: LogisticsResponse) => {
-  console.log(`Created logistics line: ${logistics.id}`)
   showCreateModal.value = false
   refreshTrigger.value++
 }
 
 const handleLogisticsUpdated = (logistics: LogisticsResponse) => {
-  console.log(`Updated logistics line: ${logistics.id}`)
   showEditModal.value = false
   selectedLogistics.value = null
   refreshTrigger.value++

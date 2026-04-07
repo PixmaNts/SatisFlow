@@ -12,7 +12,7 @@ pub mod version;
 use models::{
     factory::Factory,
     logistics::{LogisticsFlux, TransportType},
-    production_line::{ProductionLine, ProductionLineBlueprint},
+    production_line::{EngineError, ProductionLine, ProductionLineBlueprint, ProductionLineRecipe},
     FactoryId, Item, LogisticsId, PowerStats, ProductionLineId,
 };
 
@@ -312,6 +312,74 @@ impl SatisflowEngine {
         Ok(())
     }
 
+    /// Update a blueprint template's name and description in-place.
+    pub fn update_blueprint_template(
+        &mut self,
+        id: ProductionLineId,
+        name: String,
+        description: String,
+    ) -> Result<(), EngineError> {
+        if name.trim().is_empty() {
+            return Err(EngineError::EmptyName);
+        }
+        let template = self
+            .blueprint_templates
+            .get_mut(&id)
+            .ok_or(EngineError::TemplateNotFound { id })?;
+        template.name = name;
+        template.description = if description.trim().is_empty() {
+            None
+        } else {
+            Some(description)
+        };
+        Ok(())
+    }
+
+    /// Update a child production line within a blueprint template.
+    pub fn update_blueprint_production_line(
+        &mut self,
+        template_id: ProductionLineId,
+        index: usize,
+        line: ProductionLineRecipe,
+    ) -> Result<(), EngineError> {
+        let template = self
+            .blueprint_templates
+            .get_mut(&template_id)
+            .ok_or(EngineError::TemplateNotFound { id: template_id })?;
+        template.update_production_line(index, line)
+    }
+
+    /// Replace all production lines in a blueprint template.
+    pub fn replace_blueprint_production_lines(
+        &mut self,
+        template_id: ProductionLineId,
+        lines: Vec<ProductionLineRecipe>,
+    ) -> Result<(), EngineError> {
+        let template = self
+            .blueprint_templates
+            .get_mut(&template_id)
+            .ok_or(EngineError::TemplateNotFound { id: template_id })?;
+        template.production_lines = lines;
+        Ok(())
+    }
+
+    /// Remove a child production line from a blueprint template.
+    pub fn remove_blueprint_production_line(
+        &mut self,
+        template_id: ProductionLineId,
+        index: usize,
+    ) -> Result<(), EngineError> {
+        let template = self
+            .blueprint_templates
+            .get_mut(&template_id)
+            .ok_or(EngineError::TemplateNotFound { id: template_id })?;
+        let length = template.production_lines.len();
+        if template.remove_production_line(index).is_none() {
+            return Err(EngineError::IndexOutOfBounds { index, length });
+        }
+        Ok(())
+    }
+
     /// Instantiate a blueprint template into a factory as a new production line.
     ///
     /// Creates an independent deep copy of the blueprint with new UUIDs assigned.
@@ -541,7 +609,9 @@ mod tests {
     use super::*;
     use crate::models::{
         logistics::{DroneTransport, TransportType, TruckTransport},
-        production_line::{ProductionLine, ProductionLineBlueprint, ProductionLineRecipe},
+        production_line::{
+            EngineError, ProductionLine, ProductionLineBlueprint, ProductionLineRecipe,
+        },
         Item, Recipe,
     };
     use uuid::Uuid;
@@ -1346,5 +1416,285 @@ mod tests {
             "Expected error about missing factory, got: {}",
             err_msg
         );
+    }
+
+    // =========================================================================
+    // Blueprint Template Update Tests
+    // =========================================================================
+
+    #[test]
+    fn test_blueprint_template_update() {
+        let mut engine = SatisflowEngine::new();
+
+        let blueprint = ProductionLineBlueprint::new(
+            Uuid::new_v4(),
+            "Original Name".to_string(),
+            Some("Original description".to_string()),
+        );
+        let blueprint_id = engine.add_blueprint_template(blueprint);
+
+        let result = engine.update_blueprint_template(
+            blueprint_id,
+            "Updated Name".to_string(),
+            "Updated description".to_string(),
+        );
+        assert!(result.is_ok());
+
+        let template = engine.get_blueprint_template(blueprint_id).unwrap();
+        assert_eq!(template.name, "Updated Name");
+        assert_eq!(
+            template.description.as_ref().unwrap(),
+            "Updated description"
+        );
+    }
+
+    #[test]
+    fn test_blueprint_template_update_preserves_id() {
+        let mut engine = SatisflowEngine::new();
+
+        let blueprint =
+            ProductionLineBlueprint::new(Uuid::new_v4(), "Original Name".to_string(), None);
+        let blueprint_id = engine.add_blueprint_template(blueprint);
+
+        engine
+            .update_blueprint_template(blueprint_id, "New Name".to_string(), "New desc".to_string())
+            .unwrap();
+
+        let template = engine.get_blueprint_template(blueprint_id).unwrap();
+        assert_eq!(template.id, blueprint_id);
+    }
+
+    #[test]
+    fn test_blueprint_template_update_empty_name() {
+        let mut engine = SatisflowEngine::new();
+
+        let blueprint =
+            ProductionLineBlueprint::new(Uuid::new_v4(), "Original Name".to_string(), None);
+        let blueprint_id = engine.add_blueprint_template(blueprint);
+
+        let result =
+            engine.update_blueprint_template(blueprint_id, "".to_string(), "desc".to_string());
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), EngineError::EmptyName);
+    }
+
+    #[test]
+    fn test_blueprint_template_update_whitespace_name() {
+        let mut engine = SatisflowEngine::new();
+
+        let blueprint =
+            ProductionLineBlueprint::new(Uuid::new_v4(), "Original Name".to_string(), None);
+        let blueprint_id = engine.add_blueprint_template(blueprint);
+
+        let result =
+            engine.update_blueprint_template(blueprint_id, "   ".to_string(), "desc".to_string());
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), EngineError::EmptyName);
+    }
+
+    #[test]
+    fn test_blueprint_template_update_not_found() {
+        let mut engine = SatisflowEngine::new();
+        let missing_id = Uuid::new_v4();
+
+        let result =
+            engine.update_blueprint_template(missing_id, "Name".to_string(), "desc".to_string());
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            EngineError::TemplateNotFound { id: missing_id }
+        );
+    }
+
+    #[test]
+    fn test_blueprint_production_line_update() {
+        let mut engine = SatisflowEngine::new();
+
+        let mut blueprint =
+            ProductionLineBlueprint::new(Uuid::new_v4(), "Test Blueprint".to_string(), None);
+
+        let line1 = ProductionLineRecipe::new(
+            Uuid::new_v4(),
+            "Line 1".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        let line2 = ProductionLineRecipe::new(
+            Uuid::new_v4(),
+            "Line 2".to_string(),
+            None,
+            Recipe::CopperIngot,
+        );
+        blueprint.add_production_line(line1);
+        blueprint.add_production_line(line2);
+
+        let blueprint_id = engine.add_blueprint_template(blueprint);
+
+        let new_line = ProductionLineRecipe::new(
+            Uuid::new_v4(),
+            "Updated Line 1".to_string(),
+            None,
+            Recipe::IronPlate,
+        );
+        let result = engine.update_blueprint_production_line(blueprint_id, 0, new_line);
+        assert!(result.is_ok());
+
+        let template = engine.get_blueprint_template(blueprint_id).unwrap();
+        assert_eq!(template.production_lines[0].name, "Updated Line 1");
+        assert_eq!(template.production_lines[1].name, "Line 2");
+    }
+
+    #[test]
+    fn test_blueprint_production_line_update_out_of_bounds() {
+        let mut engine = SatisflowEngine::new();
+
+        let mut blueprint =
+            ProductionLineBlueprint::new(Uuid::new_v4(), "Test Blueprint".to_string(), None);
+        let line = ProductionLineRecipe::new(
+            Uuid::new_v4(),
+            "Line 1".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        blueprint.add_production_line(line);
+
+        let blueprint_id = engine.add_blueprint_template(blueprint);
+
+        let new_line = ProductionLineRecipe::new(
+            Uuid::new_v4(),
+            "New Line".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        let result = engine.update_blueprint_production_line(blueprint_id, 10, new_line);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            EngineError::IndexOutOfBounds {
+                index: 10,
+                length: 1
+            }
+        );
+    }
+
+    #[test]
+    fn test_blueprint_production_line_remove() {
+        let mut engine = SatisflowEngine::new();
+
+        let mut blueprint =
+            ProductionLineBlueprint::new(Uuid::new_v4(), "Test Blueprint".to_string(), None);
+        let line1 = ProductionLineRecipe::new(
+            Uuid::new_v4(),
+            "Line 1".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        let line2 = ProductionLineRecipe::new(
+            Uuid::new_v4(),
+            "Line 2".to_string(),
+            None,
+            Recipe::CopperIngot,
+        );
+        blueprint.add_production_line(line1);
+        blueprint.add_production_line(line2);
+
+        let blueprint_id = engine.add_blueprint_template(blueprint);
+
+        let result = engine.remove_blueprint_production_line(blueprint_id, 0);
+        assert!(result.is_ok());
+
+        let template = engine.get_blueprint_template(blueprint_id).unwrap();
+        assert_eq!(template.production_lines.len(), 1);
+        assert_eq!(template.production_lines[0].name, "Line 2");
+    }
+
+    #[test]
+    fn test_blueprint_production_line_remove_out_of_bounds() {
+        let mut engine = SatisflowEngine::new();
+
+        let mut blueprint =
+            ProductionLineBlueprint::new(Uuid::new_v4(), "Test Blueprint".to_string(), None);
+        let line = ProductionLineRecipe::new(
+            Uuid::new_v4(),
+            "Line 1".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        blueprint.add_production_line(line);
+
+        let blueprint_id = engine.add_blueprint_template(blueprint);
+
+        let result = engine.remove_blueprint_production_line(blueprint_id, 5);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            EngineError::IndexOutOfBounds {
+                index: 5,
+                length: 1
+            }
+        );
+    }
+
+    #[test]
+    fn test_blueprint_production_line_remove_template_not_found() {
+        let mut engine = SatisflowEngine::new();
+        let missing_id = Uuid::new_v4();
+
+        let result = engine.remove_blueprint_production_line(missing_id, 0);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            EngineError::TemplateNotFound { id: missing_id }
+        );
+    }
+
+    #[test]
+    fn test_blueprint_child_mutations() {
+        let mut engine = SatisflowEngine::new();
+
+        let mut blueprint =
+            ProductionLineBlueprint::new(Uuid::new_v4(), "Test Blueprint".to_string(), None);
+        blueprint.add_production_line(ProductionLineRecipe::new(
+            Uuid::new_v4(),
+            "Line 1".to_string(),
+            None,
+            Recipe::IronIngot,
+        ));
+        blueprint.add_production_line(ProductionLineRecipe::new(
+            Uuid::new_v4(),
+            "Line 2".to_string(),
+            None,
+            Recipe::CopperIngot,
+        ));
+        blueprint.add_production_line(ProductionLineRecipe::new(
+            Uuid::new_v4(),
+            "Line 3".to_string(),
+            None,
+            Recipe::IronPlate,
+        ));
+
+        let blueprint_id = engine.add_blueprint_template(blueprint);
+
+        let updated_line = ProductionLineRecipe::new(
+            Uuid::new_v4(),
+            "Updated Line 2".to_string(),
+            None,
+            Recipe::CopperIngot,
+        );
+        engine
+            .update_blueprint_production_line(blueprint_id, 1, updated_line)
+            .unwrap();
+
+        let template = engine.get_blueprint_template(blueprint_id).unwrap();
+        assert_eq!(template.production_lines[1].name, "Updated Line 2");
+
+        engine
+            .remove_blueprint_production_line(blueprint_id, 0)
+            .unwrap();
+
+        let template = engine.get_blueprint_template(blueprint_id).unwrap();
+        assert_eq!(template.production_lines.len(), 2);
+        assert_eq!(template.production_lines[0].name, "Updated Line 2");
+        assert_eq!(template.production_lines[1].name, "Line 3");
     }
 }

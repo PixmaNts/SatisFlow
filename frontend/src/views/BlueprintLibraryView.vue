@@ -373,13 +373,17 @@ const onSelectFactory = async (factoryId: string) => {
   }
 };
 
-const onSaveTemplate = async (templateData: CreateBlueprintTemplateRequest) => {
+const onSaveTemplate = async (templateData: CreateBlueprintTemplateRequest & { id?: string }) => {
   try {
-    if (editingTemplate.value) {
-      // Update creates new version
-      const newTemplate = await blueprintTemplates.update(editingTemplate.value.id, templateData);
-      templates.value.push(newTemplate);
-      showSuccess(`Blueprint '${newTemplate.name}' updated (new version created)`);
+    if (templateData.id) {
+      // Update existing template in-place
+      const updatedTemplate = await blueprintTemplates.update(templateData.id, templateData);
+      // Replace the existing template in the list
+      const index = templates.value.findIndex(t => t.id === templateData.id);
+      if (index !== -1) {
+        templates.value[index] = updatedTemplate;
+      }
+      showSuccess(`Blueprint '${updatedTemplate.name}' updated successfully`);
     } else {
       // Create new template
       const newTemplate = await blueprintTemplates.create(templateData);

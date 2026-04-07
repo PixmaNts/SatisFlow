@@ -128,11 +128,7 @@ export function useFormDraft<T extends Record<string, unknown>>(
   // Restore draft on mount
   onMounted(() => {
     if (restoreOnMount) {
-      const restored = restoreDraft()
-      if (restored) {
-        // Optionally show a notification that draft was restored
-        console.log(`Draft restored for form: ${key}`)
-      }
+      restoreDraft()
     }
     startAutoSave()
   })

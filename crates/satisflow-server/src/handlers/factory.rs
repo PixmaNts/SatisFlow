@@ -592,23 +592,20 @@ pub async fn update_factory(
             .ok_or_else(|| AppError::NotFound(format!("Factory with id {} not found", id)))?;
 
         if let Some(name) = request.name {
-            if name.trim().is_empty() {
-                return Err(AppError::BadRequest(
-                    "Factory name cannot be empty".to_string(),
-                ));
-            }
-            factory.name = name;
+            factory
+                .set_name(name)
+                .map_err(AppError::BadRequest)?;
         }
 
         if let Some(description) = request.description {
-            factory.description = Some(description);
+            factory.set_description(Some(description));
         }
 
         if let Some(notes) = request.notes {
             if notes.trim().is_empty() {
-                factory.notes = None;
+                factory.set_notes(None);
             } else {
-                factory.notes = Some(notes);
+                factory.set_notes(Some(notes));
             }
         }
     }
@@ -667,22 +664,175 @@ pub async fn update_production_line(
 ) -> Result<Json<FactoryResponse>> {
     let mut engine = state.engine.write().await;
 
-    let production_line = build_production_line_from_payload(&payload, Some(line_id))?;
-
     {
         let factory = engine.get_factory_mut(factory_id).ok_or_else(|| {
             AppError::NotFound(format!("Factory with id {} not found", factory_id))
         })?;
 
-        if factory
+        // Get the existing production line
+        let existing_line = factory
             .production_lines
-            .insert(line_id, production_line)
-            .is_none()
-        {
-            return Err(AppError::NotFound(format!(
-                "Production line with id {} not found",
-                line_id
-            )));
+            .get_mut(&line_id)
+            .ok_or_else(|| {
+                AppError::NotFound(format!("Production line with id {} not found", line_id))
+            })?;
+
+        // Apply surgical mutations based on line type
+        match existing_line {
+            ProductionLine::ProductionLineRecipe(recipe_line) => {
+                // Update name and description
+                recipe_line.set_name(payload.name.clone());
+                recipe_line.set_description(payload.description.clone());
+
+                // Validate recipe if provided
+                if let Some(recipe_name) = &payload.recipe {
+                    let recipe = recipe_by_name(recipe_name)
+                        .ok_or_else(|| AppError::BadRequest(format!("Unknown recipe: {}", recipe_name)))?;
+                    // Note: We don't change the recipe as that would require rebuilding
+                    // all machine groups due to different machine types and somersloop limits
+                    if recipe != recipe_line.recipe {
+                        return Err(AppError::BadRequest(
+                            "Cannot change recipe on an existing production line".to_string()
+                        ));
+                    }
+                }
+
+                // Apply machine group mutations
+                let existing_count = recipe_line.machine_groups.len();
+                let new_count = payload.machine_groups.len();
+
+                // Update existing groups
+                for (index, group_payload) in payload.machine_groups.iter().enumerate().take(existing_count) {
+                    recipe_line
+                        .update_machine_group(
+                            index,
+                            group_payload.oc_value,
+                            group_payload.somersloop,
+                            group_payload.number_of_machine,
+                        )
+                        .map_err(|e| AppError::ValidationError(e.to_string()))?;
+                }
+
+                // Add new groups if payload has more
+                if new_count > existing_count {
+                    for group_payload in &payload.machine_groups[existing_count..] {
+                        let machine_group = EngineMachineGroup::new(
+                            group_payload.number_of_machine,
+                            group_payload.oc_value,
+                            group_payload.somersloop,
+                        );
+                        recipe_line
+                            .add_machine_group(machine_group)
+                            .map_err(|e| AppError::ValidationError(e.to_string()))?;
+                    }
+                }
+
+                // Remove excess groups if payload has fewer
+                if new_count < existing_count {
+                    for index in (new_count..existing_count).rev() {
+                        recipe_line.remove_machine_group(index);
+                    }
+                }
+            }
+            ProductionLine::ProductionLineBlueprint(blueprint) => {
+                // Update name and description
+                blueprint.name = payload.name.clone();
+                blueprint.description = payload.description.clone();
+
+                // For blueprints, we need to handle sub-lines
+                let existing_lines_count = blueprint.production_lines.len();
+                let new_lines_count = payload.production_lines.len();
+
+                // Update existing sub-lines
+                for (index, sub_payload) in payload.production_lines.iter().enumerate().take(existing_lines_count) {
+                    let sub_line = &mut blueprint.production_lines[index];
+
+                    // Update sub-line name and description
+                    sub_line.set_name(sub_payload.name.clone());
+                    sub_line.set_description(sub_payload.description.clone());
+
+                    // Validate recipe
+                    let recipe = recipe_by_name(&sub_payload.recipe)
+                        .ok_or_else(|| AppError::BadRequest(format!("Unknown recipe: {}", sub_payload.recipe)))?;
+                    if recipe != sub_line.recipe {
+                        return Err(AppError::BadRequest(
+                            "Cannot change recipe on an existing production line".to_string()
+                        ));
+                    }
+
+                    // Apply machine group mutations to sub-line
+                    let existing_groups_count = sub_line.machine_groups.len();
+                    let new_groups_count = sub_payload.machine_groups.len();
+
+                    // Update existing groups
+                    for (group_index, group_payload) in sub_payload.machine_groups.iter().enumerate().take(existing_groups_count) {
+                        sub_line
+                            .update_machine_group(
+                                group_index,
+                                group_payload.oc_value,
+                                group_payload.somersloop,
+                                group_payload.number_of_machine,
+                            )
+                            .map_err(|e| AppError::ValidationError(e.to_string()))?;
+                    }
+
+                    // Add new groups if payload has more
+                    if new_groups_count > existing_groups_count {
+                        for group_payload in &sub_payload.machine_groups[existing_groups_count..] {
+                            let machine_group = EngineMachineGroup::new(
+                                group_payload.number_of_machine,
+                                group_payload.oc_value,
+                                group_payload.somersloop,
+                            );
+                            sub_line
+                                .add_machine_group(machine_group)
+                                .map_err(|e| AppError::ValidationError(e.to_string()))?;
+                        }
+                    }
+
+                    // Remove excess groups if payload has fewer
+                    if new_groups_count < existing_groups_count {
+                        for group_index in (new_groups_count..existing_groups_count).rev() {
+                            sub_line.remove_machine_group(group_index);
+                        }
+                    }
+                }
+
+                // Add new sub-lines if payload has more
+                if new_lines_count > existing_lines_count {
+                    for sub_payload in &payload.production_lines[existing_lines_count..] {
+                        let recipe = recipe_by_name(&sub_payload.recipe)
+                            .ok_or_else(|| AppError::BadRequest(format!("Unknown recipe: {}", sub_payload.recipe)))?;
+
+                        let mut new_line = ProductionLineRecipe::new(
+                            Uuid::new_v4(),
+                            sub_payload.name.clone(),
+                            sub_payload.description.clone(),
+                            recipe,
+                        );
+
+                        for group_payload in &sub_payload.machine_groups {
+                            let machine_group = EngineMachineGroup::new(
+                                group_payload.number_of_machine,
+                                group_payload.oc_value,
+                                group_payload.somersloop,
+                            );
+                            new_line
+                                .add_machine_group(machine_group)
+                                .map_err(|e| AppError::ValidationError(e.to_string()))?;
+                        }
+
+                        blueprint.add_production_line(new_line);
+                    }
+                }
+
+                // Remove excess sub-lines if payload has fewer
+                if new_lines_count < existing_lines_count {
+                    for index in (new_lines_count..existing_lines_count).rev() {
+                        blueprint.remove_production_line(index);
+                    }
+                }
+            }
         }
     }
 

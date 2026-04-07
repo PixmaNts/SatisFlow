@@ -6,6 +6,14 @@
     @close="$emit('close')"
   >
     <div class="blueprint-form">
+      <!-- Edit Info Alert -->
+      <div v-if="template" class="info-alert">
+        <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="info-text">Editing this template will not affect factories already using it</span>
+      </div>
+
       <!-- Basic Info -->
       <div class="form-section">
         <h3 class="section-title">Blueprint Information</h3>
@@ -226,7 +234,7 @@
           :disabled="!isValid || loading"
           :loading="loading"
         >
-          {{ template ? 'Save as New Version' : 'Create Blueprint' }}
+          {{ template ? 'Save Changes' : 'Create Blueprint' }}
         </Button>
       </div>
     </template>
@@ -264,7 +272,7 @@ interface Props {
 
 interface Emits {
   (e: 'close'): void;
-  (e: 'save', data: CreateBlueprintTemplateRequest): void;
+  (e: 'save', data: CreateBlueprintTemplateRequest & { id?: string }): void;
 }
 
 const props = defineProps<Props>();
@@ -461,7 +469,7 @@ const onSave = async () => {
   errors.value = {};
 
   try {
-    const requestData: CreateBlueprintTemplateRequest = {
+    const requestData: CreateBlueprintTemplateRequest & { id?: string } = {
       name: formData.value.name,
       description: formData.value.description || undefined,
       production_lines: formData.value.production_lines.map(line => ({
@@ -472,6 +480,12 @@ const onSave = async () => {
         machine_groups: line.machine_groups,
       })),
     };
+
+    // Include ID when editing to update in-place
+    if (props.template) {
+      requestData.id = props.template.id;
+    }
+
     emit('save', requestData);
   } catch (err) {
     console.error('Failed to save blueprint:', err);
@@ -507,7 +521,7 @@ watch(() => props.show, (show) => {
     initializeForm();
     errors.value = {};
   }
-});
+}, { immediate: true });
 
 onMounted(() => {
   loadRecipes();
@@ -839,6 +853,28 @@ onMounted(() => {
   display: flex;
   gap: 0.75rem;
   justify-content: flex-end;
+}
+
+/* Info Alert */
+.info-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 0.5rem;
+  color: #93c5fd;
+}
+
+.info-icon {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.info-text {
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
 /* Responsive */

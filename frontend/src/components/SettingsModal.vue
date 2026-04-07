@@ -103,7 +103,7 @@
         <div class="setting-group">
           <button
             class="button button-danger"
-            @click="handleResetPreferences"
+            @click="showResetConfirm = true"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M3 12C3 12 5 5 12 5C19 5 21 12 21 12C21 12 19 19 12 19C5 19 3 12 3 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -133,12 +133,23 @@
       </div>
     </template>
   </Modal>
+
+  <ConfirmDialog
+    :show="showResetConfirm"
+    title="Reset Preferences"
+    message="Are you sure you want to reset all preferences to their default values? This action cannot be undone."
+    variant="danger"
+    confirm-text="Reset"
+    @confirm="confirmResetPreferences"
+    @cancel="showResetConfirm = false"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { usePreferencesStore } from '@/stores/preferences'
 import Modal from '@/components/ui/Modal.vue'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 
 // Props
 interface Props {
@@ -158,6 +169,7 @@ const preferencesStore = usePreferencesStore()
 // Refs
 const fileInput = ref<HTMLInputElement>()
 const lastSaved = ref<Date | null>(null)
+const showResetConfirm = ref(false)
 
 // Current values
 const currentLanguage = computed({
@@ -241,10 +253,13 @@ const handleFileImport = (event: Event) => {
 }
 
 const handleResetPreferences = () => {
-  if (confirm('Are you sure you want to reset all preferences to their default values? This action cannot be undone.')) {
-    preferencesStore.resetPreferences()
-    updateLastSaved()
-  }
+  showResetConfirm.value = true
+}
+
+const confirmResetPreferences = () => {
+  showResetConfirm.value = false
+  preferencesStore.resetPreferences()
+  updateLastSaved()
 }
 
 const updateLastSaved = () => {

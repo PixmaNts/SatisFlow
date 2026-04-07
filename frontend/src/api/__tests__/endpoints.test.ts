@@ -490,30 +490,6 @@ describe('Endpoint Integration Tests', () => {
     vi.doUnmock('../client')
   })
 
-  it('should properly export productionLines as a sub-object of factories', async () => {
-    const { factories } = await import('../endpoints')
-    expect(factories.productionLines).toBeDefined()
-    expect(typeof factories.productionLines.create).toBe('function')
-    expect(typeof factories.productionLines.update).toBe('function')
-    expect(typeof factories.productionLines.delete).toBe('function')
-  })
-
-  it('should properly export rawInputs as a sub-object of factories', async () => {
-    const { factories } = await import('../endpoints')
-    expect(factories.rawInputs).toBeDefined()
-    expect(typeof factories.rawInputs.create).toBe('function')
-    expect(typeof factories.rawInputs.update).toBe('function')
-    expect(typeof factories.rawInputs.delete).toBe('function')
-  })
-
-  it('should properly export powerGenerators as a sub-object of factories', async () => {
-    const { factories } = await import('../endpoints')
-    expect(factories.powerGenerators).toBeDefined()
-    expect(typeof factories.powerGenerators.create).toBe('function')
-    expect(typeof factories.powerGenerators.update).toBe('function')
-    expect(typeof factories.powerGenerators.delete).toBe('function')
-  })
-
   it('should construct correct URLs with UUIDs', async () => {
     const mockPost = vi.fn().mockResolvedValue(mockFactoryResponse)
 

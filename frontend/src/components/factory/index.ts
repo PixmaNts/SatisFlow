@@ -1,5 +1,6 @@
 // Factory components exports
 export { default as FactorySelector } from './FactorySelector.vue'
+export { default as FactoryEditModal } from './FactoryEditModal.vue'
 export { default as ProductionLineForm } from './ProductionLineForm.vue'
 export { default as ProductionLineList } from './ProductionLineList.vue'
 export { default as RawInputForm } from './RawInputForm.vue'

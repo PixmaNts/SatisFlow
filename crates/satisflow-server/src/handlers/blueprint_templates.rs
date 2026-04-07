@@ -248,44 +248,40 @@ pub async fn create_template(
 
 /// PUT /api/blueprints/templates/:id
 ///
-/// Update a template (creates new version with new ID)
+/// Update a template in-place (preserves the same ID)
 ///
 /// # Returns
 ///
-/// - `200 OK` with new template
-/// - `404 Not Found` if original template doesn't exist
+/// - `200 OK` with updated template
+/// - `404 Not Found` if template doesn't exist
 /// - `400 Bad Request` if validation fails
 pub async fn update_template(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(request): Json<CreateBlueprintTemplateRequest>,
 ) -> Result<Json<BlueprintTemplateResponse>, AppError> {
-    // Verify original exists
-    {
-        let engine = state.engine.read().await;
-        engine
-            .get_blueprint_template(id)
-            .ok_or_else(|| AppError::NotFound(format!("Blueprint template {} not found", id)))?;
+    // Validate name is not empty
+    if request.name.trim().is_empty() {
+        return Err(AppError::BadRequest(
+            "Blueprint name cannot be empty".to_string(),
+        ));
     }
 
-    // Create new template with new ID (versioning behavior)
-    let mut new_blueprint =
-        ProductionLineBlueprint::new(Uuid::new_v4(), request.name, request.description);
-
-    // Convert request production lines
-    for line_request in request.production_lines {
+    // Build new production lines for validation
+    let mut new_lines: Vec<ProductionLineRecipe> = Vec::new();
+    for line_request in &request.production_lines {
         let recipe = recipe_by_name(&line_request.recipe).ok_or_else(|| {
             AppError::BadRequest(format!("Invalid recipe: {}", line_request.recipe))
         })?;
 
         let mut line = ProductionLineRecipe::new(
             Uuid::new_v4(),
-            line_request.name,
-            line_request.description,
+            line_request.name.clone(),
+            line_request.description.clone(),
             recipe,
         );
 
-        for mg in line_request.machine_groups {
+        for mg in &line_request.machine_groups {
             line.add_machine_group(MachineGroup::new(
                 mg.number_of_machine,
                 mg.oc_value,
@@ -294,16 +290,47 @@ pub async fn update_template(
             .map_err(|e| AppError::BadRequest(e.to_string()))?;
         }
 
-        new_blueprint.add_production_line(line);
+        new_lines.push(line);
     }
 
-    validate_template(&new_blueprint)?;
+    // Validate machine groups on new lines
+    for line in &new_lines {
+        for group in &line.machine_groups {
+            if group.oc_value < 0.0 || group.oc_value > 250.0 {
+                return Err(AppError::BadRequest(format!(
+                    "Invalid overclock value {} in production line '{}'. Must be between 0 and 250",
+                    group.oc_value, line.name
+                )));
+            }
+            if group.number_of_machine == 0 {
+                return Err(AppError::BadRequest(format!(
+                    "Invalid machine count in production line '{}'. Must be greater than 0",
+                    line.name
+                )));
+            }
+        }
+    }
 
-    // Add new version to library
+    // Update in-place using engine methods
     let mut engine = state.engine.write().await;
-    engine.add_blueprint_template(new_blueprint.clone());
 
-    Ok(Json((&new_blueprint).into()))
+    // Update name/description
+    engine
+        .update_blueprint_template(id, request.name, request.description.unwrap_or_default())
+        .map_err(|e| AppError::NotFound(e.to_string()))?;
+
+    // Replace production lines
+    engine
+        .replace_blueprint_production_lines(id, new_lines)
+        .map_err(|e| AppError::NotFound(e.to_string()))?;
+
+    // Fetch the updated template for response
+    let updated = engine
+        .get_blueprint_template(id)
+        .ok_or_else(|| AppError::NotFound(format!("Blueprint template {} not found", id)))?
+        .clone();
+
+    Ok(Json((&updated).into()))
 }
 
 /// DELETE /api/blueprints/templates/:id

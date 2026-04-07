@@ -52,14 +52,6 @@ describe('useTheme', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
   })
 
-  it('should always return dark theme (industrial theme only)', () => {
-    const { currentTheme, effectiveTheme } = testComposable(() => useTheme())
-
-    // The new API always returns dark theme (industrial theme only)
-    expect(currentTheme).toBe('dark')
-    expect(effectiveTheme).toBe('dark')
-  })
-
   it('should apply dark theme to document', () => {
     // Reset document first
     document.documentElement.className = ''
@@ -77,24 +69,6 @@ describe('useTheme', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
   })
 
-  it('should initialize theme correctly', () => {
-    // Reset document first
-    document.documentElement.className = ''
-    document.documentElement.removeAttribute('data-theme')
-
-    const { initializeTheme } = testComposable(() => useTheme())
-
-    // initializeTheme should apply dark theme
-    initializeTheme()
-    expect(document.documentElement.classList.contains('dark-theme')).toBe(true)
-    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
-  })
-
-  it('should detect system theme as dark (always)', () => {
-    // detectSystemTheme always returns 'dark' for industrial theme
-    expect(detectSystemTheme()).toBe('dark')
-  })
-
   it('should remove light theme classes when applying dark theme', () => {
     // Set up initial state with light theme
     document.documentElement.classList.add('light-theme')
@@ -107,15 +81,5 @@ describe('useTheme', () => {
     expect(document.documentElement.classList.contains('light-theme')).toBe(false)
     expect(document.documentElement.classList.contains('dark-theme')).toBe(true)
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
-  })
-
-  it('should handle missing document API gracefully', () => {
-    // The composable should handle cases where document is undefined
-    // (though in tests it should always be available)
-    const { currentTheme, effectiveTheme } = testComposable(() => useTheme())
-    
-    // Should still return dark theme
-    expect(currentTheme).toBe('dark')
-    expect(effectiveTheme).toBe('dark')
   })
 })

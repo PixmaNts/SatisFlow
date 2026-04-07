@@ -21,7 +21,7 @@ describe('App', () => {
     setActivePinia(pinia)
   })
 
-  it('mounts renders properly', async () => {
+  it('renders navigation and main content area', async () => {
     const wrapper = mount(App, {
       global: {
         plugins: [createPinia(), router],
@@ -31,6 +31,21 @@ describe('App', () => {
     // Wait for router to be ready
     await router.isReady()
 
-    expect(wrapper.text()).toContain('Satisflow')
+    // Verify navigation bar exists with brand title
+    const nav = wrapper.find('nav.main-nav')
+    expect(nav.exists()).toBe(true)
+
+    // Verify brand title renders
+    const title = wrapper.find('h1.nav-title')
+    expect(title.exists()).toBe(true)
+    expect(title.text()).toBe('Satisflow')
+
+    // Verify navigation links exist
+    const navLinks = wrapper.findAll('router-link-stub, a.nav-link')
+    expect(navLinks.length).toBeGreaterThanOrEqual(3)
+
+    // Verify main content area with router-view exists
+    const mainContent = wrapper.find('main.main-content')
+    expect(mainContent.exists()).toBe(true)
   })
 })

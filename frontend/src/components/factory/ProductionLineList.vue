@@ -435,7 +435,6 @@ const handleExportBlueprint = async (lineId: string, lineName: string) => {
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
 
-    console.log('Blueprint exported successfully')
   } catch (err) {
     error.value = 'Failed to export blueprint'
     console.error('Failed to export blueprint:', err)
@@ -511,8 +510,6 @@ const handleConfirmImport = async (customName?: string) => {
     showBlueprintPreview.value = false
     blueprintMetadata.value = null
     blueprintJsonToImport.value = ''
-
-    console.log('Blueprint imported successfully')
   } catch (err) {
     error.value = 'Failed to import blueprint'
     console.error('Failed to import blueprint:', err)

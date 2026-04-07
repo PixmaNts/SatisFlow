@@ -184,6 +184,47 @@ const formData = ref<LogisticsFormData>({
   } as TruckConfig
 })
 
+// Reset form to initial state
+const resetForm = () => {
+  formData.value = {
+    from_factory: '',
+    to_factory: '',
+    transport_config: {
+      transport_type: 'Truck',
+      item: '' as Item,
+      quantity_per_min: 0,
+      truck_id: 'TRK-001'
+    } as TruckConfig
+  }
+  selectedTransportType.value = null
+  transportConfig.value = null
+}
+
+// Load logistics line into form for editing
+const loadLogisticsLine = () => {
+  if (!props.logisticsLine) return
+
+  const logistics = props.logisticsLine
+
+  // Set factory selections
+  formData.value.from_factory = logistics.from_factory
+  formData.value.to_factory = logistics.to_factory
+
+  // Set transport type
+  selectedTransportType.value = logistics.transport_type
+
+  // Parse transport details from JSON
+  try {
+    const details = JSON.parse(logistics.transport_details)
+    transportConfig.value = details as TransportConfig
+    formData.value.transport_config = details as TransportConfig
+  } catch (e) {
+    console.error('Failed to parse transport details:', e)
+    // Fallback: create empty config based on type
+    handleTransportTypeChange(logistics.transport_type)
+  }
+}
+
 // Computed properties
 const isEditing = computed(() => !!props.logisticsLine)
 const factories = computed(() => factoryStore.factories)
@@ -335,6 +376,22 @@ const convertToApiRequest = (formData: LogisticsFormData): CreateLogisticsReques
       }
   }
 }
+
+// Watch for logisticsLine changes to load data
+watch(() => props.logisticsLine, () => {
+  if (props.show) {
+    loadLogisticsLine()
+  }
+}, { immediate: true })
+
+// Watch for show changes to load/reset form
+watch(() => props.show, (show) => {
+  if (show) {
+    loadLogisticsLine()
+  } else {
+    resetForm()
+  }
+})
 
 const handleSubmit = async () => {
   if (!isFormValid.value) return

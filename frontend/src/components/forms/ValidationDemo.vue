@@ -155,7 +155,6 @@ const submissions = ref<Array<{
 
 // Event handlers
 const onFactorySubmit = (data: Record<string, unknown>) => {
-  console.log('Factory submitted:', data);
   submissions.value.unshift({
     type: 'Factory',
     data,
@@ -168,13 +167,11 @@ const onFactorySubmit = (data: Record<string, unknown>) => {
   }
 };
 
-const onFactoryValidationChange = (isValid: boolean, errors: Record<string, string[]>) => {
+const onFactoryValidationChange = (isValid: boolean, _errors: Record<string, string[]>) => {
   factoryFormValid.value = isValid;
-  console.log('Factory validation changed:', { isValid, errors });
 };
 
 const onProductionLineSubmit = (data: Record<string, unknown>) => {
-  console.log('Production line submitted:', data);
   submissions.value.unshift({
     type: 'Production Line',
     data,
@@ -187,9 +184,8 @@ const onProductionLineSubmit = (data: Record<string, unknown>) => {
   }
 };
 
-const onProductionLineValidationChange = (isValid: boolean, errors: Record<string, string[]>) => {
+const onProductionLineValidationChange = (isValid: boolean, _errors: Record<string, string[]>) => {
   productionLineFormValid.value = isValid;
-  console.log('Production line validation changed:', { isValid, errors });
 };
 </script>
 

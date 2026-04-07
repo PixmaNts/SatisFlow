@@ -254,17 +254,16 @@ const handleFilterChange = () => {
 
 const handleSortChange = ({ key, direction }: { key: string; direction: 'asc' | 'desc' }) => {
   // Sorting is handled by the DataTable component
-  console.log('Sort changed:', { key, direction })
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _sortInfo = { key, direction }
 }
 
 const handleSaved = () => {
   // Optionally refresh dashboard after save
-  console.log('Engine state saved successfully')
 }
 
 const handleLoaded = async () => {
   // Reset all stores to clear cached data (since we just loaded new state)
-  console.log('Engine state loaded successfully, clearing stores and refreshing dashboard...')
 
   // Reset all stores (except preferences - we want to keep user settings)
   dashboardStore.reset()
@@ -282,7 +281,6 @@ const handleLoaded = async () => {
 
 const handleReset = async () => {
   // Reset all stores to clear cached data
-  console.log('Engine state reset successfully, clearing stores and refreshing dashboard...')
 
   // Reset all stores (except preferences - we want to keep user settings)
   dashboardStore.reset()

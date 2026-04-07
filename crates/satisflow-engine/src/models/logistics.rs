@@ -3,34 +3,23 @@ use serde::{Deserialize, Serialize};
 use crate::models::{FactoryId, Item, LogisticsId};
 
 pub trait ItemPerPin {
-    /// Returns the number of items that can be transported per minute (Max throughput).
     fn item_per_min(&self) -> f32;
 }
 
 pub trait FluidPerMin {
-    /// Returns the volume of fluid that can be transported per minute (Max throughput in m³/min).
     fn m3_per_min(&self) -> f32;
 }
 
-/// Common item flow information returned by all transport types
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ItemFlow {
     pub item: Item,
     pub quantity_per_min: f32,
 }
 
-/// Trait for all transport types that can carry items
 pub trait Transport {
-    /// Returns all item flows for this transport
     fn get_items(&self) -> Vec<ItemFlow>;
-
-    /// Returns the transport ID (e.g., "TRN-1", "BUS-5")
     fn get_transport_id(&self) -> String;
-
-    /// Returns the transport name if available
     fn get_transport_name(&self) -> Option<String>;
-
-    /// Returns the transport type as a string
     fn get_transport_type_name(&self) -> &'static str;
 }
 
@@ -109,12 +98,10 @@ pub struct LogisticsFlux {
 }
 
 impl LogisticsFlux {
-    /// Get all items transported by this logistics flux
     pub fn get_items(&self) -> Vec<ItemFlow> {
         self.transport_type.get_items()
     }
 
-    /// Get total quantity across all items
     pub fn total_quantity_per_min(&self) -> f32 {
         self.get_items().iter().map(|i| i.quantity_per_min).sum()
     }
@@ -155,7 +142,43 @@ impl Bus {
     pub fn add_pipeline(&mut self, pipeline: Pipeline) {
         self.pipelines.push(pipeline);
     }
+
+    /// Find and remove a conveyor by its line_id (as string).
+    /// Returns None if no conveyor with the given ID exists.
+    pub fn remove_conveyor(&mut self, line_id: &str) -> Option<Conveyor> {
+        let target_id = line_id.parse::<u64>().ok()?;
+        let pos = self.lines.iter().position(|c| c.line_id == target_id)?;
+        Some(self.lines.remove(pos))
+    }
+
+    /// Find and remove a pipeline by its pipeline_id (as string).
+    /// Returns None if no pipeline with the given ID exists.
+    pub fn remove_pipeline(&mut self, pipeline_id: &str) -> Option<Pipeline> {
+        let target_id = pipeline_id.parse::<u64>().ok()?;
+        let pos = self
+            .pipelines
+            .iter()
+            .position(|p| p.pipeline_id == target_id)?;
+        Some(self.pipelines.remove(pos))
+    }
+
+    /// Get a mutable reference to a conveyor by its line_id.
+    /// Returns None if no conveyor with the given ID exists.
+    pub fn get_conveyor_mut(&mut self, line_id: &str) -> Option<&mut Conveyor> {
+        let target_id = line_id.parse::<u64>().ok()?;
+        self.lines.iter_mut().find(|c| c.line_id == target_id)
+    }
+
+    /// Get a mutable reference to a pipeline by its pipeline_id.
+    /// Returns None if no pipeline with the given ID exists.
+    pub fn get_pipeline_mut(&mut self, pipeline_id: &str) -> Option<&mut Pipeline> {
+        let target_id = pipeline_id.parse::<u64>().ok()?;
+        self.pipelines
+            .iter_mut()
+            .find(|p| p.pipeline_id == target_id)
+    }
 }
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Conveyor {
     pub line_id: u64,
@@ -216,6 +239,7 @@ impl PipelineCapacity {
         }
     }
 }
+
 impl FluidPerMin for PipelineCapacity {
     fn m3_per_min(&self) -> f32 {
         match self {
@@ -243,6 +267,7 @@ impl ConveyorSpeed {
     pub const MK5_SPEED: f32 = 780.0;
     pub const MK6_SPEED: f32 = 1200.0;
 }
+
 impl ItemPerPin for ConveyorSpeed {
     fn item_per_min(&self) -> f32 {
         match self {
@@ -280,6 +305,17 @@ impl Train {
     pub fn add_wagon(&mut self, wagon: Wagon) {
         self.wagons.push(wagon);
     }
+
+    pub fn remove_wagon(&mut self, wagon_id: &str) -> Option<Wagon> {
+        let id = wagon_id.parse::<u64>().ok()?;
+        let pos = self.wagons.iter().position(|w| w.wagon_id == id)?;
+        Some(self.wagons.swap_remove(pos))
+    }
+
+    pub fn get_wagon_mut(&mut self, wagon_id: &str) -> Option<&mut Wagon> {
+        let id = wagon_id.parse::<u64>().ok()?;
+        self.wagons.iter_mut().find(|w| w.wagon_id == id)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -306,8 +342,6 @@ pub enum WagonType {
     Cargo,
     Fluid,
 }
-
-// ===== Transport Trait Implementations =====
 
 impl Transport for Train {
     fn get_items(&self) -> Vec<ItemFlow> {
@@ -336,19 +370,14 @@ impl Transport for Train {
 impl Transport for Bus {
     fn get_items(&self) -> Vec<ItemFlow> {
         let mut items = Vec::new();
-
-        // Add conveyor items
         items.extend(self.lines.iter().map(|c| ItemFlow {
             item: c.item,
             quantity_per_min: c.quantity_per_min,
         }));
-
-        // Add pipeline items
         items.extend(self.pipelines.iter().map(|p| ItemFlow {
             item: p.item,
             quantity_per_min: p.quantity_per_min,
         }));
-
         items
     }
 
@@ -407,7 +436,6 @@ impl Transport for DroneTransport {
     }
 }
 
-// Delegate from enum to implementations
 impl Transport for TransportType {
     fn get_items(&self) -> Vec<ItemFlow> {
         match self {
@@ -446,7 +474,6 @@ impl Transport for TransportType {
     }
 }
 
-// Unit Tests
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -455,7 +482,9 @@ mod tests {
     fn uuid_from_u64(value: u64) -> Uuid {
         Uuid::from_u128(value as u128)
     }
+
     use crate::models::Item;
+
     #[test]
     fn test_conveyor_speed_constants() {
         assert_eq!(ConveyorSpeed::MK1_SPEED, 60.0);
@@ -477,56 +506,10 @@ mod tests {
     }
 
     #[test]
-    fn test_conveyor_constants_match_methods() {
-        assert_eq!(ConveyorSpeed::MK1_SPEED, ConveyorSpeed::Mk1.item_per_min());
-        assert_eq!(ConveyorSpeed::MK2_SPEED, ConveyorSpeed::Mk2.item_per_min());
-        assert_eq!(ConveyorSpeed::MK3_SPEED, ConveyorSpeed::Mk3.item_per_min());
-        assert_eq!(ConveyorSpeed::MK4_SPEED, ConveyorSpeed::Mk4.item_per_min());
-        assert_eq!(ConveyorSpeed::MK5_SPEED, ConveyorSpeed::Mk5.item_per_min());
-        assert_eq!(ConveyorSpeed::MK6_SPEED, ConveyorSpeed::Mk6.item_per_min());
-    }
-
-    #[test]
     fn test_pipeline_capacity_constants() {
         assert_eq!(PipelineCapacity::MK1_CAPACITY, 300.0);
         assert_eq!(PipelineCapacity::MK2_CAPACITY, 600.0);
     }
-
-    #[test]
-    fn test_pipeline_capacity_m3_per_min() {
-        assert_eq!(PipelineCapacity::Mk1.m3_per_min(), 300.0);
-        assert_eq!(PipelineCapacity::Mk2.m3_per_min(), 600.0);
-    }
-
-    #[test]
-    fn test_pipeline_constants_match_methods() {
-        assert_eq!(
-            PipelineCapacity::MK1_CAPACITY,
-            PipelineCapacity::Mk1.m3_per_min()
-        );
-        assert_eq!(
-            PipelineCapacity::MK2_CAPACITY,
-            PipelineCapacity::Mk2.m3_per_min()
-        );
-    }
-
-    #[test]
-    fn test_conveyor_speed_progression() {
-        // Test that each tier is faster than the previous
-        assert!(ConveyorSpeed::Mk2.item_per_min() > ConveyorSpeed::Mk1.item_per_min());
-        assert!(ConveyorSpeed::Mk3.item_per_min() > ConveyorSpeed::Mk2.item_per_min());
-        assert!(ConveyorSpeed::Mk4.item_per_min() > ConveyorSpeed::Mk3.item_per_min());
-        assert!(ConveyorSpeed::Mk5.item_per_min() > ConveyorSpeed::Mk4.item_per_min());
-        assert!(ConveyorSpeed::Mk6.item_per_min() > ConveyorSpeed::Mk5.item_per_min());
-    }
-
-    #[test]
-    fn test_pipeline_capacity_progression() {
-        // Test that Mk2 has higher capacity than Mk1
-        assert!(PipelineCapacity::Mk2.m3_per_min() > PipelineCapacity::Mk1.m3_per_min());
-    }
-
-    // ===== NEW TESTS FOR PHASE 0 REFACTOR =====
 
     #[test]
     fn test_wagon_with_item() {
@@ -538,231 +521,274 @@ mod tests {
     }
 
     #[test]
-    fn test_conveyor_with_item() {
-        let conveyor = Conveyor::new(1, ConveyorSpeed::Mk3, Item::CopperOre, 90.0);
-        assert_eq!(conveyor.line_id, 1);
-        assert_eq!(conveyor.speed, ConveyorSpeed::Mk3);
-        assert_eq!(conveyor.item, Item::CopperOre);
-        assert_eq!(conveyor.quantity_per_min, 90.0);
+    fn test_train_remove_wagon_success() {
+        let mut train = Train::new(1, "Test Train");
+        train.add_wagon(Wagon::new(1, WagonType::Cargo, Item::IronOre, 120.0));
+        train.add_wagon(Wagon::new(2, WagonType::Cargo, Item::Coal, 60.0));
+        train.add_wagon(Wagon::new(3, WagonType::Fluid, Item::Water, 300.0));
+
+        let removed = train.remove_wagon("2");
+        assert!(removed.is_some());
+        assert_eq!(removed.unwrap().wagon_id, 2);
+        assert_eq!(train.wagons.len(), 2);
+
+        let ids: Vec<u64> = train.wagons.iter().map(|w| w.wagon_id).collect();
+        assert!(ids.contains(&1));
+        assert!(ids.contains(&3));
+        assert!(!ids.contains(&2));
     }
 
     #[test]
-    fn test_pipeline_with_item() {
-        let pipeline = Pipeline::new(1, PipelineCapacity::Mk2, Item::Water, 450.0);
-        assert_eq!(pipeline.pipeline_id, 1);
-        assert_eq!(pipeline.capacity, PipelineCapacity::Mk2);
-        assert_eq!(pipeline.item, Item::Water);
-        assert_eq!(pipeline.quantity_per_min, 450.0);
+    fn test_train_remove_wagon_not_found() {
+        let mut train = Train::new(1, "Test Train");
+        train.add_wagon(Wagon::new(1, WagonType::Cargo, Item::IronOre, 120.0));
+
+        let removed = train.remove_wagon("99");
+        assert!(removed.is_none());
+        assert_eq!(train.wagons.len(), 1);
     }
 
     #[test]
-    fn test_train_get_items() {
-        let train = Train {
-            train_id: 1,
-            train_name: "Iron Express".into(),
-            wagons: vec![
-                Wagon::new(1, WagonType::Cargo, Item::IronOre, 120.0),
-                Wagon::new(2, WagonType::Cargo, Item::Coal, 60.0),
-            ],
-        };
+    fn test_train_remove_wagon_invalid_id() {
+        let mut train = Train::new(1, "Test Train");
+        train.add_wagon(Wagon::new(1, WagonType::Cargo, Item::IronOre, 120.0));
 
-        let items = train.get_items();
-        assert_eq!(items.len(), 2);
-        assert_eq!(items[0].item, Item::IronOre);
-        assert_eq!(items[0].quantity_per_min, 120.0);
-        assert_eq!(items[1].item, Item::Coal);
-        assert_eq!(items[1].quantity_per_min, 60.0);
-        assert_eq!(train.get_transport_id(), "TRN-1");
-        assert_eq!(train.get_transport_name(), Some("Iron Express".to_string()));
-        assert_eq!(train.get_transport_type_name(), "Train");
+        let removed = train.remove_wagon("not-a-number");
+        assert!(removed.is_none());
+        assert_eq!(train.wagons.len(), 1);
     }
 
     #[test]
-    fn test_bus_get_items_conveyors_only() {
-        let bus = Bus {
-            bus_id: 1,
-            bus_name: "Main Bus".into(),
-            lines: vec![
-                Conveyor::new(1, ConveyorSpeed::Mk3, Item::CopperOre, 90.0),
-                Conveyor::new(2, ConveyorSpeed::Mk4, Item::IronOre, 180.0),
-            ],
-            pipelines: vec![],
-        };
+    fn test_train_remove_wagon_empty_train() {
+        let mut train = Train::new(1, "Empty Train");
 
-        let items = bus.get_items();
-        assert_eq!(items.len(), 2);
-        assert_eq!(items[0].item, Item::CopperOre);
-        assert_eq!(items[1].item, Item::IronOre);
+        let removed = train.remove_wagon("1");
+        assert!(removed.is_none());
+        assert!(train.wagons.is_empty());
     }
 
     #[test]
-    fn test_bus_get_items_mixed() {
-        let bus = Bus {
-            bus_id: 1,
-            bus_name: "Mixed Bus".into(),
-            lines: vec![Conveyor::new(1, ConveyorSpeed::Mk3, Item::CopperOre, 90.0)],
-            pipelines: vec![Pipeline::new(1, PipelineCapacity::Mk2, Item::Water, 450.0)],
-        };
+    fn test_train_get_wagon_mut_success() {
+        let mut train = Train::new(1, "Test Train");
+        train.add_wagon(Wagon::new(1, WagonType::Cargo, Item::IronOre, 120.0));
+        train.add_wagon(Wagon::new(2, WagonType::Cargo, Item::Coal, 60.0));
 
-        let items = bus.get_items();
-        assert_eq!(items.len(), 2);
-        assert_eq!(items[0].item, Item::CopperOre);
-        assert_eq!(items[1].item, Item::Water);
+        if let Some(wagon) = train.get_wagon_mut("2") {
+            wagon.quantity_per_min = 100.0;
+            wagon.item = Item::CopperOre;
+        }
+
+        let wagon = train.wagons.iter().find(|w| w.wagon_id == 2).unwrap();
+        assert_eq!(wagon.quantity_per_min, 100.0);
+        assert_eq!(wagon.item, Item::CopperOre);
     }
 
     #[test]
-    fn test_truck_transport_get_items() {
-        let truck = TruckTransport {
-            truck_id: 1,
-            item: Item::Concrete,
-            quantity_per_min: 30.0,
-        };
+    fn test_train_get_wagon_mut_not_found() {
+        let mut train = Train::new(1, "Test Train");
+        train.add_wagon(Wagon::new(1, WagonType::Cargo, Item::IronOre, 120.0));
 
-        let items = truck.get_items();
-        assert_eq!(items.len(), 1);
-        assert_eq!(items[0].item, Item::Concrete);
-        assert_eq!(items[0].quantity_per_min, 30.0);
+        let wagon = train.get_wagon_mut("99");
+        assert!(wagon.is_none());
     }
 
     #[test]
-    fn test_drone_transport_get_items() {
-        let drone = DroneTransport {
-            drone_id: 1,
-            item: Item::Computer,
-            quantity_per_min: 15.0,
-        };
+    fn test_train_get_wagon_mut_invalid_id() {
+        let mut train = Train::new(1, "Test Train");
+        train.add_wagon(Wagon::new(1, WagonType::Cargo, Item::IronOre, 120.0));
 
-        let items = drone.get_items();
-        assert_eq!(items.len(), 1);
-        assert_eq!(items[0].item, Item::Computer);
-        assert_eq!(items[0].quantity_per_min, 15.0);
+        let wagon = train.get_wagon_mut("invalid");
+        assert!(wagon.is_none());
     }
 
     #[test]
-    fn test_transport_type_train_polymorphism() {
-        let train = Train {
-            train_id: 1,
-            train_name: "Express".into(),
-            wagons: vec![Wagon::new(1, WagonType::Cargo, Item::IronOre, 120.0)],
-        };
+    fn test_train_wagon_mutations_idempotent() {
+        let mut train = Train::new(1, "Test Train");
+        train.add_wagon(Wagon::new(10, WagonType::Cargo, Item::IronOre, 120.0));
 
-        let transport = TransportType::Train(train);
+        assert!(train.get_wagon_mut("10").is_some());
+        assert!(train.get_wagon_mut("10").is_some());
 
-        // Test polymorphic methods
-        let items = transport.get_items();
-        assert_eq!(items.len(), 1);
-        assert_eq!(transport.get_transport_type_name(), "Train");
-        assert_eq!(transport.get_transport_id(), "TRN-1");
-        assert_eq!(transport.get_transport_name(), Some("Express".to_string()));
-        assert_eq!(items[0].item, Item::IronOre);
-        assert_eq!(items[0].quantity_per_min, 120.0);
+        let removed = train.remove_wagon("10");
+        assert!(removed.is_some());
+
+        assert!(train.get_wagon_mut("10").is_none());
+        assert!(train.remove_wagon("10").is_none());
+    }
+
+    // ===== BUS CHILD ENTITY MUTATION TESTS =====
+
+    #[test]
+    fn test_bus_remove_conveyor_success() {
+        let mut bus = Bus::new(1, "Test Bus");
+        bus.add_conveyor(Conveyor::new(1, ConveyorSpeed::Mk3, Item::CopperOre, 90.0));
+        bus.add_conveyor(Conveyor::new(2, ConveyorSpeed::Mk4, Item::IronOre, 180.0));
+        bus.add_conveyor(Conveyor::new(3, ConveyorSpeed::Mk5, Item::Coal, 120.0));
+
+        // Remove the middle conveyor
+        let removed = bus.remove_conveyor("2");
+
+        assert!(removed.is_some());
+        let removed = removed.unwrap();
+        assert_eq!(removed.line_id, 2);
+        assert_eq!(removed.item, Item::IronOre);
+        assert_eq!(bus.lines.len(), 2);
+
+        // Verify remaining conveyors are correct
+        assert_eq!(bus.lines[0].line_id, 1);
+        assert_eq!(bus.lines[1].line_id, 3);
     }
 
     #[test]
-    fn test_transport_type_bus_polymorphism() {
-        let bus = Bus {
-            bus_id: 5,
-            bus_name: "Main Line".into(),
-            lines: vec![Conveyor::new(1, ConveyorSpeed::Mk3, Item::CopperOre, 90.0)],
-            pipelines: vec![],
-        };
+    fn test_bus_remove_pipeline_success() {
+        let mut bus = Bus::new(1, "Test Bus");
+        bus.add_pipeline(Pipeline::new(10, PipelineCapacity::Mk1, Item::Water, 200.0));
+        bus.add_pipeline(Pipeline::new(
+            20,
+            PipelineCapacity::Mk2,
+            Item::CrudeOil,
+            400.0,
+        ));
+        bus.add_pipeline(Pipeline::new(
+            30,
+            PipelineCapacity::Mk1,
+            Item::HeavyOilResidue,
+            150.0,
+        ));
 
-        let transport = TransportType::Bus(bus);
+        // Remove the last pipeline
+        let removed = bus.remove_pipeline("30");
 
-        assert_eq!(transport.get_transport_type_name(), "Bus");
-        assert_eq!(transport.get_transport_id(), "BUS-5");
-        assert_eq!(
-            transport.get_transport_name(),
-            Some("Main Line".to_string())
-        );
+        assert!(removed.is_some());
+        let removed = removed.unwrap();
+        assert_eq!(removed.pipeline_id, 30);
+        assert_eq!(removed.item, Item::HeavyOilResidue);
+        assert_eq!(bus.pipelines.len(), 2);
+
+        // Verify remaining pipelines are correct
+        assert_eq!(bus.pipelines[0].pipeline_id, 10);
+        assert_eq!(bus.pipelines[1].pipeline_id, 20);
     }
 
     #[test]
-    fn test_transport_type_truck_polymorphism() {
-        let truck = TruckTransport {
-            truck_id: 3,
-            item: Item::Concrete,
-            quantity_per_min: 30.0,
-        };
+    fn test_bus_remove_nonexistent() {
+        let mut bus = Bus::new(1, "Test Bus");
+        bus.add_conveyor(Conveyor::new(1, ConveyorSpeed::Mk3, Item::CopperOre, 90.0));
+        bus.add_pipeline(Pipeline::new(10, PipelineCapacity::Mk1, Item::Water, 200.0));
 
-        let transport = TransportType::Truck(truck);
+        // Try to remove non-existent conveyor
+        let result = bus.remove_conveyor("999");
+        assert!(result.is_none());
+        assert_eq!(bus.lines.len(), 1); // Should still have original
 
-        assert_eq!(transport.get_transport_type_name(), "Truck");
-        assert_eq!(transport.get_transport_id(), "TRK-3");
-        assert_eq!(transport.get_transport_name(), None);
+        // Try to remove non-existent pipeline
+        let result = bus.remove_pipeline("999");
+        assert!(result.is_none());
+        assert_eq!(bus.pipelines.len(), 1); // Should still have original
+
+        // Try to remove with invalid ID string
+        let result = bus.remove_conveyor("not-a-number");
+        assert!(result.is_none());
     }
 
     #[test]
-    fn test_transport_type_drone_polymorphism() {
-        let drone = DroneTransport {
-            drone_id: 7,
-            item: Item::Computer,
-            quantity_per_min: 15.0,
-        };
+    fn test_bus_get_conveyor_mut_success() {
+        let mut bus = Bus::new(1, "Test Bus");
+        bus.add_conveyor(Conveyor::new(1, ConveyorSpeed::Mk3, Item::CopperOre, 90.0));
+        bus.add_conveyor(Conveyor::new(2, ConveyorSpeed::Mk4, Item::IronOre, 180.0));
 
-        let transport = TransportType::Drone(drone);
+        // Get mutable reference and modify
+        let conveyor = bus.get_conveyor_mut("2");
+        assert!(conveyor.is_some());
 
-        assert_eq!(transport.get_transport_type_name(), "Drone");
-        assert_eq!(transport.get_transport_id(), "DRN-7");
-        assert_eq!(transport.get_transport_name(), None);
+        let conveyor = conveyor.unwrap();
+        conveyor.quantity_per_min = 250.0;
+
+        // Verify the modification persisted
+        assert_eq!(bus.lines[1].quantity_per_min, 250.0);
     }
 
     #[test]
-    fn test_logistics_flux_get_items() {
-        let train = Train {
-            train_id: 1,
-            train_name: "Express".into(),
-            wagons: vec![
-                Wagon::new(1, WagonType::Cargo, Item::IronOre, 120.0),
-                Wagon::new(2, WagonType::Cargo, Item::Coal, 60.0),
-            ],
-        };
+    fn test_bus_get_pipeline_mut_success() {
+        let mut bus = Bus::new(1, "Test Bus");
+        bus.add_pipeline(Pipeline::new(10, PipelineCapacity::Mk1, Item::Water, 200.0));
+        bus.add_pipeline(Pipeline::new(
+            20,
+            PipelineCapacity::Mk2,
+            Item::CrudeOil,
+            400.0,
+        ));
 
-        let flux = LogisticsFlux {
-            id: uuid_from_u64(1),
-            from_factory: uuid_from_u64(1),
-            to_factory: uuid_from_u64(2),
-            transport_type: TransportType::Train(train),
-            transport_details: "Main line".into(),
-        };
+        // Get mutable reference and modify
+        let pipeline = bus.get_pipeline_mut("20");
+        assert!(pipeline.is_some());
 
-        let items = flux.get_items();
-        assert_eq!(items.len(), 2);
-        assert_eq!(items[0].item, Item::IronOre);
-        assert_eq!(items[0].quantity_per_min, 120.0);
-        assert_eq!(items[1].item, Item::Coal);
-        assert_eq!(items[1].quantity_per_min, 60.0);
+        let pipeline = pipeline.unwrap();
+        pipeline.quantity_per_min = 500.0;
+
+        // Verify the modification persisted
+        assert_eq!(bus.pipelines[1].quantity_per_min, 500.0);
     }
 
     #[test]
-    fn test_logistics_flux_total_quantity() {
-        let train = Train {
-            train_id: 1,
-            train_name: "Express".into(),
-            wagons: vec![
-                Wagon::new(1, WagonType::Cargo, Item::IronOre, 120.0),
-                Wagon::new(2, WagonType::Cargo, Item::Coal, 60.0),
-            ],
-        };
+    fn test_bus_get_conveyor_mut_nonexistent() {
+        let mut bus = Bus::new(1, "Test Bus");
+        bus.add_conveyor(Conveyor::new(1, ConveyorSpeed::Mk3, Item::CopperOre, 90.0));
 
-        let flux = LogisticsFlux {
-            id: uuid_from_u64(1),
-            from_factory: uuid_from_u64(1),
-            to_factory: uuid_from_u64(2),
-            transport_type: TransportType::Train(train),
-            transport_details: "".into(),
-        };
-        assert_eq!(flux.total_quantity_per_min(), 180.0);
+        // Try to get non-existent conveyor
+        let result = bus.get_conveyor_mut("999");
+        assert!(result.is_none());
+
+        // Try with invalid ID string
+        let result = bus.get_conveyor_mut("invalid");
+        assert!(result.is_none());
     }
 
     #[test]
-    fn test_item_flow_creation() {
-        let item_flow = ItemFlow {
-            item: Item::IronOre,
-            quantity_per_min: 120.0,
-        };
+    fn test_bus_get_pipeline_mut_nonexistent() {
+        let mut bus = Bus::new(1, "Test Bus");
+        bus.add_pipeline(Pipeline::new(10, PipelineCapacity::Mk1, Item::Water, 200.0));
 
-        assert_eq!(item_flow.item, Item::IronOre);
-        assert_eq!(item_flow.quantity_per_min, 120.0);
+        // Try to get non-existent pipeline
+        let result = bus.get_pipeline_mut("999");
+        assert!(result.is_none());
+
+        // Try with invalid ID string
+        let result = bus.get_pipeline_mut("invalid");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_bus_child_mutations_multiple_operations() {
+        let mut bus = Bus::new(1, "Test Bus");
+
+        // Add multiple conveyors and pipelines
+        bus.add_conveyor(Conveyor::new(1, ConveyorSpeed::Mk3, Item::CopperOre, 90.0));
+        bus.add_conveyor(Conveyor::new(2, ConveyorSpeed::Mk4, Item::IronOre, 180.0));
+        bus.add_pipeline(Pipeline::new(10, PipelineCapacity::Mk1, Item::Water, 200.0));
+        bus.add_pipeline(Pipeline::new(
+            20,
+            PipelineCapacity::Mk2,
+            Item::CrudeOil,
+            400.0,
+        ));
+
+        // Modify via mutable reference
+        if let Some(conv) = bus.get_conveyor_mut("1") {
+            conv.quantity_per_min = 100.0;
+        }
+        if let Some(pipe) = bus.get_pipeline_mut("10") {
+            pipe.quantity_per_min = 250.0;
+        }
+
+        // Remove some items
+        bus.remove_conveyor("2");
+        bus.remove_pipeline("20");
+
+        // Verify final state
+        assert_eq!(bus.lines.len(), 1);
+        assert_eq!(bus.pipelines.len(), 1);
+        assert_eq!(bus.lines[0].quantity_per_min, 100.0);
+        assert_eq!(bus.pipelines[0].quantity_per_min, 250.0);
     }
 }

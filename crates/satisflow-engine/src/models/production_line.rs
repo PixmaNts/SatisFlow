@@ -4,6 +4,36 @@ use serde::{Deserialize, Serialize};
 
 use crate::models::{recipe_info, Item, ProductionLineId, Recipe};
 
+/// Error type for ProductionLineBlueprint and SatisflowEngine operations
+#[derive(Debug, Clone, PartialEq)]
+pub enum EngineError {
+    IndexOutOfBounds { index: usize, length: usize },
+    TemplateNotFound { id: ProductionLineId },
+    EmptyName,
+}
+
+impl std::fmt::Display for EngineError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EngineError::IndexOutOfBounds { index, length } => {
+                write!(
+                    f,
+                    "Index {} out of bounds for production line with {} elements",
+                    index, length
+                )
+            }
+            EngineError::TemplateNotFound { id } => {
+                write!(f, "Blueprint template with id {} not found", id)
+            }
+            EngineError::EmptyName => {
+                write!(f, "Name cannot be empty")
+            }
+        }
+    }
+}
+
+impl std::error::Error for EngineError {}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ProductionLine {
     ProductionLineRecipe(ProductionLineRecipe),
@@ -193,6 +223,73 @@ impl ProductionLineRecipe {
         }
         total_power
     }
+
+    /// Get a machine group by index
+    pub fn get_machine_group(&self, index: usize) -> Option<&MachineGroup> {
+        self.machine_groups.get(index)
+    }
+
+    /// Remove a machine group at the given index
+    /// Returns the removed machine group if successful
+    pub fn remove_machine_group(&mut self, index: usize) -> Option<MachineGroup> {
+        if index < self.machine_groups.len() {
+            Some(self.machine_groups.remove(index))
+        } else {
+            None
+        }
+    }
+
+    /// Update a machine group at the given index with new values
+    /// Returns an error if the index is out of bounds or if any value is invalid
+    pub fn update_machine_group(
+        &mut self,
+        index: usize,
+        oc: f32,
+        somersloop: u8,
+        count: u32,
+    ) -> Result<(), MachineGroupError> {
+        if index >= self.machine_groups.len() {
+            return Err(MachineGroupError::IndexOutOfBounds {
+                index,
+                length: self.machine_groups.len(),
+            });
+        }
+
+        // Validate all values before making any changes
+        if !(0.0..=250.0).contains(&oc) {
+            return Err(MachineGroupError::InvalidOverclockValue { oc_value: oc });
+        }
+
+        let max_somersloop = recipe_info(self.recipe).machine.max_somersloop();
+        if somersloop > max_somersloop {
+            return Err(MachineGroupError::InvalidSomersloopCount {
+                somersloop,
+                max_somersloop,
+            });
+        }
+
+        if count == 0 {
+            return Err(MachineGroupError::InvalidMachineCount { count });
+        }
+
+        // All validation passed, update the machine group
+        let group = &mut self.machine_groups[index];
+        group.oc_value = oc;
+        group.somersloop = somersloop;
+        group.number_of_machine = count;
+
+        Ok(())
+    }
+
+    /// Set the name of the production line
+    pub fn set_name(&mut self, name: String) {
+        self.name = name;
+    }
+
+    /// Set the description of the production line
+    pub fn set_description(&mut self, description: Option<String>) {
+        self.description = description;
+    }
 }
 
 impl ProductionLineBlueprint {
@@ -207,6 +304,48 @@ impl ProductionLineBlueprint {
 
     pub fn add_production_line(&mut self, line: ProductionLineRecipe) {
         self.production_lines.push(line);
+    }
+
+    /// Remove a production line at the given index.
+    /// Returns the removed line if successful, or None if index is out of bounds.
+    pub fn remove_production_line(&mut self, index: usize) -> Option<ProductionLineRecipe> {
+        if index < self.production_lines.len() {
+            Some(self.production_lines.remove(index))
+        } else {
+            None
+        }
+    }
+
+    /// Update a production line at the given index.
+    /// Returns Ok(()) if successful, or EngineError if index is out of bounds.
+    pub fn update_production_line(
+        &mut self,
+        index: usize,
+        line: ProductionLineRecipe,
+    ) -> Result<(), EngineError> {
+        if index >= self.production_lines.len() {
+            return Err(EngineError::IndexOutOfBounds {
+                index,
+                length: self.production_lines.len(),
+            });
+        }
+        self.production_lines[index] = line;
+        Ok(())
+    }
+
+    /// Get a production line at the given index.
+    pub fn get_production_line(&self, index: usize) -> Option<&ProductionLineRecipe> {
+        self.production_lines.get(index)
+    }
+
+    /// Set the blueprint name.
+    pub fn set_name(&mut self, name: String) {
+        self.name = name;
+    }
+
+    /// Set the blueprint description.
+    pub fn set_description(&mut self, description: Option<String>) {
+        self.description = description;
     }
 
     fn id(&self) -> ProductionLineId {
@@ -267,6 +406,55 @@ impl ProductionLineBlueprint {
     }
 }
 
+/// Errors that can occur when working with machine groups
+#[derive(Debug, Clone, PartialEq)]
+pub enum MachineGroupError {
+    InvalidOverclockValue { oc_value: f32 },
+    InvalidMachineCount { count: u32 },
+    InvalidSomersloopCount { somersloop: u8, max_somersloop: u8 },
+    IndexOutOfBounds { index: usize, length: usize },
+}
+
+impl std::fmt::Display for MachineGroupError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MachineGroupError::InvalidOverclockValue { oc_value } => {
+                write!(
+                    f,
+                    "Overclock value {} is invalid. Must be between 0.000 and 250.000",
+                    oc_value
+                )
+            }
+            MachineGroupError::InvalidMachineCount { count } => {
+                write!(
+                    f,
+                    "Machine count {} is invalid. Must be greater than 0",
+                    count
+                )
+            }
+            MachineGroupError::InvalidSomersloopCount {
+                somersloop,
+                max_somersloop,
+            } => {
+                write!(
+                    f,
+                    "Somersloop count {} is invalid. Must be between 0 and {}",
+                    somersloop, max_somersloop
+                )
+            }
+            MachineGroupError::IndexOutOfBounds { index, length } => {
+                write!(
+                    f,
+                    "Index {} is out of bounds for machine groups of length {}",
+                    index, length
+                )
+            }
+        }
+    }
+}
+
+impl std::error::Error for MachineGroupError {}
+
 impl MachineGroup {
     pub fn new(number_of_machines: u32, overclock: f32, somersloop_per_machine: u8) -> Self {
         Self {
@@ -274,6 +462,32 @@ impl MachineGroup {
             oc_value: overclock,
             somersloop: somersloop_per_machine,
         }
+    }
+
+    /// Set the overclock value for this machine group
+    pub fn set_oc_value(&mut self, oc: f32) -> Result<(), MachineGroupError> {
+        if !(0.0..=250.0).contains(&oc) {
+            return Err(MachineGroupError::InvalidOverclockValue { oc_value: oc });
+        }
+        self.oc_value = oc;
+        Ok(())
+    }
+
+    /// Set the somersloop count per machine
+    /// Note: Does not validate against max_somersloop - validation should be done
+    /// by the caller (ProductionLineRecipe::update_machine_group) when recipe context is available
+    pub fn set_somersloop(&mut self, s: u8) -> Result<(), MachineGroupError> {
+        self.somersloop = s;
+        Ok(())
+    }
+
+    /// Set the number of machines in this group
+    pub fn set_number_of_machines(&mut self, n: u32) -> Result<(), MachineGroupError> {
+        if n == 0 {
+            return Err(MachineGroupError::InvalidMachineCount { count: n });
+        }
+        self.number_of_machine = n;
+        Ok(())
     }
 }
 
@@ -510,5 +724,282 @@ mod tests {
         let total_power = production_line.total_power_consumption();
         // 4.0 * (250/100)^1.321928 = 4.0 * 2.5^1.321928 ≈ 4.0 * 3.36 = 13.44
         assert!((total_power - 13.44).abs() < 0.1);
+    }
+
+    // ============== MachineGroup Mutation Tests ==============
+
+    #[test]
+    fn test_machine_group_set_oc_value_valid() {
+        let mut group = MachineGroup::new(4, 100.0, 0);
+        group.set_oc_value(150.0).expect("Should set OC value");
+        assert_eq!(group.oc_value, 150.0);
+    }
+
+    #[test]
+    fn test_machine_group_set_oc_value_min() {
+        let mut group = MachineGroup::new(4, 100.0, 0);
+        group.set_oc_value(0.0).expect("Should set OC value to min");
+        assert_eq!(group.oc_value, 0.0);
+    }
+
+    #[test]
+    fn test_machine_group_set_oc_value_max() {
+        let mut group = MachineGroup::new(4, 100.0, 0);
+        group
+            .set_oc_value(250.0)
+            .expect("Should set OC value to max");
+        assert_eq!(group.oc_value, 250.0);
+    }
+
+    #[test]
+    fn test_machine_group_set_oc_value_invalid_negative() {
+        let mut group = MachineGroup::new(4, 100.0, 0);
+        let result = group.set_oc_value(-0.001);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            MachineGroupError::InvalidOverclockValue { oc_value: -0.001 }
+        );
+    }
+
+    #[test]
+    fn test_machine_group_set_oc_value_invalid_over_max() {
+        let mut group = MachineGroup::new(4, 100.0, 0);
+        let result = group.set_oc_value(250.001);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            MachineGroupError::InvalidOverclockValue { oc_value: 250.001 }
+        );
+    }
+
+    #[test]
+    fn test_machine_group_set_number_of_machines_valid() {
+        let mut group = MachineGroup::new(4, 100.0, 0);
+        group
+            .set_number_of_machines(10)
+            .expect("Should set machine count");
+        assert_eq!(group.number_of_machine, 10);
+    }
+
+    #[test]
+    fn test_machine_group_set_number_of_machines_invalid_zero() {
+        let mut group = MachineGroup::new(4, 100.0, 0);
+        let result = group.set_number_of_machines(0);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            MachineGroupError::InvalidMachineCount { count: 0 }
+        );
+    }
+
+    #[test]
+    fn test_machine_group_set_somersloop_valid() {
+        let mut group = MachineGroup::new(4, 100.0, 0);
+        group.set_somersloop(2).expect("Should set somersloop");
+        assert_eq!(group.somersloop, 2);
+    }
+
+    // ============== ProductionLineRecipe Mutation Tests ==============
+
+    #[test]
+    fn test_get_machine_group() {
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        production_line
+            .add_machine_group(MachineGroup::new(4, 100.0, 0))
+            .expect("Invalid group");
+        production_line
+            .add_machine_group(MachineGroup::new(2, 150.0, 1))
+            .expect("Invalid group");
+
+        let group0 = production_line.get_machine_group(0);
+        assert!(group0.is_some());
+        assert_eq!(group0.unwrap().number_of_machine, 4);
+
+        let group1 = production_line.get_machine_group(1);
+        assert!(group1.is_some());
+        assert_eq!(group1.unwrap().number_of_machine, 2);
+
+        let group2 = production_line.get_machine_group(2);
+        assert!(group2.is_none());
+    }
+
+    #[test]
+    fn test_remove_machine_group() {
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        production_line
+            .add_machine_group(MachineGroup::new(4, 100.0, 0))
+            .expect("Invalid group");
+        production_line
+            .add_machine_group(MachineGroup::new(2, 150.0, 1))
+            .expect("Invalid group");
+
+        assert_eq!(production_line.machine_groups.len(), 2);
+
+        let removed = production_line.remove_machine_group(0);
+        assert!(removed.is_some());
+        assert_eq!(removed.unwrap().number_of_machine, 4);
+        assert_eq!(production_line.machine_groups.len(), 1);
+        assert_eq!(production_line.machine_groups[0].number_of_machine, 2);
+
+        // Remove out of bounds
+        let removed = production_line.remove_machine_group(5);
+        assert!(removed.is_none());
+    }
+
+    #[test]
+    fn test_update_machine_group_valid() {
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        production_line
+            .add_machine_group(MachineGroup::new(4, 100.0, 0))
+            .expect("Invalid group");
+
+        production_line
+            .update_machine_group(0, 150.0, 1, 8)
+            .expect("Should update machine group");
+
+        let group = &production_line.machine_groups[0];
+        assert_eq!(group.oc_value, 150.0);
+        assert_eq!(group.somersloop, 1);
+        assert_eq!(group.number_of_machine, 8);
+    }
+
+    #[test]
+    fn test_update_machine_group_invalid_oc() {
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        production_line
+            .add_machine_group(MachineGroup::new(4, 100.0, 0))
+            .expect("Invalid group");
+
+        let result = production_line.update_machine_group(0, 300.0, 0, 4);
+        assert!(result.is_err());
+        // Original group should be unchanged
+        assert_eq!(production_line.machine_groups[0].oc_value, 100.0);
+    }
+
+    #[test]
+    fn test_update_machine_group_invalid_somersloop() {
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        production_line
+            .add_machine_group(MachineGroup::new(4, 100.0, 0))
+            .expect("Invalid group");
+
+        // IronIngot machine (Constructor) has max_somersloop of 1
+        let result = production_line.update_machine_group(0, 100.0, 2, 4);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            MachineGroupError::InvalidSomersloopCount {
+                somersloop: 2,
+                max_somersloop: 1
+            }
+        );
+    }
+
+    #[test]
+    fn test_update_machine_group_invalid_count() {
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        production_line
+            .add_machine_group(MachineGroup::new(4, 100.0, 0))
+            .expect("Invalid group");
+
+        let result = production_line.update_machine_group(0, 100.0, 0, 0);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            MachineGroupError::InvalidMachineCount { count: 0 }
+        );
+    }
+
+    #[test]
+    fn test_update_machine_group_index_out_of_bounds() {
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        production_line
+            .add_machine_group(MachineGroup::new(4, 100.0, 0))
+            .expect("Invalid group");
+
+        let result = production_line.update_machine_group(5, 100.0, 0, 4);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            MachineGroupError::IndexOutOfBounds {
+                index: 5,
+                length: 1
+            }
+        );
+    }
+
+    #[test]
+    fn test_set_name() {
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Original".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        production_line.set_name("New Name".to_string());
+        assert_eq!(production_line.name, "New Name");
+    }
+
+    #[test]
+    fn test_set_description_some() {
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test".to_string(),
+            None,
+            Recipe::IronIngot,
+        );
+        production_line.set_description(Some("A description".to_string()));
+        assert_eq!(
+            production_line.description,
+            Some("A description".to_string())
+        );
+    }
+
+    #[test]
+    fn test_set_description_none() {
+        let mut production_line = ProductionLineRecipe::new(
+            uuid_from_u64(1),
+            "Test".to_string(),
+            Some("Has description".to_string()),
+            Recipe::IronIngot,
+        );
+        production_line.set_description(None);
+        assert!(production_line.description.is_none());
     }
 }
