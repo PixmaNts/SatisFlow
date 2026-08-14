@@ -50,3 +50,7 @@ lerna-debug.log*
 
 # Project-specific
 /satisflow-engine-old/
+
+# Agent tooling state (oh-my-openagent / Sisyphus)
+.omo/
+.sisyphus/
