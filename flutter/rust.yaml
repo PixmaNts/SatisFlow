@@ -1,0 +1,5 @@
+rust_input:
+  - ../crates/satisflow-bridge/src/lib.rs
+dart_output:
+  - lib/src/rust/
+rust_crate_name: satisflow_bridge
