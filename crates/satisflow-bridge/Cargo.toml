@@ -1,0 +1,11 @@
+[package]
+name = "satisflow-bridge"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+flutter_rust_bridge = "2"
+satisflow-engine = { path = "../satisflow-engine" }
+
+[lib]
+crate-type = ["cdylib"]

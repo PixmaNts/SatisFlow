@@ -1,10 +1,10 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/satisflow-engine", "crates/satisflow-server",
+    "crates/satisflow-engine", "crates/satisflow-server", "crates/satisflow-bridge",
 ]
 default-members = [
-    "crates/satisflow-engine", "crates/satisflow-server",
+    "crates/satisflow-engine", "crates/satisflow-server", "crates/satisflow-bridge",
 ]
 
 [workspace.dependencies]
