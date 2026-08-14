@@ -5,7 +5,9 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+pub mod errors;
 pub mod examples;
+pub mod ffi;
 pub mod models;
 pub mod version;
 
@@ -16,6 +18,7 @@ use models::{
     FactoryId, Item, LogisticsId, PowerStats, ProductionLineId,
 };
 
+pub use errors::SatisflowError;
 pub use version::{SaveVersion, VersionError};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -77,7 +80,7 @@ impl SatisflowEngine {
         to: FactoryId,
         transport_type: TransportType,
         transport_detail: String,
-    ) -> Result<LogisticsId, Box<dyn std::error::Error>> {
+    ) -> Result<LogisticsId, SatisflowError> {
         let id = Uuid::new_v4();
         let line = LogisticsFlux {
             id,
@@ -89,10 +92,12 @@ impl SatisflowEngine {
 
         //check that from and to factories exist
         if !self.factories.contains_key(&from) {
-            return Err(format!("Factory with id {} does not exist", from).into());
+            return Err(SatisflowError::FactoryNotFound {
+                id: from.to_string(),
+            });
         }
         if !self.factories.contains_key(&to) {
-            return Err(format!("Factory with id {} does not exist", to).into());
+            return Err(SatisflowError::FactoryNotFound { id: to.to_string() });
         }
 
         self.logistics_lines.insert(id, line);
@@ -106,18 +111,20 @@ impl SatisflowEngine {
         to: FactoryId,
         transport_type: TransportType,
         transport_detail: String,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), SatisflowError> {
         if !self.factories.contains_key(&from) {
-            return Err(format!("Factory with id {} does not exist", from).into());
+            return Err(SatisflowError::FactoryNotFound {
+                id: from.to_string(),
+            });
         }
         if !self.factories.contains_key(&to) {
-            return Err(format!("Factory with id {} does not exist", to).into());
+            return Err(SatisflowError::FactoryNotFound { id: to.to_string() });
         }
 
         let logistics = self
             .logistics_lines
             .get_mut(&id)
-            .ok_or_else(|| format!("Logistics line with id {} not found", id))?;
+            .ok_or_else(|| SatisflowError::LogisticsNotFound { id: id.to_string() })?;
 
         logistics.from_factory = from;
         logistics.to_factory = to;
@@ -190,10 +197,10 @@ impl SatisflowEngine {
     }
 
     /// Delete a factory and its connected logistics lines
-    pub fn delete_factory(&mut self, id: FactoryId) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn delete_factory(&mut self, id: FactoryId) -> Result<(), SatisflowError> {
         // Check if factory exists
         if !self.factories.contains_key(&id) {
-            return Err(format!("Factory with id {} does not exist", id).into());
+            return Err(SatisflowError::FactoryNotFound { id: id.to_string() });
         }
 
         // Remove all logistics lines connected to this factory
@@ -201,24 +208,23 @@ impl SatisflowEngine {
             .retain(|_, logistics| logistics.from_factory != id && logistics.to_factory != id);
 
         // Remove the factory
-        self.factories.remove(&id).ok_or("Factory not found")?;
+        self.factories
+            .remove(&id)
+            .ok_or(SatisflowError::FactoryNotFound { id: id.to_string() })?;
 
         Ok(())
     }
 
     /// Delete a logistics line
-    pub fn delete_logistics_line(
-        &mut self,
-        id: LogisticsId,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn delete_logistics_line(&mut self, id: LogisticsId) -> Result<(), SatisflowError> {
         // Check if logistics line exists
         if !self.logistics_lines.contains_key(&id) {
-            return Err(format!("Logistics line with id {} does not exist", id).into());
+            return Err(SatisflowError::LogisticsNotFound { id: id.to_string() });
         }
 
         self.logistics_lines
             .remove(&id)
-            .ok_or("Logistics line not found")?;
+            .ok_or(SatisflowError::LogisticsNotFound { id: id.to_string() })?;
 
         Ok(())
     }
@@ -241,7 +247,7 @@ impl SatisflowEngine {
     /// engine.reset().unwrap();
     /// assert_eq!(engine.get_all_factories().len(), 0);
     /// ```
-    pub fn reset(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn reset(&mut self) -> Result<(), SatisflowError> {
         self.factories.clear();
         self.logistics_lines.clear();
         self.blueprint_templates.clear();
@@ -304,9 +310,9 @@ impl SatisflowEngine {
     pub fn remove_blueprint_template(
         &mut self,
         id: ProductionLineId,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), SatisflowError> {
         if !self.blueprint_templates.contains_key(&id) {
-            return Err(format!("Blueprint template with id {} does not exist", id).into());
+            return Err(SatisflowError::BlueprintNotFound { id: id.to_string() });
         }
         self.blueprint_templates.remove(&id);
         Ok(())
@@ -398,22 +404,28 @@ impl SatisflowEngine {
         factory_id: FactoryId,
         blueprint_id: ProductionLineId,
         custom_name: Option<String>,
-    ) -> Result<(ProductionLineId, String), Box<dyn std::error::Error>> {
+    ) -> Result<(ProductionLineId, String), SatisflowError> {
         // Get the blueprint template
         let blueprint = self
             .get_blueprint_template(blueprint_id)
-            .ok_or_else(|| format!("Blueprint template {} not found", blueprint_id))?
+            .ok_or_else(|| SatisflowError::BlueprintNotFound {
+                id: blueprint_id.to_string(),
+            })?
             .clone();
 
         // Validate blueprint has at least one production line
         if blueprint.production_lines.is_empty() {
-            return Err("Blueprint must have at least 1 production line".into());
+            return Err(SatisflowError::InvalidInput {
+                message: "Blueprint must have at least 1 production line".to_string(),
+            });
         }
 
         // Get factory and add blueprint
-        let factory = self
-            .get_factory_mut(factory_id)
-            .ok_or_else(|| format!("Factory {} not found", factory_id))?;
+        let factory =
+            self.get_factory_mut(factory_id)
+                .ok_or_else(|| SatisflowError::FactoryNotFound {
+                    id: factory_id.to_string(),
+                })?;
 
         // Deep clone and regenerate UUIDs
         let mut instance = blueprint.clone();
@@ -454,10 +466,12 @@ impl SatisflowEngine {
     /// let engine = SatisflowEngine::new();
     /// engine.save_to_file(Path::new("my_factory.json")).unwrap();
     /// ```
-    pub fn save_to_file(&self, path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn save_to_file(&self, path: &Path) -> Result<(), SatisflowError> {
         let save_file = SaveFile::new(self.clone());
         let json = serde_json::to_string_pretty(&save_file)?;
-        std::fs::write(path, json)?;
+        std::fs::write(path, json).map_err(|e| SatisflowError::Serialization {
+            message: e.to_string(),
+        })?;
         Ok(())
     }
 
@@ -479,8 +493,10 @@ impl SatisflowEngine {
     ///
     /// let engine = SatisflowEngine::load_from_file(Path::new("my_factory.json")).unwrap();
     /// ```
-    pub fn load_from_file(path: &Path) -> Result<Self, Box<dyn std::error::Error>> {
-        let json = std::fs::read_to_string(path)?;
+    pub fn load_from_file(path: &Path) -> Result<Self, SatisflowError> {
+        let json = std::fs::read_to_string(path).map_err(|e| SatisflowError::Serialization {
+            message: e.to_string(),
+        })?;
         Self::load_from_json_with_version_check(&json)
     }
 
@@ -489,7 +505,7 @@ impl SatisflowEngine {
     /// # Returns
     ///
     /// Result containing the JSON string or an error
-    pub fn save_to_json(&self) -> Result<String, Box<dyn std::error::Error>> {
+    pub fn save_to_json(&self) -> Result<String, SatisflowError> {
         let save_file = SaveFile::new(self.clone());
         let json = serde_json::to_string_pretty(&save_file)?;
         Ok(json)
@@ -504,18 +520,21 @@ impl SatisflowEngine {
     /// # Returns
     ///
     /// Result containing the loaded engine or an error
-    pub fn load_from_json(json: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn load_from_json(json: &str) -> Result<Self, SatisflowError> {
         Self::load_from_json_with_version_check(json)
     }
 
     /// Internal method to load with version checking
-    fn load_from_json_with_version_check(json: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    fn load_from_json_with_version_check(json: &str) -> Result<Self, SatisflowError> {
         // First, parse just to get the version
         let value: serde_json::Value = serde_json::from_str(json)?;
 
-        let file_version_str = value["version"]
-            .as_str()
-            .ok_or("Missing version field in save file")?;
+        let file_version_str =
+            value["version"]
+                .as_str()
+                .ok_or_else(|| SatisflowError::Version {
+                    message: "Missing version field in save file".to_string(),
+                })?;
 
         let file_version = SaveVersion::parse(file_version_str)?;
         let engine_version = SaveVersion::current();
@@ -529,18 +548,20 @@ impl SatisflowEngine {
 
         if !file_version.is_compatible_with(&engine_version) {
             // Incompatible major version
-            return Err(Box::new(VersionError::Incompatible {
+            return Err(VersionError::Incompatible {
                 save_version: file_version.to_string(),
                 engine_version: engine_version.to_string(),
-            }));
+            }
+            .into());
         }
 
         if file_version.is_newer_than(&engine_version) {
             // Save is from a newer version
-            return Err(Box::new(VersionError::SaveTooNew {
+            return Err(VersionError::SaveTooNew {
                 save_version: file_version.to_string(),
                 engine_version: engine_version.to_string(),
-            }));
+            }
+            .into());
         }
 
         // Save is older but compatible - for now, try to load it
@@ -1234,7 +1255,7 @@ mod tests {
 
         let result = engine.remove_blueprint_template(missing_id);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("does not exist"));
+        assert!(result.unwrap_err().to_string().contains("not found"));
     }
 
     #[test]
